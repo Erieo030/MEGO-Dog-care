@@ -6,9 +6,10 @@ import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeabl
 
 import { Colors } from '../../../constants/Colors';
 import type { AISessionRecord } from '../../../services/aiSessionService';
+import { Type } from '../../../constants/Typography';
 
 const DELETE_WIDTH = 100;
-const DELETE_SURFACE = '#FBE9E5';
+const DELETE_SURFACE = Colors.dangerSoft;
 
 type SwipeableMethods = {
   close: () => void;
@@ -74,7 +75,7 @@ export const AIConversationSessionRow = React.memo(function AIConversationSessio
         onPress={onOpen}
       >
         <View style={styles.sessionIcon}>
-          <Ionicons name="chatbubble-ellipses-outline" size={19} color={Colors.success} />
+          <Ionicons name="chatbubble-ellipses-outline" size={19} color={Colors.successDecoration} />
         </View>
         <View style={styles.sessionBody}>
           <Text style={styles.sessionTitle} numberOfLines={1}>
@@ -136,6 +137,6 @@ const styles = StyleSheet.create({
   },
   sessionBody: { flex: 1 },
   sessionTitle: { color: Colors.text, fontWeight: '700' },
-  sessionMeta: { color: Colors.subtext, fontSize: 12, marginTop: 3 },
-  chevron: { color: Colors.subtext, fontSize: 24 },
+  sessionMeta: { color: Colors.subtext, fontSize: Type.caption, marginTop: 3 },
+  chevron: { color: Colors.subtext, fontSize: Type.title1 },
 });

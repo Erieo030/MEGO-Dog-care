@@ -17,6 +17,7 @@ import { useTabContentBottomPadding } from '../components/navigation/useTabConte
 import { HOME_THEME_IDS, HOME_THEMES } from '../constants/HomeThemes';
 import { HomeThemeId } from '../constants/HomeThemeIds';
 import { useSettings } from '../contexts/SettingsContext';
+import { Type } from '../constants/Typography';
 
 export default function HomeThemeScreen() {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -84,8 +85,8 @@ export default function HomeThemeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, paddingBottom: 38 },
-  title: { color: Colors.text, fontSize: 26, fontWeight: '900' },
-  subtitle: { color: Colors.subtext, fontSize: 15, lineHeight: 23, marginTop: 8 },
+  title: { color: Colors.text, fontSize: Type.display, fontWeight: '900' },
+  subtitle: { color: Colors.subtext, fontSize: Type.body, lineHeight: 23, marginTop: 8 },
   list: { gap: 15, marginTop: 24 },
   themeCard: {
     height: 172,
@@ -99,10 +100,10 @@ const styles = StyleSheet.create({
   cardShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(47,41,37,0.13)' },
   cardContent: { flex: 1, justifyContent: 'flex-end', padding: 15 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { flex: 1, color: Colors.text, fontSize: 19, fontWeight: '900' },
+  cardTitle: { flex: 1, color: Colors.text, fontSize: Type.headline, fontWeight: '900' },
   cardDescription: {
-    color: '#4D423A',
-    fontSize: 13,
+    color: Colors.text,
+    fontSize: Type.footnote,
     lineHeight: 19,
     marginTop: 5,
     maxWidth: '90%',

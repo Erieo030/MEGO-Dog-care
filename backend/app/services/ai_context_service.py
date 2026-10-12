@@ -69,7 +69,7 @@ def build_context(pet_id: str, user_id: str, days: int) -> dict:
     logs_clean = [{"id": str(item["_id"]), "loggedAt": item.get("loggedAt"), **{key: item.get(key) for key in ("waterLevel", "foodLevel", "energyLevel", "stoolLevel") if item.get(key) is not None}} for item in logs]
 
     return _clean({
-        "pet": {"petId": pet_id, "name": pet.get("name", ""), "breed": pet.get("breed", ""), "sex": pet.get("gender", ""), "birthDate": pet.get("birthday"), "isNeutered": pet.get("neutered"), "allergies": pet.get("allergies", ""), "chronicDiseases": pet.get("chronicDiseases", "")},
+        "pet": {"petId": pet_id, "name": pet.get("name", ""), "breed": pet.get("breed", ""), "sex": pet.get("gender", ""), "birthDate": pet.get("birthday"), "isNeutered": pet.get("neutered"), "allergies": pet.get("allergies", ""), "chronicDiseases": pet.get("chronicDiseases", ""), "memorial": bool(pet.get("memorial", False)), "passedAwayDate": pet.get("passedAwayDate", "")},
         "period": {"days": days, "startAt": start, "endAt": end},
         "weight": {"latestWeightKg": latest["weightKg"] if latest else None, "previousWeightKg": previous["weightKg"] if previous else None, "differenceKg": latest["weightKg"] - previous["weightKg"] if latest and previous else None, "recordCount": len(weight_series), "series": weight_series},
         "dailyLogs": {"recordCount": len(logs_clean), "water": _summary(logs_clean, "waterLevel"), "food": _summary(logs_clean, "foodLevel"), "energy": _summary(logs_clean, "energyLevel"), "stool": _summary(logs_clean, "stoolLevel"), "recent": logs_clean[-30:]},

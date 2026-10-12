@@ -1,14 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：編輯健康異常紀錄既有的通用欄位，保留詳細資料與本機圖片 URI。 */
 import React, { useCallback, useRef, useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +36,8 @@ import {
   HealthEventErrorState,
   HealthEventLoadingState,
 } from '../features/health-events/components/HealthEventScreenState';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 const eventTypes = (Object.keys(HEALTH_EVENT_LABELS) as HealthEventType[]).filter(
   (value) => value !== 'vomiting' && value !== 'abnormal_stool',
@@ -66,8 +61,22 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const requestId = useRef(0);
+  const formValues = { type, summary, occurredAt, severity, notes, attachments };
+  const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setType(value.type);
+      setSummary(value.summary);
+      setOccurredAt(value.occurredAt);
+      setSeverity(value.severity);
+      setNotes(value.notes);
+      setAttachments(value.attachments);
+    },
+    !loading && !error,
+  );
 
   const load = useCallback(async () => {
+    if (dirtyRef.current) return;
     const currentRequest = ++requestId.current;
     setItem(null);
     if (!session?.userId || !selectedPet) {
@@ -90,6 +99,14 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       setSeverity(result.severity);
       setNotes(result.notes ?? '');
       setAttachments(result.attachments ?? []);
+      markSaved({
+        type: result.type,
+        summary: result.summary,
+        occurredAt: new Date(result.occurredAt),
+        severity: result.severity,
+        notes: result.notes ?? '',
+        attachments: result.attachments ?? [],
+      });
     } catch (requestError) {
       if (currentRequest !== requestId.current) return;
       setError((requestError as Error).message || '無法載入健康紀錄');
@@ -98,13 +115,17 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
         setLoading(false);
       }
     }
-  }, [route.params.eventId, selectedPet, session?.userId]);
+  }, [route.params.eventId, selectedPet, session?.userId, dirtyRef, markSaved]);
 
   useFocusEffect(
     useCallback(() => {
+      if (dirtyRef.current) return;
       setLoading(true);
-      load();
-    }, [load]),
+      void load();
+      return () => {
+        requestId.current += 1;
+      };
+    }, [load, dirtyRef]),
   );
 
   const submit = async () => {
@@ -123,7 +144,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
         details: item.details ?? {},
         attachmentIds: attachments.map((value) => value.id),
       });
-      navigation.goBack();
+      markSaved(formValues, () => navigation.goBack());
     } catch (requestError) {
       Alert.alert('更新失敗', (requestError as Error).message);
     } finally {
@@ -150,7 +171,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       >
         <View style={styles.formIntro}>
           <View style={styles.formIntroIcon}>
-            <Ionicons name="heart-outline" size={23} color={Colors.primary} />
+            <Ionicons name="heart-outline" size={23} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.formIntroCopy}>
             <Text style={styles.formEyebrow}>健康觀察</Text>
@@ -254,12 +275,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   formIntroCopy: { flex: 1 },
-  formEyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  formHint: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 3 },
+  formEyebrow: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  formHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 3 },
   sectionHeading: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: Type.headline,
     fontWeight: '800',
     marginTop: 22,
     marginBottom: 2,
@@ -282,7 +308,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { color: Colors.text },
-  chipTextActive: { color: '#FFF', fontWeight: '700' },
+  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   input: {
     fontSize: FORM_FIELD_FONT_SIZE,
     minHeight: FORM_FIELD_HEIGHT,
@@ -295,7 +321,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   inputText: { color: Colors.text },
-  hint: { color: Colors.subtext, fontSize: 12, marginTop: 12 },
+  hint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 12 },
   submit: {
     backgroundColor: Colors.primary,
     borderRadius: FORM_BUTTON_RADIUS,
@@ -304,6 +330,6 @@ const styles = StyleSheet.create({
     marginTop: 25,
     minHeight: FORM_BUTTON_HEIGHT,
   },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.55 },
 });

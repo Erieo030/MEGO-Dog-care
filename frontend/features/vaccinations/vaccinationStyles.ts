@@ -13,11 +13,12 @@ import {
   FORM_FIELD_RADIUS,
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../../constants/FormTokens';
+import { Type } from '../../constants/Typography';
 
 export const vaccinationStyles = StyleSheet.create({
   emptyBox: { alignItems: 'center', paddingVertical: 28 },
   emptyArtwork: { width: 82, height: 76, marginBottom: 10 },
-  emptyHint: { color: '#887A6D', fontSize: 13, marginTop: 6, textAlign: 'center' },
+  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   page: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
@@ -31,8 +32,8 @@ export const vaccinationStyles = StyleSheet.create({
     marginRight: 12,
   },
   listHeaderBody: { flex: 1 },
-  listSubtitle: { color: Colors.subtext, fontSize: 13, marginTop: 3 },
-  title: { fontSize: 24, fontWeight: '800', color: Colors.text },
+  listSubtitle: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 3 },
+  title: { fontSize: Type.title1, fontWeight: '800', color: Colors.text },
   formIntro: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 12 },
   formIntroIcon: {
     width: 46,
@@ -43,8 +44,8 @@ export const vaccinationStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   formIntroCopy: { flex: 1, minWidth: 0 },
-  formEyebrow: { color: Colors.success, fontSize: 12, fontWeight: '800' },
-  formHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  formEyebrow: { color: Colors.success, fontSize: Type.caption, fontWeight: '800' },
+  formHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
   card: {
     padding: 16,
     borderWidth: 1,
@@ -64,7 +65,7 @@ export const vaccinationStyles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 9,
   },
-  name: { flex: 1, color: Colors.text, fontSize: 18, fontWeight: '700' },
+  name: { flex: 1, color: Colors.text, fontSize: Type.headline, fontWeight: '700' },
   cardText: { color: Colors.text, lineHeight: 20 },
   cardMeta: { color: Colors.primary, fontWeight: '700' },
   label: {
@@ -96,7 +97,7 @@ export const vaccinationStyles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
   },
-  primaryText: { color: '#fff', fontWeight: '700' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   detailHero: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -116,8 +117,8 @@ export const vaccinationStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailHeroCopy: { flex: 1, minWidth: 0 },
-  detailTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
-  detailDate: { color: Colors.subtext, fontSize: 12, marginTop: 3 },
+  detailTitle: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
+  detailDate: { color: Colors.subtext, fontSize: Type.caption, marginTop: 3 },
   detailGroup: {
     marginTop: 14,
     backgroundColor: Colors.surface,
@@ -132,7 +133,7 @@ export const vaccinationStyles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: Colors.border,
   },
-  detailLabel: { color: Colors.subtext, fontSize: 12 },
+  detailLabel: { color: Colors.subtext, fontSize: Type.caption },
   detailValue: { color: Colors.text, lineHeight: 20, marginTop: 4 },
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
   actionButton: {
@@ -154,7 +155,7 @@ export const vaccinationStyles = StyleSheet.create({
   },
   secondaryText: { color: Colors.success, fontWeight: '700' },
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
-  error: { color: '#b42318' },
+  error: { color: Colors.dangerText },
   deleteButton: {
     alignSelf: 'center',
     minHeight: 44,
@@ -165,5 +166,5 @@ export const vaccinationStyles = StyleSheet.create({
     paddingVertical: 10,
     marginTop: 8,
   },
-  delete: { color: '#b42318', textAlign: 'center', fontWeight: '700' },
+  delete: { color: Colors.dangerText, textAlign: 'center', fontWeight: '700' },
 });

@@ -1,3 +1,4 @@
+import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /**
  * 用途：新增、編輯與複製用藥療程。
  * 表單型別：../types.ts
@@ -54,6 +55,7 @@ export function MedicationFormScreen() {
     ...(existing || {}),
   });
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const [editingReminderTime, setEditingReminderTime] = useState<string | null>(null);
   const setField = <Key extends keyof MedicationDraft>(key: Key, value: MedicationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -104,6 +106,7 @@ export function MedicationFormScreen() {
         existing && !duplicate
           ? await updateMedication(session.userId, existing.id, payload)
           : await createMedication(session.userId, selectedPet.id, payload);
+      markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
           message: '用藥紀錄已儲存，完整內容可到「紀錄」查看。',
@@ -112,7 +115,9 @@ export function MedicationFormScreen() {
         });
       } else {
         Alert.alert('已儲存', '用藥紀錄已更新');
-        navigation.replace('MedicationDetail', { recordId: response.record.id });
+        markSaved(draft, () =>
+          navigation.replace('MedicationDetail', { recordId: response.record.id }),
+        );
       }
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
@@ -127,7 +132,7 @@ export function MedicationFormScreen() {
     >
       <View style={styles.formIntro}>
         <View style={styles.formIntroIcon}>
-          <Ionicons name="medical-outline" size={22} color={Colors.success} />
+          <Ionicons name="medical-outline" size={22} color={Colors.successDecoration} />
         </View>
         <View style={styles.formIntroCopy}>
           <Text style={styles.formEyebrow}>用藥照護</Text>

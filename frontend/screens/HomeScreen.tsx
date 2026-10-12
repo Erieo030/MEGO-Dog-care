@@ -1,6 +1,13 @@
 /** 用途：首頁照護入口、今日待辦與近期健康觀察。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  ScrollView,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -24,7 +31,9 @@ import { HomeTodayOverview } from '../features/home/components/HomeTodayOverview
 import { CARE_ACTIONS, DAILY_ACTIONS } from '../features/home/homeContent';
 import { HomePetHeader } from '../features/home/components/HomePetHeader';
 import { HomePetSelectorModal } from '../features/home/components/HomePetSelectorModal';
+import { HomeMemorialCard } from '../features/home/components/HomeMemorialCard';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
+import { Type } from '../constants/Typography';
 
 type Navigation = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -55,46 +64,49 @@ export default function HomeScreen() {
   const ownerKey = session && selectedPet ? `${session.userId}:${selectedPet.id}` : '';
   const petId = selectedPet?.id;
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    const requestId = ++requestRef.current;
-    const isCurrent = () => requestRef.current === requestId;
-    if (!session?.userId || !petId) {
-      setLoading(false);
-      return;
-    }
-    if (ownerRef.current !== ownerKey) {
-      ownerRef.current = ownerKey;
-      setTodayCount(null);
-      setHealthTrend(null);
-      setResultOwner(ownerKey);
-    }
-    if (loadedOwnerRef.current !== ownerKey) setLoading(true);
-    setError('');
-    // 今日提醒與健康摘要互不相依，並行載入可縮短首頁整體等待時間。
-    void getTodayReminders(session.userId, petId, signal)
-      .then((reminders) => {
-        if (isCurrent())
-          setTodayCount(
-            reminders.filter((item) => item.status === 'pending' || item.status === 'snoozed')
-              .length,
-          );
-      })
-      .catch(() => {
-        if (isCurrent()) setError('部分照護資料更新失敗');
-      });
-    try {
-      const dashboard = await getHealthDashboard(session.userId, petId, 30, signal);
-      if (!isCurrent()) return;
-      setHealthTrend(analyzeHealthTrend(dashboard.dailyRecords));
-      loadedOwnerRef.current = ownerKey;
-      setLoading(false);
-    } catch {
-      if (isCurrent()) {
-        setError('照護資料更新失敗');
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const requestId = ++requestRef.current;
+      const isCurrent = () => requestRef.current === requestId;
+      if (!session?.userId || !petId) {
         setLoading(false);
+        return;
       }
-    }
-  }, [session?.userId, petId, ownerKey]);
+      if (ownerRef.current !== ownerKey) {
+        ownerRef.current = ownerKey;
+        setTodayCount(null);
+        setHealthTrend(null);
+        setResultOwner(ownerKey);
+      }
+      if (loadedOwnerRef.current !== ownerKey) setLoading(true);
+      setError('');
+      // 今日提醒與健康摘要互不相依，並行載入可縮短首頁整體等待時間。
+      void getTodayReminders(session.userId, petId, signal)
+        .then((reminders) => {
+          if (isCurrent())
+            setTodayCount(
+              reminders.filter((item) => item.status === 'pending' || item.status === 'snoozed')
+                .length,
+            );
+        })
+        .catch(() => {
+          if (isCurrent()) setError('部分照護資料更新失敗');
+        });
+      try {
+        const dashboard = await getHealthDashboard(session.userId, petId, 30, signal);
+        if (!isCurrent()) return;
+        setHealthTrend(analyzeHealthTrend(dashboard.dailyRecords));
+        loadedOwnerRef.current = ownerKey;
+        setLoading(false);
+      } catch {
+        if (isCurrent()) {
+          setError('照護資料更新失敗');
+          setLoading(false);
+        }
+      }
+    },
+    [session?.userId, petId, ownerKey],
+  );
   useFocusEffect(
     useCallback(() => {
       const controller = new AbortController();
@@ -168,80 +180,114 @@ export default function HomeScreen() {
           )}
         </View>
       ) : (
-        <SoftEntrance
-          style={[
-            s.content,
-            {
-              paddingTop: compact ? 16 : Math.max(48, Math.min(Math.round(height * 0.05), 72)),
-              paddingBottom: homeDockPadding,
-            },
-          ]}
+        <ScrollView
+          style={s.foreground}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <HomePetHeader
-            selectedPet={selectedPet}
-            pets={pets}
-            theme={activeHomeTheme}
-            compact={compact}
-            onEdit={() => navigation.navigate('EditPet')}
-            onOpenPetSelector={() => setPetSelectorVisible(true)}
-          />
-          <HomeSectionHeading
-            title="今天想做什麼？"
-            icon="sunny-outline"
-            color={RECORD_CATEGORY_COLORS.daily}
-            compact={compact}
-          />
-          <View style={[s.shortcutRow, compact && s.compactGap]}>
-            {DAILY_ACTIONS.map(([icon, label, route]) => (
-              <HomeAction
-                key={route}
-                icon={icon}
-                label={label}
-                route={route}
-                onOpen={openRoute}
-                variant="daily"
+          <SoftEntrance
+            style={[
+              s.content,
+              {
+                paddingTop: compact ? 16 : Math.max(48, Math.min(Math.round(height * 0.05), 72)),
+                paddingBottom: homeDockPadding,
+              },
+            ]}
+          >
+            <HomePetHeader
+              selectedPet={selectedPet}
+              pets={pets}
+              theme={activeHomeTheme}
+              compact={compact}
+              onEdit={() => navigation.navigate('EditPet')}
+              onOpenPetSelector={() => setPetSelectorVisible(true)}
+            />
+            {selectedPet.memorial ? (
+              <HomeMemorialCard
+                pet={selectedPet}
                 compact={compact}
+                onOpenRecords={() =>
+                  navigation.getParent()?.navigate('Timeline', { screen: 'TimelineOverview' })
+                }
+                onOpenPhotos={() =>
+                  navigation.getParent()?.navigate('Timeline', { screen: 'PhotosOverview' })
+                }
+                onOpenWeights={() => navigation.navigate('WeightList')}
+                onOpenMemorial={() => navigation.navigate('PetMemorial')}
               />
-            ))}
-          </View>
-          <HomeTodayOverview
-            compact={compact}
-            loading={loading}
-            error={error}
-            reminders={reminders}
-            observations={observations}
-            onRetry={refresh}
-            onOpenReminders={() =>
-              navigation.getParent()?.navigate('Timeline', {
-                screen: 'ReminderList',
-                params: { upcomingDays: 0 },
-              })
-            }
-            onOpenObservations={() =>
-              navigation.getParent()?.navigate('Timeline', { screen: 'HealthObservation' })
-            }
-          />
-          <HomeSectionHeading
-            title="健康管理"
-            icon="heart-circle-outline"
-            color={RECORD_CATEGORY_COLORS.care}
-            compact={compact}
-            variant="care"
-          />
-          <View style={s.managementRow}>
-            {CARE_ACTIONS.map(([icon, label, route]) => (
-              <HomeAction
-                key={route}
-                icon={icon}
-                label={label}
-                route={route}
-                onOpen={openRoute}
-                variant="care"
-                compact={compact}
-              />
-            ))}
-          </View>
-        </SoftEntrance>
+            ) : (
+              <>
+                <HomeSectionHeading
+                  title="今天想做什麼？"
+                  icon="sunny-outline"
+                  color={RECORD_CATEGORY_COLORS.daily}
+                  compact={compact}
+                />
+                <View style={[s.shortcutRow, compact && s.compactGap]}>
+                  {DAILY_ACTIONS.map(([icon, label, route]) => (
+                    <HomeAction
+                      key={route}
+                      icon={icon}
+                      label={label}
+                      route={route}
+                      onOpen={openRoute}
+                      variant="daily"
+                      compact={compact}
+                    />
+                  ))}
+                </View>
+                <HomeTodayOverview
+                  compact={compact}
+                  loading={loading}
+                  error={error}
+                  reminders={reminders}
+                  observations={observations}
+                  onRetry={refresh}
+                  onOpenReminders={() =>
+                    navigation.getParent()?.navigate('Timeline', {
+                      screen: 'ReminderList',
+                      params: { upcomingDays: 0 },
+                    })
+                  }
+                  onOpenObservations={() =>
+                    navigation.getParent()?.navigate('Timeline', { screen: 'HealthObservation' })
+                  }
+                />
+                <View style={s.careHeadingRow}>
+                  <HomeSectionHeading
+                    title="健康管理"
+                    icon="heart-circle-outline"
+                    color={RECORD_CATEGORY_COLORS.care}
+                    compact={compact}
+                    variant="care"
+                  />
+                  <SoftButton
+                    accessibilityRole="button"
+                    accessibilityLabel="開啟就醫地圖，查看夜間與急診動物醫院"
+                    style={s.mapChip}
+                    onPress={() => navigation.navigate('VetMap')}
+                  >
+                    <Ionicons name="map-outline" size={16} color={Colors.successStrong} />
+                    <Text style={s.mapChipText}>急診地圖</Text>
+                  </SoftButton>
+                </View>
+                <View style={s.managementRow}>
+                  {CARE_ACTIONS.map(([icon, label, route]) => (
+                    <HomeAction
+                      key={route}
+                      icon={icon}
+                      label={label}
+                      route={route}
+                      onOpen={openRoute}
+                      variant="care"
+                      compact={compact}
+                    />
+                  ))}
+                </View>
+              </>
+            )}
+          </SoftEntrance>
+        </ScrollView>
       )}
       {petSelectorVisible && selectedPet ? (
         <HomePetSelectorModal
@@ -290,9 +336,11 @@ function HomeSectionHeading({
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { flex: 1, paddingHorizontal: 16, zIndex: 1 },
+  foreground: { flex: 1, zIndex: 1 },
+  scrollContent: { flexGrow: 1 },
+  content: { flexGrow: 1, paddingHorizontal: 16 },
   flex: { flex: 1, minWidth: 0 },
-  mutedSmall: { color: Colors.subtext, fontSize: 12, marginTop: 3 },
+  mutedSmall: { color: Colors.subtext, fontSize: Type.caption, marginTop: 3 },
   sectionHeading: { alignSelf: 'flex-start', marginBottom: 1 },
   sectionHeadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionHeadingIcon: {
@@ -307,14 +355,14 @@ const s = StyleSheet.create({
   headingAccent: { width: 22, height: 3, borderRadius: 2, marginLeft: 38, marginTop: 1 },
   shortcutHeading: {
     color: Colors.text,
-    fontSize: 20,
+    fontSize: Type.title3,
     lineHeight: 28,
     fontWeight: '800',
     textShadowColor: 'rgba(255,255,255,0.55)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
   },
-  compactHeading: { fontSize: 19, lineHeight: 25 },
+  compactHeading: { fontSize: Type.headline, lineHeight: 25 },
   shortcutRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -323,6 +371,19 @@ const s = StyleSheet.create({
     marginBottom: 5,
   },
   managementHead: { marginTop: 17 },
+  careHeadingRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  mapChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    borderRadius: 17,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.border,
+    backgroundColor: 'rgba(255,249,242,0.94)',
+  },
+  mapChipText: { color: Colors.successStrong, fontSize: Type.footnote, fontWeight: '800' },
   managementRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,10 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { RECORD_CATEGORY_TEXT_COLORS } from '../../../constants/RecordCategoryColors';
 import { Colors } from '../../../constants/Colors';
 import { TIMELINE_META } from '../../../constants/Timeline';
 import { TimelineItem } from '../../../types';
 import { getTimelineCategory, TIMELINE_CATEGORIES } from '../timelineContent';
+import { Type } from '../../../constants/Typography';
 
 type Props = { item: TimelineItem; onPress: () => void };
 
@@ -38,7 +40,9 @@ const TimelineCard = React.memo(function TimelineCard({ item, onPress }: Props) 
       </View>
       <View style={styles.flex}>
         <View style={styles.cardMeta}>
-          <Text style={[styles.kind, { color: categoryColor }]}>{meta.label}</Text>
+          <Text style={[styles.kind, { color: RECORD_CATEGORY_TEXT_COLORS[category] }]}>
+            {meta.label}
+          </Text>
           <Text numberOfLines={1} style={styles.date}>
             {timeLabel}
           </Text>
@@ -78,9 +82,9 @@ const styles = StyleSheet.create({
     marginRight: 11,
   },
   cardMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  kind: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
-  date: { color: Colors.subtext, fontSize: 11, flexShrink: 1, textAlign: 'right' },
+  kind: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
+  date: { color: Colors.subtext, fontSize: Type.caption2, flexShrink: 1, textAlign: 'right' },
   itemTitle: { color: Colors.text, fontWeight: '800', marginTop: 5, lineHeight: 20 },
   description: { color: Colors.subtext, marginTop: 4, lineHeight: 19 },
-  arrow: { color: Colors.subtext, fontSize: 24, marginLeft: 5 },
+  arrow: { color: Colors.subtext, fontSize: Type.title1, marginLeft: 5 },
 });

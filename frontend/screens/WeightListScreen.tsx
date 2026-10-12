@@ -1,19 +1,13 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示全量體重摘要、期間篩選、折線趨勢與可管理的歷史紀錄。 */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  RefreshControl,
-  FlatList,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, RefreshControl, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { RecordActionButton } from '../components/RecordActionButton';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import FilterChip from '../components/FilterChip';
 import { Colors } from '../constants/Colors';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import ScreenState from '../components/ScreenState';
@@ -46,6 +40,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const mutationLock = useRef(false);
   const [error, setError] = useState('');
   const requestId = useRef(0);
   const hasLoadedRef = useRef(false);
@@ -109,7 +104,8 @@ export default function WeightListScreen({ navigation, route }: Props) {
         text: '刪除',
         style: 'destructive',
         onPress: async () => {
-          if (!session?.userId || deletingId) return;
+          if (!session?.userId || deletingId || mutationLock.current) return;
+          mutationLock.current = true;
           setDeletingId(item.id);
           try {
             await service.deleteWeight(session.userId, item.id);
@@ -117,6 +113,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
           } catch (requestError) {
             Alert.alert('刪除失敗', (requestError as Error).message);
           } finally {
+            mutationLock.current = false;
             setDeletingId(null);
           }
         },
@@ -152,7 +149,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
           <>
             <View style={styles.listContext}>
               <View style={styles.contextIcon}>
-                <Ionicons name="scale-outline" size={18} color={Colors.success} />
+                <Ionicons name="scale-outline" size={18} color={Colors.successDecoration} />
               </View>
               <View style={styles.flex}>
                 <Text style={styles.contextTitle}>用固定頻率記錄，就能看見變化</Text>
@@ -163,17 +160,12 @@ export default function WeightListScreen({ navigation, route }: Props) {
             <Text style={styles.heading}>查看期間</Text>
             <View style={styles.filters}>
               {WEIGHT_PERIODS.map((option) => (
-                <TouchableOpacity
+                <FilterChip
                   key={String(option.value)}
-                  style={[styles.filter, period === option.value && styles.filterActive]}
+                  label={option.label}
+                  selected={period === option.value}
                   onPress={() => setPeriod(option.value)}
-                >
-                  <Text
-                    style={[styles.filterText, period === option.value && styles.filterTextActive]}
-                  >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
             <Text style={styles.heading}>體重趨勢</Text>
@@ -197,7 +189,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
                 <Ionicons
                   name={historyExpanded ? 'chevron-up' : 'chevron-down'}
                   size={17}
-                  color={Colors.primary}
+                  color={Colors.primaryDecoration}
                 />
               </TouchableOpacity>
             ) : null}
@@ -207,7 +199,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
               )}
             {!items.length ? (
               <View style={styles.emptyBox}>
-                <Ionicons name="scale-outline" size={34} color={Colors.primary} />
+                <Ionicons name="scale-outline" size={34} color={Colors.primaryDecoration} />
                 <Text style={styles.empty}>尚未記錄體重</Text>
                 <Text style={styles.emptyHint}>偶爾記一次，就能慢慢看見變化。</Text>
               </View>

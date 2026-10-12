@@ -31,6 +31,8 @@ import { AIConversationSessionRow } from '../features/ai/components/AIConversati
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { acceptAIDataConsent, getAIDataConsent } from '../services/aiDataConsentService';
 import AuthenticatedPetAvatar from '../components/AuthenticatedPetAvatar';
+import { Type } from '../constants/Typography';
+import { CardShadow, Radius, Spacing } from '../constants/Layout';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthOverview'>;
 
@@ -50,12 +52,14 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
   const pendingAIAction = React.useRef<(() => Promise<void>) | null>(null);
   const loadedOwnerRef = React.useRef('');
   const ownerKey = session?.userId && selectedPet?.id ? `${session.userId}:${selectedPet.id}` : '';
-  const openChat = useCallback(() => {
-    const rootNavigation = navigation.getParent()?.getParent() as
-      | NativeStackNavigationProp<RootStackParamList>
-      | undefined;
-    rootNavigation?.navigate('AIChat');
-  }, [navigation]);
+  const rootNavigation = useCallback(
+    () =>
+      navigation.getParent()?.getParent() as
+        | NativeStackNavigationProp<RootStackParamList>
+        | undefined,
+    [navigation],
+  );
+  const openChat = useCallback(() => rootNavigation()?.navigate('AIChat'), [rootNavigation]);
   const refreshSessions = useCallback(() => {
     let active = true;
     if (!session?.userId || !selectedPet?.id) {
@@ -190,13 +194,13 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
               style={styles.petAvatar}
               fallback={
                 <View style={styles.petAvatarFallback}>
-                  <Ionicons name="paw-outline" size={23} color={Colors.primary} />
+                  <Ionicons name="paw-outline" size={23} color={Colors.primaryDecoration} />
                 </View>
               }
             />
           ) : (
             <View style={styles.petAvatarFallback}>
-              <Ionicons name="paw-outline" size={23} color={Colors.primary} />
+              <Ionicons name="paw-outline" size={23} color={Colors.primaryDecoration} />
             </View>
           )}
           <View style={styles.petHeaderText}>
@@ -208,26 +212,58 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="開始新的 MEGO AI 對話"
-          style={styles.startButton}
+          style={styles.hero}
+          activeOpacity={0.88}
           onPress={openAssistant}
         >
-          <View style={styles.startButtonLabel}>
-            <View style={styles.startButtonIcon}>
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color={Colors.primary} />
-            </View>
-            <View style={styles.petHeaderText}>
-              <Text style={styles.startButtonText}>開始新的對話</Text>
-              <Text style={styles.startButtonHint}>
-                和 {selectedPet?.name || '毛孩'} 一起整理照護
-              </Text>
-            </View>
+          <View style={styles.heroIcon}>
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={22}
+              color={Colors.primaryDecoration}
+            />
           </View>
-          <Text style={styles.startButtonArrow}>›</Text>
+          <Text style={styles.heroTitle}>有什麼想問的照護問題？</Text>
+          <Text style={styles.heroText}>
+            查詢{selectedPet?.name || '毛孩'}的紀錄、問照護知識，回答會附上參考來源。
+          </Text>
+          <View style={styles.heroAction}>
+            <Text style={styles.heroActionText}>開始新的對話</Text>
+            <Ionicons name="arrow-forward" size={17} color={Colors.primaryDecoration} />
+          </View>
         </TouchableOpacity>
+
+        <Text style={[styles.sectionTitle, styles.toolsTitle]}>照護工具</Text>
+        <View style={styles.tools}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="準備看醫生，整理就醫前摘要"
+            style={styles.tool}
+            onPress={() => withAIConsent(async () => rootNavigation()?.navigate('VetVisitBrief'))}
+          >
+            <View style={[styles.toolIcon, styles.toolIconCare]}>
+              <Ionicons name="medkit-outline" size={20} color={Colors.successStrong} />
+            </View>
+            <Text style={styles.toolTitle}>準備看醫生</Text>
+            <Text style={styles.toolText}>整理近期紀錄，帶著重點和獸醫溝通</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="開啟就醫地圖，查看夜間與急診動物醫院"
+            style={styles.tool}
+            onPress={() => navigation.navigate('VetMap')}
+          >
+            <View style={[styles.toolIcon, styles.toolIconMap]}>
+              <Ionicons name="map-outline" size={20} color={Colors.primaryDecoration} />
+            </View>
+            <Text style={styles.toolTitle}>急診地圖</Text>
+            <Text style={styles.toolText}>查看夜間與急診動物醫院</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>最近對話</Text>
-          <Text style={styles.sectionHint}>最多保留 5 個</Text>
         </View>
+        <Text style={styles.sectionHint}>最多保留 5 個；超過時，建立新對話會刪除最舊的一個。</Text>
         {sessionsLoading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={Colors.primary} />
@@ -277,7 +313,7 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
         ) : (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="paw-outline" size={24} color={Colors.primary} />
+              <Ionicons name="paw-outline" size={24} color={Colors.primaryDecoration} />
             </View>
             <Text style={styles.empty}>還沒有對話，從一次照護提問開始吧。</Text>
           </View>
@@ -291,47 +327,52 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
       >
         <View style={styles.consentBackdrop}>
           <View style={styles.consentDialog}>
-            <View style={styles.consentIcon}>
-              <Ionicons name="lock-closed-outline" size={23} color={Colors.primary} />
-            </View>
-            <Text style={styles.consentTitle}>開始使用 MEGO AI 前</Text>
-            <Text style={styles.consentIntro}>
-              你的問題會傳送至 MEGO 設定的 AI 服務，以產生回覆。
-            </Text>
-            <View style={styles.consentInfoBlock}>
-              <Text style={styles.consentInfoHeading}>對話內容</Text>
-              <Text style={styles.consentBody}>
-                為延續同一段對話，最近最多 10 則訊息可能一併傳送；不同對話不會互相帶入。對話紀錄保存在這台裝置，不會跨裝置同步。
+            <ScrollView bounces={false} contentContainerStyle={styles.consentContent}>
+              <View style={styles.consentIcon}>
+                <Ionicons name="lock-closed-outline" size={23} color={Colors.primaryDecoration} />
+              </View>
+              <Text style={styles.consentTitle}>開始使用 MEGO AI 前</Text>
+              <Text style={styles.consentIntro}>
+                你的問題會傳送至 MEGO 設定的 AI 服務，以產生回覆。
               </Text>
-            </View>
-            <View style={styles.consentInfoBlock}>
-              <Text style={styles.consentInfoHeading}>毛孩資料</Text>
-              <Text style={styles.consentBody}>
-                問題需要個人化照護資訊時，才會傳送回答所需的資料，例如基本資料、過敏／慢性病、日常觀察或相關照護紀錄。只會依問題提供必要範圍；一般生活問題不會附帶毛孩紀錄。
+              <View style={styles.consentInfoBlock}>
+                <Text style={styles.consentInfoHeading}>對話內容</Text>
+                <Text style={styles.consentBody}>
+                  為延續同一段對話，最近最多 10
+                  則訊息可能一併傳送；不同對話不會互相帶入。對話紀錄保存在這台裝置，不會跨裝置同步。
+                </Text>
+              </View>
+              <View style={styles.consentInfoBlock}>
+                <Text style={styles.consentInfoHeading}>毛孩資料</Text>
+                <Text style={styles.consentBody}>
+                  問題需要個人化照護資訊時，才會傳送回答所需的資料，例如基本資料、過敏／慢性病、日常觀察或相關照護紀錄。只會依問題提供必要範圍；一般生活問題不會附帶毛孩紀錄。
+                </Text>
+              </View>
+              <Text style={styles.consentFootnote}>
+                AI 回覆可能不完全正確，不能取代獸醫診斷。完整內容可在「設定 → AI 助手 → AI
+                資料使用說明」查看。
               </Text>
+            </ScrollView>
+            <View style={styles.consentActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={[styles.consentPrimary, consentSaving && styles.consentDisabled]}
+                onPress={() => void confirmAIDataConsent()}
+                disabled={consentSaving}
+              >
+                <Text style={styles.consentPrimaryText}>
+                  {consentSaving ? '正在記錄…' : '我了解，繼續使用 MEGO AI'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                style={styles.consentLater}
+                onPress={deferAIDataConsent}
+                disabled={consentSaving}
+              >
+                <Text style={styles.consentLaterText}>稍後再說</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.consentFootnote}>
-              AI 回覆可能不完全正確，不能取代獸醫診斷。完整內容可在「設定 → AI 助手 → AI
-              資料使用說明」查看。
-            </Text>
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={[styles.consentPrimary, consentSaving && styles.consentDisabled]}
-              onPress={() => void confirmAIDataConsent()}
-              disabled={consentSaving}
-            >
-              <Text style={styles.consentPrimaryText}>
-                {consentSaving ? '正在記錄…' : '我了解，繼續使用 MEGO AI'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={styles.consentLater}
-              onPress={deferAIDataConsent}
-              disabled={consentSaving}
-            >
-              <Text style={styles.consentLaterText}>稍後再說</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -361,8 +402,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primarySoft,
   },
   petHeaderText: { flex: 1 },
-  eyebrow: { color: Colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  title: { color: Colors.text, fontSize: 25, fontWeight: '800', marginTop: 2 },
+  eyebrow: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800', letterSpacing: 1 },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800', marginTop: 2 },
   subtitle: { color: Colors.subtext, lineHeight: 21, marginBottom: 14 },
   sectionHeader: {
     flexDirection: 'row',
@@ -373,10 +414,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: Type.headline,
     fontWeight: '800',
   },
-  sectionHint: { color: Colors.subtext, fontSize: 12 },
+  sectionHint: { color: Colors.subtext, fontSize: Type.caption },
   empty: { color: Colors.subtext, paddingVertical: 12 },
   loadError: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   retryButton: {
@@ -406,75 +447,77 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
-  startButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  hero: {
+    marginTop: Spacing.sm,
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
     backgroundColor: Colors.primary,
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    minHeight: 68,
-    marginTop: 8,
+    ...CardShadow,
   },
-  startButtonLabel: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingRight: 8,
-  },
-  startButtonIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    backgroundColor: '#FFF4E8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  startButtonText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
-  startButtonHint: { color: '#F8DCC8', fontSize: 12, marginTop: 3 },
-  startButtonArrow: { color: '#FFF', fontSize: 28, lineHeight: 28 },
-  card: {
-    minHeight: 72,
-    backgroundColor: '#FFFDF9',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#8B684D',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  featuredCard: { backgroundColor: '#F1F8F2', borderColor: '#C9E3D0' },
-  cardContent: { flex: 1 },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  recommended: {
-    color: Colors.primary,
-    fontSize: 11,
-    fontWeight: '700',
-    backgroundColor: '#DCEFE1',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  iconWrap: {
+  heroIcon: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.background,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    backgroundColor: Colors.surfaceWarm,
   },
-  cardTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
-  text: { color: Colors.subtext, marginTop: 4 },
+  heroTitle: {
+    marginTop: Spacing.md,
+    color: Colors.onPrimary,
+    fontSize: Type.title3,
+    fontWeight: '800',
+  },
+  heroText: {
+    marginTop: Spacing.xs,
+    color: Colors.primarySoft,
+    fontSize: Type.subhead,
+    lineHeight: 21,
+  },
+  heroAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: Spacing.xs,
+    minHeight: 44,
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.surface,
+  },
+  heroActionText: { color: Colors.primary, fontSize: Type.body, fontWeight: '800' },
+  toolsTitle: { marginTop: Spacing.xxl, marginBottom: Spacing.md },
+  tools: { flexDirection: 'row', gap: Spacing.md },
+  tool: {
+    flex: 1,
+    minHeight: 132,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  toolIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toolIconCare: { backgroundColor: Colors.successSoft },
+  toolIconMap: { backgroundColor: Colors.primarySoft },
+  toolTitle: {
+    marginTop: Spacing.md,
+    color: Colors.text,
+    fontSize: Type.callout,
+    fontWeight: '800',
+  },
+  toolText: {
+    marginTop: Spacing.xxs,
+    color: Colors.subtext,
+    fontSize: Type.footnote,
+    lineHeight: 18,
+  },
   consentBackdrop: {
     flex: 1,
     justifyContent: 'center',
@@ -482,11 +525,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(35, 27, 22, 0.48)',
   },
   consentDialog: {
-    padding: 22,
+    maxHeight: '90%',
+    flexShrink: 1,
     borderRadius: 24,
     backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  consentContent: { padding: 22 },
+  consentActions: {
+    paddingHorizontal: 22,
+    paddingBottom: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
   consentIcon: {
     width: 46,
@@ -497,17 +548,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primarySoft,
     marginBottom: 12,
   },
-  consentTitle: { color: Colors.text, fontSize: 20, fontWeight: '800', marginBottom: 8 },
-  consentIntro: { color: Colors.text, fontSize: 14, lineHeight: 22, marginBottom: 12 },
+  consentTitle: { color: Colors.text, fontSize: Type.title3, fontWeight: '800', marginBottom: 8 },
+  consentIntro: { color: Colors.text, fontSize: Type.subhead, lineHeight: 22, marginBottom: 12 },
   consentInfoBlock: {
     padding: 12,
     borderRadius: 14,
     backgroundColor: Colors.surface,
     marginBottom: 8,
   },
-  consentInfoHeading: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 4 },
-  consentBody: { color: Colors.text, fontSize: 14, lineHeight: 22 },
-  consentFootnote: { color: Colors.subtext, fontSize: 12, lineHeight: 19, marginTop: 12 },
+  consentInfoHeading: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  consentBody: { color: Colors.text, fontSize: Type.subhead, lineHeight: 22 },
+  consentFootnote: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 19, marginTop: 12 },
   consentPrimary: {
     minHeight: 50,
     borderRadius: 16,
@@ -517,8 +573,8 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingHorizontal: 12,
   },
-  consentPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
+  consentPrimaryText: { color: Colors.onPrimary, fontSize: Type.body, fontWeight: '800' },
   consentDisabled: { opacity: 0.65 },
   consentLater: { alignItems: 'center', padding: 12, marginTop: 2 },
-  consentLaterText: { color: Colors.subtext, fontSize: 14, fontWeight: '700' },
+  consentLaterText: { color: Colors.subtext, fontSize: Type.subhead, fontWeight: '700' },
 });

@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
 import { FORM_FIELD_FONT_SIZE, FORM_FIELD_RADIUS } from '../constants/FormTokens';
+import { Type } from '../constants/Typography';
 
 type Props = {
   value: string;
@@ -76,7 +77,7 @@ export default function SupplementalNotesField({
           {value || placeholder}
         </Text>
         <View style={styles.editIcon}>
-          <Ionicons name="create-outline" size={20} color={Colors.primary} />
+          <Ionicons name="create-outline" size={20} color={Colors.primaryDecoration} />
         </View>
       </TouchableOpacity>
 
@@ -173,12 +174,12 @@ export default function SupplementalNotesField({
 const styles = StyleSheet.create({
   label: {
     color: Colors.text,
-    fontSize: 15,
+    fontSize: Type.body,
     fontWeight: '700',
     marginTop: 21,
     marginBottom: 8,
   },
-  helperText: { color: Colors.subtext, fontSize: 12, marginBottom: 6 },
+  helperText: { color: Colors.subtext, fontSize: Type.caption, marginBottom: 6 },
   trigger: {
     minHeight: 80,
     marginTop: 8,
@@ -231,11 +232,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   titleGroup: { flex: 1 },
-  modalTitle: { color: Colors.text, fontSize: 20, fontWeight: '800' },
-  modalHint: { color: Colors.subtext, fontSize: 13, marginTop: 3 },
+  modalTitle: { color: Colors.text, fontSize: Type.title3, fontWeight: '800' },
+  modalHint: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 3 },
   closeButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 20,
     backgroundColor: Colors.surface,
     alignItems: 'center',
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
   characterCount: {
     alignSelf: 'flex-end',
     color: Colors.subtext,
-    fontSize: 12,
+    fontSize: Type.caption,
     marginTop: 6,
   },
   actions: { flexDirection: 'row', gap: 10, marginTop: 16 },
@@ -268,7 +269,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelText: { color: Colors.text, fontSize: 16, fontWeight: '700' },
+  cancelText: { color: Colors.text, fontSize: Type.callout, fontWeight: '700' },
   saveButton: {
     flex: 1,
     minHeight: 52,
@@ -277,5 +278,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  saveText: { color: Colors.onPrimary, fontSize: Type.callout, fontWeight: '700' },
 });

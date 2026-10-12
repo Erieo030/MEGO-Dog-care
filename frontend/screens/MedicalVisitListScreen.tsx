@@ -26,6 +26,8 @@ import { useSettings } from '../contexts/SettingsContext';
 import { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/medicalVisitService';
 import { MedicalVisit } from '../types';
+import { Type } from '../constants/Typography';
+import { MemorialReadOnlyNotice } from '../components/MemorialReadOnlyNotice';
 type Props = NativeStackScreenProps<HomeStackParamList, 'MedicalVisitList'>;
 export default function MedicalVisitListScreen({ navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -96,7 +98,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
           <>
             <View style={s.listHeader}>
               <View style={s.listHeaderIcon}>
-                <Ionicons name="business-outline" size={23} color={Colors.success} />
+                <Ionicons name="business-outline" size={23} color={Colors.successDecoration} />
               </View>
               <View style={s.listHeaderBody}>
                 <Text style={s.title}>就醫紀錄</Text>
@@ -105,22 +107,26 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
                 </Text>
               </View>
             </View>
-            <AppButton
-              variant="primary"
-              style={s.primary}
-              onPress={() => navigation.navigate('MedicalVisitForm', {})}
-              accessibilityLabel="新增就醫紀錄"
-            >
-              <Ionicons name="add" size={20} color="#FFF" />
-              <Text style={s.primaryText}>新增就醫紀錄</Text>
-            </AppButton>
+            {selectedPet?.memorial ? (
+              <MemorialReadOnlyNotice petName={selectedPet.name} />
+            ) : (
+              <AppButton
+                variant="primary"
+                style={s.primary}
+                onPress={() => navigation.navigate('MedicalVisitForm', {})}
+                accessibilityLabel="新增就醫紀錄"
+              >
+                <Ionicons name="add" size={20} color={Colors.onPrimary} />
+                <Text style={s.primaryText}>新增就醫紀錄</Text>
+              </AppButton>
+            )}
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="尋找附近動物醫院"
               style={s.mapLink}
               onPress={() => navigation.navigate('VetMap')}
             >
-              <Ionicons name="map-outline" size={19} color={Colors.success} />
+              <Ionicons name="map-outline" size={19} color={Colors.successDecoration} />
               <Text style={s.mapLinkText}>尋找附近動物醫院</Text>
               <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
             </TouchableOpacity>
@@ -152,7 +158,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
           >
             <View style={s.cardTitleRow}>
               <View style={s.cardIcon}>
-                <Ionicons name="business-outline" size={18} color={Colors.success} />
+                <Ionicons name="business-outline" size={18} color={Colors.successDecoration} />
               </View>
               <View style={s.cardTitleBody}>
                 <Text style={s.clinic}>{item.clinicName || '未填寫醫院'}</Text>
@@ -209,8 +215,8 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   listHeaderBody: { flex: 1 },
-  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  listSubtitle: { color: Colors.subtext, fontSize: 13, marginTop: 3 },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  listSubtitle: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 3 },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -229,7 +235,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  primaryText: { color: '#FFF', fontWeight: '800' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '800' },
   mapLink: {
     minHeight: 52,
     marginBottom: 18,
@@ -242,7 +248,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  mapLinkText: { color: Colors.text, fontSize: 15, fontWeight: '700', flex: 1 },
+  mapLinkText: { color: Colors.text, fontSize: Type.body, fontWeight: '700', flex: 1 },
   emptyBox: { alignItems: 'center', paddingVertical: 28 },
   emptyArtwork: { width: 82, height: 76, marginBottom: 10 },
   emptyIcon: {
@@ -255,7 +261,7 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   emptyTitle: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
-  emptyHint: { color: '#887A6D', fontSize: 13, marginTop: 6, textAlign: 'center' },
+  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   empty: { color: Colors.subtext, textAlign: 'center', padding: 18 },
   retry: {
     borderWidth: 1,
@@ -284,9 +290,9 @@ const s = StyleSheet.create({
     marginRight: 9,
   },
   cardTitleBody: { flex: 1 },
-  date: { color: Colors.subtext, fontSize: 12 },
-  clinic: { color: Colors.text, fontSize: 19, fontWeight: '800', marginTop: 4 },
+  date: { color: Colors.subtext, fontSize: Type.caption },
+  clinic: { color: Colors.text, fontSize: Type.headline, fontWeight: '800', marginTop: 4 },
   reason: { color: Colors.text, marginTop: 8, lineHeight: 21 },
   copy: { color: Colors.primary, fontWeight: '800', marginTop: 8 },
-  meta: { color: Colors.subtext, fontSize: 12, marginTop: 8 },
+  meta: { color: Colors.subtext, fontSize: Type.caption, marginTop: 8 },
 });

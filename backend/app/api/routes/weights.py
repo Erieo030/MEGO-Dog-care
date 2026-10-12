@@ -1,5 +1,6 @@
 """用途：提供具毛孩所有權檢查的體重列表、新增、編輯與刪除 API。"""
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, Response, status, Depends
+from app.api.dependencies import require_active_pet
 
 from app.schemas.weight import WeightRecordRequest
 from app.services import weight_service
@@ -13,7 +14,7 @@ def list_weights(pet_id: str, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "取得體重資料成功", "data": result}
 
 
-@router.post("/pets/{pet_id}/weights", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/weights", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_weight(
     pet_id: str,
     data: WeightRecordRequest,

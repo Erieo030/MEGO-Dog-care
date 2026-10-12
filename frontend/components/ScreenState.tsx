@@ -17,7 +17,7 @@ export default function ScreenState({ text, loading = false, error = false, acti
         <Ionicons
           name={error ? 'leaf-outline' : 'paw-outline'}
           size={25}
-          color={error ? Colors.success : Colors.primary}
+          color={error ? Colors.successDecoration : Colors.primaryDecoration}
         />
       </View>
       {loading ? <ActivityIndicator color={Colors.primary} /> : null}

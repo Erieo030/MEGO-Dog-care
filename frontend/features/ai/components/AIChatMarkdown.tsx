@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { Colors } from '../../../constants/Colors';
 import { parseAIAnswer } from '../aiMarkdown';
+import { Type } from '../../../constants/Typography';
 
 function inlineMarkdown(text: string) {
   const tokens = text.split(/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`)/g);
@@ -46,10 +47,10 @@ export function AIChatMarkdown({ text, collapsed }: { text: string; collapsed?: 
 }
 
 const styles = StyleSheet.create({
-  content: { color: Colors.text, lineHeight: 23, fontSize: 16 },
-  paragraph: { color: Colors.text, lineHeight: 23, fontSize: 16 },
-  heading: { color: Colors.text, lineHeight: 23, fontSize: 16, fontWeight: '800' },
+  content: { color: Colors.text, lineHeight: 23, fontSize: Type.callout },
+  paragraph: { color: Colors.text, lineHeight: 23, fontSize: Type.callout },
+  heading: { color: Colors.text, lineHeight: 23, fontSize: Type.callout, fontWeight: '800' },
   bold: { fontWeight: '800' },
-  code: { color: Colors.primary, fontSize: 14 },
+  code: { color: Colors.primary, fontSize: Type.subhead },
   listMarker: { color: Colors.primary, fontWeight: '800' },
 });

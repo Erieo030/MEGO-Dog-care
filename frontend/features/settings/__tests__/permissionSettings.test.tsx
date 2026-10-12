@@ -4,6 +4,8 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { Linking } from 'react-native';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
+import { getNotificationPermissionState } from '../../../services/notificationService';
 import { NotificationSettingsScreen } from '../screens/SettingsScreens';
 
 const mockRemove = jest.fn();
@@ -112,4 +114,20 @@ test('location status errors do not hide other permission states', async () => {
   expect(row('定位權限').props.value).toBe('暫時無法讀取');
   expect(row('手機通知權限').props.value).toBe('已開啟');
   expect(row('相簿照片').props.value).toBe('已開啟');
+});
+
+test('camera-read failures preserve independent notification and photo statuses', async () => {
+  (ImagePicker.getCameraPermissionsAsync as jest.Mock).mockRejectedValueOnce(
+    new Error('unavailable'),
+  );
+  await mount();
+  expect(row('相機權限').props.value).toBe('暫時無法讀取');
+  expect(row('相簿照片').props.value).toBe('已開啟');
+  expect(row('手機通知權限').props.value).toBe('已開啟');
+});
+test('notification-read failures are distinguished from an undecided permission', async () => {
+  (getNotificationPermissionState as jest.Mock).mockRejectedValueOnce(new Error('unavailable'));
+  await mount();
+  expect(row('手機通知權限').props.value).toBe('暫時無法讀取');
+  expect(row('相機權限').props.value).toBe('未開啟');
 });

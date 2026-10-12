@@ -17,6 +17,14 @@ export interface Pet {
   microchipNumber?: string;
   coatColor?: string;
   distinctiveFeatures?: string;
+  /** 回憶模式：毛孩已離開，紀錄只供回顧，不能再新增。 */
+  memorial?: boolean;
+  passedAwayDate?: string;
+  memorialNote?: string;
+}
+export interface PetMemorialData {
+  passedAwayDate: string;
+  memorialNote: string;
 }
 export type PetFormData = Omit<Pet, 'id' | 'userId' | 'species' | 'gender'> & {
   gender: 'male' | 'female' | '';

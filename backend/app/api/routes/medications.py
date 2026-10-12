@@ -1,5 +1,6 @@
 from typing import Literal
-from fastapi import APIRouter,Query,Response,status
+from fastapi import APIRouter,Query,Response,status,Depends
+from app.api.dependencies import require_active_pet
 from app.schemas.medication import MedicationRequest
 from app.services import medication_service
 router=APIRouter(tags=["medications"])
@@ -7,7 +8,7 @@ router=APIRouter(tags=["medications"])
 def ls(pet_id:str,user_id:str=Query(alias="userId"),status:Literal["active","completed","stopped"]|None=None):return {"success":True,"message":"取得用藥紀錄成功","data":medication_service.list_records(pet_id,user_id,status)}
 @router.get("/medications/{record_id}")
 def get(record_id:str,user_id:str=Query(alias="userId")):return {"success":True,"message":"取得用藥紀錄成功","data":{"record":medication_service.get(record_id,user_id)}}
-@router.post("/pets/{pet_id}/medications",status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/medications",status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create(pet_id:str,data:MedicationRequest,user_id:str=Query(alias="userId")):return {"success":True,"message":"用藥紀錄已建立","data":{"record":medication_service.create(pet_id,user_id,data)}}
 @router.patch("/medications/{record_id}")
 def update(record_id:str,data:MedicationRequest,user_id:str=Query(alias="userId")):return {"success":True,"message":"用藥紀錄已更新","data":{"record":medication_service.update(record_id,user_id,data)}}

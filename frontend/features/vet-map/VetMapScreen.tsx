@@ -115,7 +115,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
           {!isTabRoot && (
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityLabel={selectForVisit ? '返回就醫紀錄表單' : '返回就醫紀錄'}
+              accessibilityLabel={selectForVisit ? '返回就醫紀錄表單' : '返回上一頁'}
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
@@ -124,10 +124,10 @@ export default function VetMapScreen({ navigation, route }: Props) {
           )}
           <View style={styles.headingCopy}>
             <Text style={styles.eyebrow}>MEGO 照護支援</Text>
-            <Text style={styles.title}>{isTabRoot ? '就醫地圖' : '臺中動物醫院'}</Text>
+            <Text style={styles.title}>{selectForVisit ? '選擇動物醫院' : '就醫地圖'}</Text>
           </View>
           <View style={styles.headingIcon}>
-            <Ionicons name="medical-outline" size={23} color={Colors.success} />
+            <Ionicons name="medical-outline" size={23} color={Colors.successDecoration} />
           </View>
         </View>
         <Text style={styles.subtitle}>
@@ -170,7 +170,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
             {locating ? (
               <ActivityIndicator color={Colors.success} />
             ) : (
-              <Ionicons name="locate-outline" size={21} color={Colors.success} />
+              <Ionicons name="locate-outline" size={21} color={Colors.successDecoration} />
             )}
           </TouchableOpacity>
         </View>
@@ -193,7 +193,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
                 <Ionicons
                   name={item === 'map' ? 'map-outline' : 'list-outline'}
                   size={17}
-                  color={active ? Colors.primary : Colors.subtext}
+                  color={active ? Colors.primaryDecoration : Colors.subtext}
                 />
                 <Text style={[styles.modeText, active && styles.modeTextActive]}>
                   {item === 'map' ? '地圖' : '清單'}
@@ -235,7 +235,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
             {!hasMapLocations && (
               <View pointerEvents="none" style={styles.mapEmptyHint}>
                 <View style={styles.mapEmptyIcon}>
-                  <Ionicons name="paw-outline" size={20} color={Colors.success} />
+                  <Ionicons name="paw-outline" size={20} color={Colors.successDecoration} />
                 </View>
                 <Text style={styles.mapEmptyTitle}>
                   {hospitals.length ? '院所位置待確認' : '找不到符合的醫院'}
@@ -301,7 +301,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
               onPress={() => selectHospital(hospital.id)}
             >
               <View style={styles.hospitalIcon}>
-                <Ionicons name="medical-outline" size={20} color={Colors.success} />
+                <Ionicons name="medical-outline" size={20} color={Colors.successDecoration} />
               </View>
               <View style={styles.hospitalCopy}>
                 <Text numberOfLines={1} style={styles.hospitalName}>
@@ -391,7 +391,7 @@ function HospitalCard({
     <View style={styles.selectedCard}>
       <View style={styles.selectedHeader}>
         <View style={styles.hospitalIcon}>
-          <Ionicons name="medical-outline" size={21} color={Colors.success} />
+          <Ionicons name="medical-outline" size={21} color={Colors.successDecoration} />
         </View>
         <View style={styles.hospitalCopy}>
           <Text style={styles.hospitalName}>{hospital.name}</Text>
@@ -408,7 +408,7 @@ function HospitalCard({
         style={styles.sourceLabel}
         onPress={() => void openSource(hospital.sourceUrl)}
       >
-        <Ionicons name="checkmark-circle-outline" size={15} color={Colors.success} />
+        <Ionicons name="checkmark-circle-outline" size={15} color={Colors.successDecoration} />
         <Text style={styles.sourceLabelText}>
           資料來源：{hospital.sourceName} · 確認日期 {hospital.verifiedAt} · 查看來源
         </Text>
@@ -442,7 +442,7 @@ function HospitalCard({
             style={styles.secondaryAction}
             onPress={onSelectForVisit}
           >
-            <Ionicons name="checkmark-circle-outline" size={17} color={Colors.success} />
+            <Ionicons name="checkmark-circle-outline" size={17} color={Colors.successDecoration} />
             <Text style={styles.secondaryActionText}>帶入紀錄</Text>
           </TouchableOpacity>
         ) : null}
@@ -452,7 +452,7 @@ function HospitalCard({
           style={styles.secondaryAction}
           onPress={onCall}
         >
-          <Ionicons name="call-outline" size={17} color={Colors.success} />
+          <Ionicons name="call-outline" size={17} color={Colors.successDecoration} />
           <Text style={styles.secondaryActionText}>聯絡醫院</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -461,7 +461,7 @@ function HospitalCard({
           style={styles.primaryAction}
           onPress={onDirections}
         >
-          <Ionicons name="navigate-outline" size={17} color="#FFF" />
+          <Ionicons name="navigate-outline" size={17} color={Colors.onPrimary} />
           <Text style={styles.primaryActionText}>開始導航</Text>
         </TouchableOpacity>
       </View>

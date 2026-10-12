@@ -10,6 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import { Colors } from '../constants/Colors';
+import { usePressFeedback } from '../hooks/usePressFeedback';
+import { Type } from '../constants/Typography';
 
 export type AppButtonVariant = 'primary' | 'secondary' | 'danger' | 'tertiary';
 
@@ -38,6 +40,7 @@ export const AppButton = ({
   fullWidth = true,
   accessibilityLabel,
 }: AppButtonProps) => {
+  const feedback = usePressFeedback();
   const unavailable = disabled || busy;
   return (
     <Pressable
@@ -50,7 +53,7 @@ export const AppButton = ({
         styles.button,
         styles[variant],
         fullWidth && styles.fullWidth,
-        pressed && !unavailable && styles.pressed,
+        feedback(pressed, unavailable),
         unavailable && styles.disabled,
         style,
       ]}
@@ -89,16 +92,15 @@ const styles = StyleSheet.create({
   secondary: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.success },
   danger: { backgroundColor: 'transparent' },
   tertiary: { backgroundColor: 'transparent' },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.98 }] },
   disabled: { opacity: 0.5 },
   text: {
     flexShrink: 1,
     textAlign: 'center',
     lineHeight: 22,
-    fontSize: 16,
+    fontSize: Type.callout,
     fontWeight: '700',
   },
-  primaryText: { color: '#FFFFFF' },
+  primaryText: { color: Colors.onPrimary },
   secondaryText: { color: Colors.success },
   dangerText: { color: Colors.danger },
   tertiaryText: { color: Colors.subtext },

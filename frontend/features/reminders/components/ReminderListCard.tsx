@@ -4,6 +4,7 @@ import { AppButton } from '../../../components/AppButton';
 import { Colors } from '../../../constants/Colors';
 import { Reminder } from '../../../types';
 import { REMINDER_STATUS_LABELS } from '../reminderListContent';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   item: Reminder;
@@ -95,20 +96,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   focusCard: { borderColor: Colors.primary, borderWidth: 2 },
-  title: { color: Colors.text, fontSize: 18, fontWeight: '800' },
+  title: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
   metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 5 },
   meta: { color: Colors.subtext },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
-    fontSize: 12,
+    fontSize: Type.caption,
     fontWeight: '700',
   },
   status_pending: { color: Colors.primary, backgroundColor: Colors.primarySoft },
-  status_snoozed: { color: '#8A6A32', backgroundColor: '#F7EBCF' },
+  status_snoozed: { color: Colors.warningTitle, backgroundColor: Colors.warningSoft },
   status_completed: { color: Colors.success, backgroundColor: Colors.successSoft },
-  status_skipped: { color: Colors.subtext, backgroundColor: '#EEEAE4' },
+  status_skipped: { color: Colors.subtext, backgroundColor: Colors.memorialSoft },
   notes: { color: Colors.text, marginTop: 9 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 13 },
   action: {

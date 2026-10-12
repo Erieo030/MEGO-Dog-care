@@ -7,6 +7,7 @@ import type { DashboardWeightPoint } from '../../../../types';
 import type { VetVisitBrief } from '../../../../services/aiService';
 import { DAILY_LABELS, EVENT_LABELS, preVetDateLabel, SEVERITY_LABELS } from '../preVetContent';
 import { preVetStyles as styles } from '../preVetStyles';
+import { Colors } from '../../../../constants/Colors';
 
 export function PreVetSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -182,7 +183,11 @@ export function PreVetQuestions({ items }: { items: string[] }) {
       {items.map((item, index) => (
         <View key={`${item}-${index}`} style={styles.questionRow}>
           <View style={styles.questionIcon}>
-            <Ionicons name="chatbubble-ellipses-outline" size={15} color="#5F9274" />
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={15}
+              color={Colors.successDecoration}
+            />
           </View>
           <Text style={styles.questionText}>{item}</Text>
         </View>

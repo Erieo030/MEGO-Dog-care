@@ -35,6 +35,8 @@ import {
   settingsPalette as palette,
 } from '../components/SettingsLayout';
 import { PetIdentityCarousel } from '../../pets/components/PetIdentityCarousel';
+import { Colors } from '../../../constants/Colors';
+import { Type } from '../../../constants/Typography';
 
 export function PetManagementScreen({
   navigation,
@@ -74,29 +76,41 @@ export function PetManagementScreen({
 export function NotificationSettingsScreen() {
   const { session } = useAuth();
   const { settings, update, saving } = useSettings();
-  const [permission, setPermission] = useState<NotificationPermissionState>('undetermined');
+  const [permission, setPermission] = useState<NotificationPermissionState | null>('undetermined');
   const [photoPermission, setPhotoPermission] = useState('尚未詢問');
   const [cameraPermission, setCameraPermission] = useState('尚未詢問');
   const [locationPermission, setLocationPermission] = useState('尚未詢問');
   const refreshPermissions = useCallback(async () => {
-    const [notification, photos, camera, location] = await Promise.all([
-      getNotificationPermissionState(),
-      ImagePicker.getMediaLibraryPermissionsAsync(),
-      ImagePicker.getCameraPermissionsAsync(),
-      Location.getForegroundPermissionsAsync().catch(() => null),
-    ]);
-    setPermission(notification);
+    const [notificationResult, photoResult, cameraResult, locationResult] =
+      await Promise.allSettled([
+        getNotificationPermissionState(),
+        ImagePicker.getMediaLibraryPermissionsAsync(),
+        ImagePicker.getCameraPermissionsAsync(),
+        Location.getForegroundPermissionsAsync(),
+      ]);
+    const photos = photoResult.status === 'fulfilled' ? photoResult.value : null;
+    const camera = cameraResult.status === 'fulfilled' ? cameraResult.value : null;
+    const location = locationResult.status === 'fulfilled' ? locationResult.value : null;
+    setPermission(notificationResult.status === 'fulfilled' ? notificationResult.value : null);
     setPhotoPermission(
-      photos.accessPrivileges === 'limited'
-        ? '僅允許所選照片'
-        : photos.granted
-          ? '已開啟'
-          : photos.status === 'denied'
-            ? '未開啟'
-            : '尚未詢問',
+      !photos
+        ? '暫時無法讀取'
+        : photos.accessPrivileges === 'limited'
+          ? '僅允許所選照片'
+          : photos.granted
+            ? '已開啟'
+            : photos.status === 'denied'
+              ? '未開啟'
+              : '尚未詢問',
     );
     setCameraPermission(
-      camera.granted ? '已開啟' : camera.status === 'denied' ? '未開啟' : '尚未詢問',
+      !camera
+        ? '暫時無法讀取'
+        : camera.granted
+          ? '已開啟'
+          : camera.status === 'denied'
+            ? '未開啟'
+            : '尚未詢問',
     );
     setLocationPermission(
       !location
@@ -110,9 +124,9 @@ export function NotificationSettingsScreen() {
   }, []);
   useFocusEffect(
     useCallback(() => {
-      refreshPermissions().catch(() => undefined);
+      void refreshPermissions();
       const subscription = AppState.addEventListener('change', (state) => {
-        if (state === 'active') refreshPermissions().catch(() => undefined);
+        if (state === 'active') void refreshPermissions();
       });
       return () => subscription.remove();
     }, [refreshPermissions]),
@@ -136,7 +150,13 @@ export function NotificationSettingsScreen() {
         <Row
           title="手機通知權限"
           value={
-            permission === 'granted' ? '已開啟' : permission === 'denied' ? '未開啟' : '尚未決定'
+            permission === null
+              ? '暫時無法讀取'
+              : permission === 'granted'
+                ? '已開啟'
+                : permission === 'denied'
+                  ? '未開啟'
+                  : '尚未決定'
           }
           rowStyle={s.notificationInnerRow}
           icon="notifications-outline"
@@ -156,7 +176,7 @@ export function NotificationSettingsScreen() {
           />
         </View>
       </View>
-      {permission !== 'granted' ? (
+      {permission && permission !== 'granted' ? (
         <Text style={s.note}>手機通知尚未開啟，你仍可在 App 內查看提醒。</Text>
       ) : null}
       <Text style={s.subheading}>照片與相機</Text>
@@ -346,40 +366,45 @@ export function TermsOfUseScreen() {
 
 const s = StyleSheet.create({
   subheading: {
-    fontSize: 16,
+    fontSize: Type.callout,
     fontWeight: '800',
     color: palette.text,
     marginTop: 16,
     marginBottom: 3,
   },
-  sectionDescription: { color: palette.sub, lineHeight: 19, fontSize: 13, marginBottom: 10 },
+  sectionDescription: {
+    color: palette.sub,
+    lineHeight: 19,
+    fontSize: Type.footnote,
+    marginBottom: 10,
+  },
   lastPermissionRow: { borderBottomWidth: 0 },
   notificationSwitch: { transform: [{ scale: 0.86 }], alignSelf: 'center', marginRight: -4 },
   roundedActionRow: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E8E0D4',
-    backgroundColor: '#FFFFFF',
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
   },
   notificationCard: {
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E8E0D4',
+    borderColor: Colors.border,
     marginBottom: 12,
   },
   whiteSettingRow: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface,
     borderRadius: 14,
     marginBottom: 8,
     borderBottomWidth: 0,
     overflow: 'hidden',
   },
-  notificationInnerRow: { backgroundColor: '#FFFFFF' },
+  notificationInnerRow: { backgroundColor: Colors.surface },
   notificationDescription: {
-    color: '#887A6D',
-    fontSize: 12,
+    color: Colors.muted,
+    fontSize: Type.caption,
     lineHeight: 17,
     marginTop: 3,
     textAlign: 'left',
@@ -390,13 +415,13 @@ const s = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(228,221,212,0.70)',
-    backgroundColor: '#FFF4E8',
+    backgroundColor: Colors.surfaceWarm,
     flexDirection: 'row',
     alignItems: 'center',
   },
   rowIcon: { marginRight: 10 },
-  rowTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: palette.text },
-  note: { color: palette.sub, lineHeight: 19, fontSize: 13, marginVertical: 14 },
+  rowTitle: { flex: 1, fontSize: Type.body, fontWeight: '700', color: palette.text },
+  note: { color: palette.sub, lineHeight: 19, fontSize: Type.footnote, marginVertical: 14 },
   primary: {
     marginTop: 18,
     minHeight: 52,
@@ -406,7 +431,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: palette.primary,
   },
-  primaryText: { color: '#fff', fontWeight: '800' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '800' },
   identityAction: {
     minHeight: 52,
     marginTop: 10,
@@ -422,20 +447,26 @@ const s = StyleSheet.create({
   },
   identityActionText: { color: palette.primary, fontWeight: '800' },
   aboutHero: {
-    fontSize: 30,
+    fontSize: Type.display2,
     fontWeight: '900',
-    color: '#5F9274',
+    color: Colors.success,
     textAlign: 'center',
     marginVertical: 20,
   },
-  aboutParagraph: { fontSize: 15, lineHeight: 24, color: '#4A382E', marginBottom: 12 },
-  heading: { fontSize: 19, fontWeight: '800', color: palette.text, marginTop: 24, marginBottom: 9 },
+  aboutParagraph: { fontSize: Type.body, lineHeight: 24, color: Colors.text, marginBottom: 12 },
+  heading: {
+    fontSize: Type.headline,
+    fontWeight: '800',
+    color: palette.text,
+    marginTop: 24,
+    marginBottom: 9,
+  },
   subsectionHeading: {
-    fontSize: 15,
+    fontSize: Type.body,
     fontWeight: '800',
     color: palette.sub,
     marginTop: 9,
     marginBottom: 4,
   },
-  paragraph: { fontSize: 15, lineHeight: 24, color: palette.text, marginBottom: 12 },
+  paragraph: { fontSize: Type.body, lineHeight: 24, color: palette.text, marginBottom: 12 },
 });

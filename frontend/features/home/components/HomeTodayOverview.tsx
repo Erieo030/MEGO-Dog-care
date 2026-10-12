@@ -6,6 +6,7 @@ import { Colors } from '../../../constants/Colors';
 import { SoftButton } from '../../../components/SoftMotion';
 import type { HealthTrendResult } from '../../../utils/healthTrendEngine';
 import { getHealthObservationText } from '../../../utils/healthTrendEngine';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   compact: boolean;
@@ -51,7 +52,7 @@ export function HomeTodayOverview({
         onPress={onOpenReminders}
       >
         <View style={[styles.rowIcon, compact && styles.rowIconCompact, styles.reminderIcon]}>
-          <Ionicons name="notifications-outline" size={18} color={Colors.primary} />
+          <Ionicons name="notifications-outline" size={18} color={Colors.primaryDecoration} />
         </View>
         <Text style={styles.todayStatusText}>今日待辦</Text>
         <Text style={styles.link}>
@@ -70,7 +71,7 @@ export function HomeTodayOverview({
         onPress={onOpenObservations}
       >
         <View style={[styles.rowIcon, compact && styles.rowIconCompact, styles.observationIcon]}>
-          <Ionicons name="heart-outline" size={18} color={Colors.success} />
+          <Ionicons name="heart-outline" size={18} color={Colors.successDecoration} />
         </View>
         <Text style={styles.todayStatusText}>健康觀察</Text>
         <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   todayOverlayCompact: { paddingVertical: 8, marginTop: 7, marginBottom: 7 },
-  overlayTitle: { color: Colors.text, fontSize: 19, lineHeight: 25, fontWeight: '800' },
+  overlayTitle: { color: Colors.text, fontSize: Type.headline, lineHeight: 25, fontWeight: '800' },
   summaryAction: {
     minHeight: 54,
     paddingVertical: 7,
@@ -121,20 +122,20 @@ const styles = StyleSheet.create({
   observationIcon: { backgroundColor: Colors.successSoft },
   todayStatusText: {
     color: Colors.text,
-    fontSize: 14,
+    fontSize: Type.subhead,
     lineHeight: 20,
     fontWeight: '700',
     flex: 1,
     minWidth: 0,
   },
-  overlayHint: { color: Colors.subtext, fontSize: 12, marginTop: 4 },
+  overlayHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 4 },
   summaryValue: {
     color: Colors.subtext,
-    fontSize: 12,
+    fontSize: Type.caption,
     lineHeight: 18,
     flexShrink: 1,
     textAlign: 'right',
   },
   errorAction: { minHeight: 44, justifyContent: 'center' },
-  link: { color: Colors.primary, fontWeight: '800', fontSize: 15 },
+  link: { color: Colors.primary, fontWeight: '800', fontSize: Type.body },
 });

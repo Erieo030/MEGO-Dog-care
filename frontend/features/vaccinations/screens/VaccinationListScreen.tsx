@@ -17,6 +17,7 @@ import type { HomeStackParamList } from '../../../navigation/types';
 import { getVaccinations } from '../../../services/vaccinationService';
 import type { Vaccination } from '../../../types';
 import { vaccinationStyles as styles } from '../vaccinationStyles';
+import { MemorialReadOnlyNotice } from '../../../components/MemorialReadOnlyNotice';
 
 export function VaccinationListScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
@@ -28,23 +29,25 @@ export function VaccinationListScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestId = useRef(0);
-  const load = useCallback(async (signal?: AbortSignal) => {
-    const current = ++requestId.current;
-    if (!session?.userId || !selectedPet) return;
-    setLoading(true);
-    try {
-      const result = await getVaccinations(session.userId, selectedPet.id, signal);
-      if (current === requestId.current) {
-        setRecords(result.records);
-        setError('');
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const current = ++requestId.current;
+      if (!session?.userId || !selectedPet) return;
+      setLoading(true);
+      try {
+        const result = await getVaccinations(session.userId, selectedPet.id, signal);
+        if (current === requestId.current) {
+          setRecords(result.records);
+          setError('');
+        }
+      } catch (caught) {
+        if (current === requestId.current && !signal?.aborted) setError((caught as Error).message);
+      } finally {
+        if (current === requestId.current) setLoading(false);
       }
-    } catch (caught) {
-      if (current === requestId.current && !signal?.aborted)
-        setError((caught as Error).message);
-    } finally {
-      if (current === requestId.current) setLoading(false);
-    }
-  }, [selectedPet, session?.userId]);
+    },
+    [selectedPet, session?.userId],
+  );
   useFocusEffect(
     useCallback(() => {
       const controller = new AbortController();
@@ -69,7 +72,7 @@ export function VaccinationListScreen() {
         <>
           <View style={styles.listHeader}>
             <View style={styles.listHeaderIcon}>
-              <Ionicons name="medkit-outline" size={23} color={Colors.success} />
+              <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
             </View>
             <View style={styles.listHeaderBody}>
               <Text style={styles.title}>疫苗紀錄</Text>
@@ -83,15 +86,19 @@ export function VaccinationListScreen() {
               <Text style={styles.error}>{error}（重試）</Text>
             </TouchableOpacity>
           ) : null}
-          <AppButton
-            variant="primary"
-            style={styles.primary}
-            onPress={() => navigation.navigate('VaccinationForm')}
-            accessibilityLabel="新增疫苗紀錄"
-          >
-            <Ionicons name="add" size={20} color="#FFF" />
-            <Text style={styles.primaryText}>新增疫苗紀錄</Text>
-          </AppButton>
+          {selectedPet?.memorial ? (
+            <MemorialReadOnlyNotice petName={selectedPet.name} />
+          ) : (
+            <AppButton
+              variant="primary"
+              style={styles.primary}
+              onPress={() => navigation.navigate('VaccinationForm')}
+              accessibilityLabel="新增疫苗紀錄"
+            >
+              <Ionicons name="add" size={20} color={Colors.onPrimary} />
+              <Text style={styles.primaryText}>新增疫苗紀錄</Text>
+            </AppButton>
+          )}
           {!records.length ? (
             <View style={styles.emptyBox}>
               <SoftEntrance>
@@ -117,7 +124,7 @@ export function VaccinationListScreen() {
         >
           <View style={styles.cardTitleRow}>
             <View style={styles.cardIcon}>
-              <Ionicons name="medkit-outline" size={18} color={Colors.success} />
+              <Ionicons name="medkit-outline" size={18} color={Colors.successDecoration} />
             </View>
             <Text style={styles.name}>{record.vaccineName}</Text>
             <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />

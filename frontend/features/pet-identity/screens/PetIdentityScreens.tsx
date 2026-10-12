@@ -1,3 +1,4 @@
+import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：毛孩資訊公開範圍設定與資訊 QR；保留既有 route。 */
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -53,36 +54,45 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const userId = session?.userId;
   const petId = selectedPet?.id;
+  const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
+    profile,
+    setProfile,
+    !loading && Boolean(profile),
+  );
 
   useFocusEffect(
     useCallback(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setProfile(null);
-    if (!userId || !petId) {
-      setError('請先登入並選擇毛孩');
-      setLoading(false);
-      return;
-    }
-    getLostProfile(userId, petId, controller.signal)
-      .then((result) => {
-        if (!cancelled) setProfile(result.profile);
-      })
-      .catch((caught) => {
-        if (!cancelled) setError((caught as Error).message || '無法載入毛孩資訊');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      controller.abort();
-      cancelled = true;
-    };
-    // retryKey intentionally re-runs this focused request after retry.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [petId, retryKey, userId]),
+      if (dirtyRef.current) return;
+      const controller = new AbortController();
+      let cancelled = false;
+      setLoading(true);
+      setError('');
+      setProfile(null);
+      if (!userId || !petId) {
+        setError('請先登入並選擇毛孩');
+        setLoading(false);
+        return;
+      }
+      getLostProfile(userId, petId, controller.signal)
+        .then((result) => {
+          if (!cancelled) {
+            setProfile(result.profile);
+            markSaved(result.profile);
+          }
+        })
+        .catch((caught) => {
+          if (!cancelled) setError((caught as Error).message || '無法載入毛孩資訊');
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        controller.abort();
+        cancelled = true;
+      };
+      // retryKey intentionally re-runs this focused request after retry.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [petId, retryKey, userId, dirtyRef, markSaved]),
   );
 
   const data = profile || DEFAULT_PROFILE;
@@ -106,6 +116,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         enabled: true,
       });
       setProfile(result.profile);
+      markSaved(result.profile);
       Alert.alert('已儲存', '毛孩資訊 QR 已更新');
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
@@ -120,22 +131,17 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       return (
         <View
           key={key}
-          style={[
-            styles.optionRow,
-            index === fields.length - 1 && { borderBottomWidth: 0 },
-          ]}
+          style={[styles.optionRow, index === fields.length - 1 && { borderBottomWidth: 0 }]}
         >
           <View style={styles.optionCopy}>
             <Text style={styles.optionLabel}>{label}</Text>
-            <Text style={styles.optionState}>
-              {visible ? '掃描頁會顯示' : '已隱藏，不會公開'}
-            </Text>
+            <Text style={styles.optionState}>{visible ? '掃描頁會顯示' : '已隱藏，不會公開'}</Text>
           </View>
           <View style={styles.optionControl}>
             <Switch
               accessibilityLabel={`公開${label}`}
-              trackColor={{ false: '#B8B1AA', true: '#9DCAB4' }}
-              ios_backgroundColor="#D8D2CB"
+              trackColor={{ false: Colors.disabled, true: '#9DCAB4' }}
+              ios_backgroundColor={Colors.borderStrong}
               thumbColor={visible ? Colors.success : '#F8F5F0'}
               value={visible}
               onValueChange={(value) => update(key, value)}
@@ -150,9 +156,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
     data.showSex && selectedPet?.gender
       ? `性別：${selectedPet.gender === 'male' ? '公' : '母'}`
       : '',
-    data.showNeutered && selectedPet
-      ? `結紮：${selectedPet.neutered ? '已結紮' : '未結紮'}`
-      : '',
+    data.showNeutered && selectedPet ? `結紮：${selectedPet.neutered ? '已結紮' : '未結紮'}` : '',
     data.showCoatColor && selectedPet?.coatColor ? `毛色：${selectedPet.coatColor}` : '',
     data.showDistinctiveFeatures && selectedPet?.distinctiveFeatures
       ? `明顯特徵：${selectedPet.distinctiveFeatures}`
@@ -194,19 +198,21 @@ export function LostPetSettingsScreen({ navigation }: Props) {
               attachmentId={selectedPet.avatarAttachmentId}
               userId={userId}
               style={styles.petAvatarImage}
-              fallback={<Ionicons name="paw" size={28} color={Colors.primary} />}
+              fallback={<Ionicons name="paw" size={28} color={Colors.primaryDecoration} />}
             />
           ) : (
-            <Ionicons name="paw" size={28} color={Colors.primary} />
+            <Ionicons name="paw" size={28} color={Colors.primaryDecoration} />
           )}
         </View>
         <View style={styles.petInfo}>
           <Text style={styles.petName}>{selectedPet?.name || '尚未選擇毛孩'}</Text>
           <Text style={styles.petMeta}>
-            {[selectedPet?.breed, selectedPet?.gender === 'male' ? '公' : selectedPet?.gender === 'female' ? '母' : '']
+            {[
+              selectedPet?.breed,
+              selectedPet?.gender === 'male' ? '公' : selectedPet?.gender === 'female' ? '母' : '',
+            ]
               .filter(Boolean)
-              .join(' · ') ||
-              '補充毛孩基本資料'}
+              .join(' · ') || '補充毛孩基本資料'}
           </Text>
         </View>
       </View>
@@ -250,16 +256,12 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         <Text style={styles.noteLead}>關閉項目不會公開</Text>
         {'\n'}資料仍會保留在 App，只是不會出現在公開掃描頁。
       </Text>
-      <View style={styles.optionSurface}>
-        {toggleOptions(petVisibilityFields)}
-      </View>
+      <View style={styles.optionSurface}>{toggleOptions(petVisibilityFields)}</View>
       <Text style={styles.sectionTitle}>聯絡資料的公開範圍</Text>
       <Text style={styles.note}>
         掃描者只會看到已開啟且已填寫的聯絡方式；至少公開一種，對方才能聯絡你。
       </Text>
-      <View style={styles.optionSurface}>
-        {toggleOptions(contactVisibilityFields)}
-      </View>
+      <View style={styles.optionSurface}>{toggleOptions(contactVisibilityFields)}</View>
       <View style={styles.previewSurface}>
         <Text style={styles.previewHeading}>掃描頁預覽</Text>
         <Text style={styles.previewSubheading}>以下內容會依目前的公開設定即時更新</Text>
@@ -281,7 +283,9 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         <Text style={styles.previewSectionTitle}>毛孩資料</Text>
         {previewPetDetails.length ? (
           previewPetDetails.map((item) => (
-            <Text key={item} style={styles.previewDetail}>{item}</Text>
+            <Text key={item} style={styles.previewDetail}>
+              {item}
+            </Text>
           ))
         ) : (
           <Text style={styles.previewEmpty}>目前沒有選擇公開其他毛孩資料</Text>
@@ -290,7 +294,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         {previewContacts.length ? (
           previewContacts.map((item, index) => (
             <View key={`${item.icon}-${index}`} style={styles.previewContact}>
-              <Ionicons name={item.icon} size={18} color={Colors.success} />
+              <Ionicons name={item.icon} size={18} color={Colors.successDecoration} />
               <Text style={styles.previewContactText}>{item.value}</Text>
             </View>
           ))
@@ -314,7 +318,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
           onPress={() => navigation.navigate('LostPetQr')}
           accessibilityLabel="查看毛孩資訊 QR"
         >
-          <Ionicons name="qr-code-outline" size={19} color={Colors.success} />
+          <Ionicons name="qr-code-outline" size={19} color={Colors.successDecoration} />
           <Text style={styles.secondaryText}>查看毛孩資訊 QR</Text>
         </AppButton>
       ) : null}
@@ -336,35 +340,35 @@ export function LostPetQrScreen() {
   const petId = selectedPet?.id;
   useFocusEffect(
     useCallback(() => {
-    const controller = new AbortController();
-    let cancelled = false;
-    setLoading(true);
-    setError('');
-    setProfile(null);
-    setToken('');
-    if (!userId || !petId) {
-      setError('請先登入並選擇毛孩');
-      setLoading(false);
-      return;
-    }
-    getLostProfile(userId, petId, controller.signal)
-      .then((result) => {
-        if (cancelled) return;
-        setProfile(result.profile);
-        setToken(result.profile?.publicToken || '');
-      })
-      .catch((caught) => {
-        if (!cancelled) setError((caught as Error).message || '無法載入毛孩資訊 QR');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      controller.abort();
-      cancelled = true;
-    };
-    // retryKey intentionally re-runs this focused request after retry.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      const controller = new AbortController();
+      let cancelled = false;
+      setLoading(true);
+      setError('');
+      setProfile(null);
+      setToken('');
+      if (!userId || !petId) {
+        setError('請先登入並選擇毛孩');
+        setLoading(false);
+        return;
+      }
+      getLostProfile(userId, petId, controller.signal)
+        .then((result) => {
+          if (cancelled) return;
+          setProfile(result.profile);
+          setToken(result.profile?.publicToken || '');
+        })
+        .catch((caught) => {
+          if (!cancelled) setError((caught as Error).message || '無法載入毛孩資訊 QR');
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        controller.abort();
+        cancelled = true;
+      };
+      // retryKey intentionally re-runs this focused request after retry.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [petId, retryKey, userId]),
   );
   const url = token && BASE ? `${BASE}/api/public/lost-pets/${token}/page` : '';
@@ -431,7 +435,7 @@ export function LostPetQrScreen() {
         }
         accessibilityLabel="分享毛孩資訊 QR"
       >
-        <Ionicons name="share-outline" size={20} color="#fff" />
+        <Ionicons name="share-outline" size={20} color={Colors.onPrimary} />
         <Text style={styles.primaryText}>分享毛孩資訊 QR</Text>
       </AppButton>
       <AppButton
@@ -442,7 +446,7 @@ export function LostPetQrScreen() {
         busy={rotating}
         accessibilityLabel="更新安全連結"
       >
-        <Ionicons name="refresh-outline" size={19} color={Colors.success} />
+        <Ionicons name="refresh-outline" size={19} color={Colors.successDecoration} />
         <Text style={styles.secondaryText}>更新安全連結</Text>
       </AppButton>
     </ScrollView>

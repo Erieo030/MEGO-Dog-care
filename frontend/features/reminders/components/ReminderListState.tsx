@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 16,
   },
-  primaryText: { color: '#FFF', fontWeight: '800' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '800' },
 });

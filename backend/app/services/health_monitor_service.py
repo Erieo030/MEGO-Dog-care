@@ -55,16 +55,18 @@ def monitor(context):
     if len(series)>=2 and series[0].get("weightKg") and series[-1].get("weightKg")<series[0]["weightKg"]:
         pct=(series[-1]["weightKg"]-series[0]["weightKg"])/series[0]["weightKg"]*100
         if pct<=-HealthMonitorConfig.WEIGHT_CHANGE_ATTENTION_PERCENT: alerts.append(_alert("weight_decrease","attention","近期體重變化",f"此期間紀錄的體重下降約 {abs(pct):.1f}%。",{"changePercent":round(pct,2)}))
-    for item in context.get("medical",{}).get("recentVisits",[]):
+    # 已移到回憶的毛孩不再提示回診、療程或疫苗驅蟲到期。
+    memorial=bool(context.get("pet",{}).get("memorial"))
+    for item in ([] if memorial else context.get("medical",{}).get("recentVisits",[])):
         due=_aware(item.get("followUpAt"))
         if due and due<now and not item.get("followUpCompleted",False): alerts.append(_alert("follow_up_overdue","attention","回診提醒已逾期","有一筆回診日期已超過且尚未完成。",{"dueAt":due,"medicalVisitId":item.get("id")}))
-    for item in context.get("medications",{}).get("active",[]):
+    for item in ([] if memorial else context.get("medications",{}).get("active",[])):
         end=item.get("endDate")
         if end:
             end_date=_end_of_taipei_day(end)
             if end_date and now<=end_date<=now+timedelta(days=HealthMonitorConfig.MEDICATION_ENDING_SOON_DAYS): alerts.append(_alert("medication_ending_soon","info","用藥療程即將結束",f"{item.get('name','用藥')} 的紀錄療程即將結束。",{"medicationName":item.get("name",""),"endDate":end,"daysRemaining":(end_date-now).days}))
     for key,label in (("vaccinations","疫苗"),("dewormings","驅蟲")):
-        latest=context.get(key,{}).get("latest")
+        latest=None if memorial else context.get(key,{}).get("latest")
         due=_aware(latest.get("nextDueAt")) if latest else None
         if due:
             if due<now: alerts.append(_alert(f"{key[:-1]}_due","attention",f"{label}日期已超過",f"{label}的下次預計日期已超過。",{"nextDueAt":due,"status":"overdue"}))

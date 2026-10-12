@@ -17,6 +17,7 @@ import {
   SettingsHomeRow as Row,
   SettingsHomeSection as Section,
 } from '../features/settings/components/SettingsHomeRows';
+import { Type } from '../constants/Typography';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileOverview'>;
 
 export default function SettingsHomeScreen({ navigation }: Props) {
@@ -98,7 +99,7 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         <Section title="一般設定">
           <Row
             title="手機權限與提醒"
-            value="通知、相簿、相機與定位"
+            description="通知、相簿、相機與定位"
             icon="phone-portrait-outline"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
@@ -112,7 +113,7 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         <Section title="AI 助手">
           <Row
             title="AI 資料使用說明"
-            value="查看資料如何用於問答"
+            description="查看資料如何用於問答"
             onPress={() => navigation.navigate('AIDataUseInfo')}
             icon="lock-closed-outline"
           />
@@ -166,5 +167,5 @@ const s = StyleSheet.create({
   content: { paddingHorizontal: 18, paddingTop: 18 },
   profileBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   profileLogo: { width: 36, height: 34, resizeMode: 'contain' },
-  hero: { fontSize: 28, fontWeight: '900', color: Colors.text, marginBottom: 12 },
+  hero: { fontSize: Type.display, fontWeight: '900', color: Colors.text, marginBottom: 12 },
 });

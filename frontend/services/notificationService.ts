@@ -145,7 +145,10 @@ export async function reconcileAccountNotifications(userId: string, pets: Pet[])
   }
   if (!pets.length) return { scheduled: 0, cancelled: 0, permission: 'undetermined' as const };
   const remindersByPet = await Promise.all(
-    pets.map(async (pet) => ({ pet, reminders: await getReminders(userId, pet.id) })),
+    // 回憶中的毛孩不再排定通知；後端也會把它的未完成提醒改為略過。
+    pets
+      .filter((pet) => !pet.memorial)
+      .map(async (pet) => ({ pet, reminders: await getReminders(userId, pet.id) })),
   );
   const desired = remindersByPet.flatMap(({ pet, reminders }) =>
     reminders

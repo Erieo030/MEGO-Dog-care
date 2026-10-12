@@ -2,7 +2,7 @@
  * 用途：查看用藥療程、執行編輯、複製、完成、停止、刪除。
  * API：../../../services/medicationService.ts
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -25,10 +25,12 @@ import type { MedicationCourse } from '../../../types';
 import { MedicationDetailRow } from '../components/MedicationDetailRow';
 import { medicationStyles as styles } from '../medicationStyles';
 import { mealTimingLabels } from '../types';
+import { usePet } from '../../../contexts/PetContext';
 
 export function MedicationDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
+  const { selectedPet } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'MedicationDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<MedicationCourse | null>(null);
@@ -36,6 +38,7 @@ export function MedicationDetailScreen() {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const mutationLock = useRef(false);
   const userId = session?.userId;
   const recordId = route.params?.recordId;
 
@@ -90,7 +93,8 @@ export function MedicationDetailScreen() {
       {
         text: '確定',
         onPress: async () => {
-          if (!userId || submitting) return;
+          if (!userId || submitting || mutationLock.current) return;
+          mutationLock.current = true;
           setSubmitting(true);
           try {
             await action(userId, record.id);
@@ -98,6 +102,7 @@ export function MedicationDetailScreen() {
           } catch (caught) {
             Alert.alert(`${label}失敗`, (caught as Error).message || '請稍後再試');
           } finally {
+            mutationLock.current = false;
             setSubmitting(false);
           }
         },
@@ -108,7 +113,7 @@ export function MedicationDetailScreen() {
     <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
       <View style={styles.detailHero}>
         <View style={styles.detailHeroIcon}>
-          <Ionicons name="medical-outline" size={24} color={Colors.success} />
+          <Ionicons name="medical-outline" size={24} color={Colors.successDecoration} />
         </View>
         <View style={styles.detailHeroCopy}>
           <Text style={styles.formEyebrow}>用藥療程</Text>
@@ -143,16 +148,20 @@ export function MedicationDetailScreen() {
         <RecordActionButton
           kind="edit"
           label="編輯紀錄"
+          disabled={submitting}
           style={styles.actionButton}
           onPress={() => navigation.navigate('MedicationForm', { record })}
         />
-        <AppButton
-          title="複製新增"
-          variant="secondary"
-          fullWidth={false}
-          style={[styles.secondary, styles.actionButton]}
-          onPress={() => navigation.navigate('MedicationForm', { record, duplicate: true })}
-        />
+        {!selectedPet?.memorial && (
+          <AppButton
+            title="複製新增"
+            disabled={submitting}
+            variant="secondary"
+            fullWidth={false}
+            style={[styles.secondary, styles.actionButton]}
+            onPress={() => navigation.navigate('MedicationForm', { record, duplicate: true })}
+          />
+        )}
       </View>
       {record.status === 'active' ? (
         <>

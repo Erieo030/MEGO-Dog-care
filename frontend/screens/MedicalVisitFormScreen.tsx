@@ -27,6 +27,14 @@ import { Attachment, Medication } from '../types';
 import MedicalVisitMedicationEditor from '../features/medical-visits/components/MedicalVisitMedicationEditor';
 import MedicalVisitTextField from '../features/medical-visits/components/MedicalVisitTextField';
 import { emptyMedication } from '../features/medical-visits/medicalVisitContent';
+import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
+import {
+  firstVisitError,
+  validateMedicalVisit,
+  type VisitErrors,
+} from '../features/medical-visits/medicalVisitValidation';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 type Props = NativeStackScreenProps<HomeStackParamList, 'MedicalVisitForm'>;
 export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -53,6 +61,47 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   const [attachments, setAttachments] = useState<Attachment[]>(existing?.attachments || []);
   const [medications, setMedications] = useState<Medication[]>(existing?.medications || []);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<VisitErrors>({});
+  const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
+  const fieldPositions = useRef<Record<string, number>>({});
+  const position = (key: string) => (event: { nativeEvent: { layout: { y: number } } }) => {
+    fieldPositions.current[key] = event.nativeEvent.layout.y;
+  };
+  const fieldError = (message?: string) =>
+    message ? (
+      <Text accessibilityRole="alert" style={s.fieldError}>
+        {message}
+      </Text>
+    ) : null;
+  const formValues = {
+    visitedAt,
+    reason,
+    clinic,
+    vet,
+    vetNotes,
+    treatment,
+    followUp,
+    createReminder,
+    cost,
+    notes,
+    attachments,
+    medications,
+  };
+  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
+    setVisitedAt(value.visitedAt);
+    setReason(value.reason);
+    setClinic(value.clinic);
+    setVet(value.vet);
+    setVetNotes(value.vetNotes);
+    setTreatment(value.treatment);
+    setFollowUp(value.followUp);
+    setCreateReminder(value.createReminder);
+    setCost(value.cost);
+    setNotes(value.notes);
+    setAttachments(value.attachments);
+    setMedications(value.medications);
+    setErrors({});
+  });
   useEffect(() => {
     if (!route.params?.clinicName) return;
     setClinic(route.params.clinicName);
@@ -70,40 +119,17 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
       },
     ]);
   const validate = () => {
-    if (!reason.trim()) {
-      Alert.alert('必填欄位', '請填寫看診原因');
+    const next = validateMedicalVisit({ reason, visitedAt, followUp, cost, medications });
+    setErrors(next);
+    const first = firstVisitError(next);
+    if (first) {
+      requestAnimationFrame(() =>
+        scrollRef.current?.scrollTo({
+          y: Math.max((fieldPositions.current[first] || 0) - 16, 0),
+          animated: true,
+        }),
+      );
       return false;
-    }
-    if (Number.isNaN(visitedAt.getTime())) {
-      Alert.alert('日期錯誤', '請選擇有效的就醫日期');
-      return false;
-    }
-    if (followUp && followUp < visitedAt) {
-      Alert.alert('日期錯誤', '回診日期不可早於就醫日期');
-      return false;
-    }
-    if (cost && !/^\d+(\.\d{1,2})?$/.test(cost)) {
-      Alert.alert('費用錯誤', '費用需為有效數字，最多兩位小數');
-      return false;
-    }
-    const amount = cost ? Number(cost) : null;
-    if (amount != null && (amount < 0 || amount > 10000000)) {
-      Alert.alert('費用錯誤', '費用需介於 NT$ 0 至 NT$ 10,000,000');
-      return false;
-    }
-    for (const med of medications) {
-      if (!med.name.trim()) {
-        Alert.alert('藥物資料', '藥品名稱不可空白，若不需要請移除該筆');
-        return false;
-      }
-      if (!Number.isInteger(med.timesPerDay) || med.timesPerDay < 1 || med.timesPerDay > 10) {
-        Alert.alert('藥物資料', '每日次數需為 1 至 10 的整數');
-        return false;
-      }
-      if (med.startDate && med.endDate && med.endDate < med.startDate) {
-        Alert.alert('藥物資料', `${med.name}的結束日期不可早於開始日期`);
-        return false;
-      }
     }
     return true;
   };
@@ -134,6 +160,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
       if (existing && !duplicate)
         await service.updateMedicalVisit(session.userId, existing.id, data);
       else await service.createMedicalVisit(session.userId, selectedPet.id, data);
+      markSaved(formValues);
       await reconcileAccountNotifications(session.userId, pets).catch(() => undefined);
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -155,11 +182,12 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
       >
         <View style={s.formIntro}>
           <View style={s.formIntroIcon}>
-            <Ionicons name="medical-outline" size={23} color={Colors.primary} />
+            <Ionicons name="medical-outline" size={23} color={Colors.primaryDecoration} />
           </View>
           <View style={s.formIntroCopy}>
             <Text style={s.formEyebrow}>就醫照護</Text>
@@ -169,24 +197,30 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
             <Text style={s.notice}>保存這次看診重點，方便日後回看或和獸醫溝通。</Text>
           </View>
         </View>
-        <Text style={s.sectionHeading}>這次看診</Text>
-        <DatePickerField
-          label="就醫日期（必填）"
-          value={visitedAt}
-          mode="date"
-          onChange={(date) => {
-            const next = new Date(visitedAt);
-            next.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-            next.setHours(12, 0, 0, 0);
-            setVisitedAt(next);
-          }}
-        />
-        <MedicalVisitTextField
-          label="看診原因（必填）"
-          value={reason}
-          onChangeText={setReason}
-          maxLength={500}
-        />
+        <Text style={s.sectionHeading}>必填與看診資料</Text>
+        <View onLayout={position('visitedAt')}>
+          <DatePickerField
+            label="就醫日期（必填）"
+            value={visitedAt}
+            mode="date"
+            onChange={(date) => {
+              const next = new Date(visitedAt);
+              next.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+              next.setHours(12, 0, 0, 0);
+              setVisitedAt(next);
+            }}
+          />
+          {fieldError(errors.visitedAt)}
+        </View>
+        <View onLayout={position('reason')}>
+          <MedicalVisitTextField
+            error={errors.reason}
+            label="看診原因（必填）"
+            value={reason}
+            onChangeText={setReason}
+            maxLength={500}
+          />
+        </View>
         <MedicalVisitTextField
           label="動物醫院名稱（選填）"
           value={clinic}
@@ -199,7 +233,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           style={s.findHospital}
           onPress={() => navigation.navigate('VetMap', { selectForVisit: true })}
         >
-          <Ionicons name="map-outline" size={17} color={Colors.success} />
+          <Ionicons name="map-outline" size={17} color={Colors.successDecoration} />
           <Text style={s.findHospitalText}>在地圖上尋找動物醫院</Text>
           <Ionicons name="chevron-forward" size={16} color={Colors.subtext} />
         </TouchableOpacity>
@@ -221,14 +255,17 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           onChange={setTreatment}
           placeholder="記下治療方式或用藥說明"
         />
-        <Text style={s.sectionHeading}>回診安排</Text>
-        <DatePickerField
-          label="下次回診日期（選填）"
-          value={followUp || undefined}
-          mode="datetime"
-          minimumDate={visitedAt}
-          onChange={setFollowUp}
-        />
+        <View onLayout={position('followUp')}>
+          <Text style={s.heading}>回診安排</Text>
+          <DatePickerField
+            label="下次回診日期（選填）"
+            value={followUp || undefined}
+            mode="datetime"
+            minimumDate={visitedAt}
+            onChange={setFollowUp}
+          />
+          {fieldError(errors.followUp)}
+        </View>
         {followUp && (
           <TouchableOpacity
             onPress={() => {
@@ -248,26 +285,30 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
             <Switch value={createReminder} onValueChange={setCreateReminder} />
           </View>
         )}
-        <Text style={s.sectionHeading}>其他補充</Text>
-        <MedicalVisitTextField
-          label="費用（選填）"
-          value={cost}
-          onChangeText={setCost}
-          keyboardType="decimal-pad"
-          placeholder="0"
-        />
-        <SupplementalNotesField value={notes} onChange={setNotes} />
+        <Text style={s.sectionHeading}>藥物與費用</Text>
+        <View onLayout={position('cost')}>
+          <MedicalVisitTextField
+            error={errors.cost}
+            label="費用（選填）"
+            value={cost}
+            onChangeText={setCost}
+            keyboardType="decimal-pad"
+            placeholder="0"
+          />
+        </View>
         <Text style={s.heading}>用藥紀錄（選填）</Text>
         <Text style={s.helper}>只有拿藥時才需要新增；不知道藥名可先查看藥袋或附上照片。</Text>
         {!medications.length && <Text style={s.empty}>目前沒有藥物</Text>}
         {medications.map((medication, index) => (
-          <MedicalVisitMedicationEditor
-            key={index}
-            medication={medication}
-            index={index}
-            onUpdate={(key, value) => updateMed(index, key, value)}
-            onRemove={() => removeMed(index)}
-          />
+          <View key={index} onLayout={position(`medication-${index}`)}>
+            <MedicalVisitMedicationEditor
+              errors={errors.medications?.[index]}
+              medication={medication}
+              index={index}
+              onUpdate={(key, value) => updateMed(index, key, value)}
+              onRemove={() => removeMed(index)}
+            />
+          </View>
         ))}
         <TouchableOpacity
           disabled={submitting}
@@ -276,6 +317,8 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         >
           <Text style={s.outlineText}>＋ 新增一筆用藥</Text>
         </TouchableOpacity>
+        <Text style={s.sectionHeading}>附件與補充</Text>
+        <SupplementalNotesField value={notes} onChange={setNotes} />
         <AttachmentPicker
           userId={session!.userId}
           petId={existing?.petId || selectedPet!.id}
@@ -299,9 +342,10 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   );
 }
 const s = StyleSheet.create({
+  fieldError: { color: Colors.dangerText, fontSize: Type.footnote, marginTop: 6 },
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 20, paddingBottom: 48 },
-  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
   formIntro: { flexDirection: 'row', alignItems: 'center', marginBottom: 22 },
   formIntroIcon: {
     width: 50,
@@ -313,11 +357,16 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   formIntroCopy: { flex: 1 },
-  formEyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  notice: { color: Colors.subtext, lineHeight: 19, marginTop: 3, fontSize: 13 },
+  formEyebrow: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  notice: { color: Colors.subtext, lineHeight: 19, marginTop: 3, fontSize: Type.footnote },
   sectionHeading: {
     color: Colors.text,
-    fontSize: 17,
+    fontSize: Type.headline,
     fontWeight: '800',
     marginTop: 20,
     marginBottom: 2,
@@ -335,10 +384,16 @@ const s = StyleSheet.create({
     padding: 13,
   },
   switchText: { color: Colors.text, fontWeight: '700' },
-  helper: { color: Colors.subtext, fontSize: 12, marginTop: 4, maxWidth: 280 },
-  heading: { color: Colors.text, fontSize: 17, fontWeight: '800', marginTop: 26, marginBottom: 4 },
+  helper: { color: Colors.subtext, fontSize: Type.caption, marginTop: 4, maxWidth: 280 },
+  heading: {
+    color: Colors.text,
+    fontSize: Type.headline,
+    fontWeight: '800',
+    marginTop: 26,
+    marginBottom: 4,
+  },
   empty: { color: Colors.subtext, paddingVertical: 12 },
-  removeText: { color: '#C34D4D', fontWeight: '700', marginTop: 8 },
+  removeText: { color: Colors.dangerText, fontWeight: '700', marginTop: 8 },
   outline: {
     borderWidth: 1,
     borderColor: Colors.primary,
@@ -362,10 +417,15 @@ const s = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: Colors.successSoft,
   },
-  findHospitalText: { color: Colors.success, fontSize: 13, fontWeight: '700' },
+  findHospitalText: { color: Colors.success, fontSize: Type.footnote, fontWeight: '700' },
   images: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   image: { width: 75, height: 75, borderRadius: 10 },
-  removeImage: { color: '#C34D4D', fontSize: 12, textAlign: 'center', marginTop: 3 },
+  removeImage: {
+    color: Colors.dangerText,
+    fontSize: Type.caption,
+    textAlign: 'center',
+    marginTop: 3,
+  },
   submit: {
     backgroundColor: Colors.primary,
     borderRadius: FORM_BUTTON_RADIUS,
@@ -375,6 +435,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginTop: 25,
   },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.5 },
 });

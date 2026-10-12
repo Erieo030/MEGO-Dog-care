@@ -21,6 +21,7 @@ import {
   pickAndUploadAttachments,
   AttachmentPickSource,
 } from '../services/attachmentService';
+import { Type } from '../constants/Typography';
 
 interface Props {
   userId: string;
@@ -47,8 +48,12 @@ export default function AttachmentPicker({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    void getValidAccessToken().then((token) => { if (active) setAccessToken(token); });
-    return () => { active = false; };
+    void getValidAccessToken().then((token) => {
+      if (active) setAccessToken(token);
+    });
+    return () => {
+      active = false;
+    };
   }, [userId]);
   const pick = async (source: AttachmentPickSource) => {
     if (busy || disabled) return;
@@ -91,7 +96,9 @@ export default function AttachmentPicker({
     ]);
   return (
     <View style={s.wrap}>
-      <Text style={s.title}>照片（{value.length}/{limit}）</Text>
+      <Text style={s.title}>
+        照片（{value.length}/{limit}）
+      </Text>
       {value.length > 0 ? <Text style={s.uploaded}>已上傳照片，可新增或移除</Text> : null}
       <View style={s.actions}>
         <TouchableOpacity
@@ -99,14 +106,16 @@ export default function AttachmentPicker({
           style={s.button}
           onPress={() => pick('camera')}
         >
-          <Ionicons name="camera-outline" size={18} color={Colors.text} /><Text style={s.buttonText}>拍照</Text>
+          <Ionicons name="camera-outline" size={18} color={Colors.text} />
+          <Text style={s.buttonText}>拍照</Text>
         </TouchableOpacity>
         <TouchableOpacity
           disabled={busy || disabled || value.length >= limit}
           style={s.button}
           onPress={() => pick('library')}
         >
-          <Ionicons name="images-outline" size={18} color={Colors.text} /><Text style={s.buttonText}>從相簿選擇</Text>
+          <Ionicons name="images-outline" size={18} color={Colors.text} />
+          <Text style={s.buttonText}>從相簿選擇</Text>
         </TouchableOpacity>
       </View>
       {busy && (
@@ -178,8 +187,8 @@ const s = StyleSheet.create({
   },
   buttonText: { color: Colors.text, fontWeight: '600', flexShrink: 1 },
   status: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  error: { marginTop: 10, padding: 10, backgroundColor: '#FFF1F0', borderRadius: 10 },
-  errorText: { color: '#A33' },
+  error: { marginTop: 10, padding: 10, backgroundColor: Colors.dangerSoft, borderRadius: 10 },
+  errorText: { color: Colors.dangerText },
   retry: { color: Colors.primary, fontWeight: '800', marginTop: 4 },
   photo: { width: 120, height: 120, marginTop: 12, marginRight: 10 },
   image: { width: '100%', height: '100%', borderRadius: 12, backgroundColor: Colors.border },
@@ -191,15 +200,15 @@ const s = StyleSheet.create({
     borderRadius: 12,
     padding: 8,
   },
-  uploaded: { color: Colors.subtext, fontSize: 13, marginBottom: 6 },
+  uploaded: { color: Colors.subtext, fontSize: Type.footnote, marginBottom: 6 },
   remove: {
     position: 'absolute',
     right: 0,
     top: 0,
-    width: 40,
-    height: 40,
-    minWidth: 40,
-    minHeight: 40,
+    width: 44,
+    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     borderRadius: 12,
   },
 });

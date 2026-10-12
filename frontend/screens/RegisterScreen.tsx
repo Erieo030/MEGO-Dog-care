@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { SoftButton, SoftEntrance, SoftField } from '../components/SoftMotion';
+import { Type } from '../constants/Typography';
 
 interface RegisterScreenProps {
   onRegisterSuccess: (email: string, password: string) => void | Promise<void>;
@@ -123,7 +124,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoToLogin }: Regis
             </TouchableOpacity>
             <SoftEntrance style={styles.hero}>
               <View style={styles.heroMark}>
-                <Ionicons name="paw" size={30} color={Colors.primary} />
+                <Ionicons name="paw" size={30} color={Colors.primaryDecoration} />
               </View>
               <Text style={styles.brand}>MEGO</Text>
               <Text style={styles.title}>建立帳號</Text>
@@ -144,7 +145,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoToLogin }: Regis
                       <Ionicons
                         name={field.icon}
                         size={21}
-                        color={focused === field.key ? Colors.primary : Colors.subtext}
+                        color={focused === field.key ? Colors.primaryDecoration : Colors.subtext}
                       />
                       <TextInput
                         ref={field.ref}
@@ -219,7 +220,7 @@ export default function RegisterScreen({ onRegisterSuccess, onGoToLogin }: Regis
               >
                 <Text style={styles.loginSecondary}>已有帳號？ </Text>
                 <Text style={styles.loginAccent}>立即登入</Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
+                <Ionicons name="chevron-forward" size={16} color={Colors.primaryDecoration} />
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -243,26 +244,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  brand: { fontSize: 30, fontWeight: '800', letterSpacing: 2, color: Colors.text, marginBottom: 8 },
-  title: { fontSize: 26, fontWeight: '700', color: Colors.text },
-  subtitle: { marginTop: 8, fontSize: 15, color: Colors.subtext },
+  brand: {
+    fontSize: Type.display2,
+    fontWeight: '800',
+    letterSpacing: 2,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  title: { fontSize: Type.display, fontWeight: '700', color: Colors.text },
+  subtitle: { marginTop: 8, fontSize: Type.body, color: Colors.subtext },
   form: { width: '100%', maxWidth: 480, alignSelf: 'center', gap: 12 },
-  label: { color: Colors.text, fontSize: 14, fontWeight: '600', marginBottom: 6 },
+  label: { color: Colors.text, fontSize: Type.subhead, fontWeight: '600', marginBottom: 6 },
   inputShell: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E8DDD4',
+    borderColor: Colors.border,
     backgroundColor: 'rgba(255,255,255,0.78)',
     paddingHorizontal: 18,
   },
   focused: { borderColor: Colors.primary },
   invalid: { borderColor: Colors.danger },
-  hint: { fontSize: 12, color: Colors.subtext, marginTop: 4 },
-  error: { fontSize: 12, color: Colors.danger, marginTop: 4 },
-  input: { flex: 1, height: '100%', paddingHorizontal: 12, fontSize: 16, color: Colors.text },
+  hint: { fontSize: Type.caption, color: Colors.subtext, marginTop: 4 },
+  error: { fontSize: Type.caption, color: Colors.danger, marginTop: 4 },
+  input: {
+    flex: 1,
+    height: '100%',
+    paddingHorizontal: 12,
+    fontSize: Type.callout,
+    color: Colors.text,
+  },
   eyeButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   registerButton: {
     height: 56,
@@ -274,7 +287,7 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: Colors.primary,
   },
-  registerButtonText: { color: '#FFF9F1', fontSize: 18, fontWeight: '700' },
+  registerButtonText: { color: Colors.onPrimary, fontSize: Type.headline, fontWeight: '700' },
   loginLinkButton: {
     minHeight: 44,
     marginTop: 4,
@@ -282,6 +295,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loginSecondary: { color: Colors.subtext, fontSize: 15 },
-  loginAccent: { color: Colors.primary, fontSize: 15, fontWeight: '700' },
+  loginSecondary: { color: Colors.subtext, fontSize: Type.body },
+  loginAccent: { color: Colors.primary, fontSize: Type.body, fontWeight: '700' },
 });

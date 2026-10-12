@@ -1,5 +1,6 @@
 """用途：提供具使用者所有權檢查的提醒 CRUD、完成、略過與延後 API。"""
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, Response, status, Depends
+from app.api.dependencies import require_active_pet
 
 from app.schemas.reminder import ReminderCreateRequest, ReminderSnoozeRequest, ReminderUpdateRequest
 from app.services import reminder_service
@@ -17,7 +18,7 @@ def get_today_reminders(pet_id: str, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "取得今日提醒成功", "data": {"reminders": reminder_service.list_reminders(pet_id, user_id, today=True)}}
 
 
-@router.post("/pets/{pet_id}/reminders", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/reminders", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_reminder(pet_id: str, data: ReminderCreateRequest, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "提醒已建立", "data": {"reminder": reminder_service.create_reminder(pet_id, user_id, data)}}
 

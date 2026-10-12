@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Pet } from '../../../types';
 import { PetIdentityCarousel } from '../../pets/components/PetIdentityCarousel';
 import { Colors } from '../../../constants/Colors';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   visible: boolean;
@@ -14,13 +15,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function HomePetSelectorModal({
-  visible,
-  pets,
-  selectedPet,
-  onSelect,
-  onClose,
-}: Props) {
+export function HomePetSelectorModal({ visible, pets, selectedPet, onSelect, onClose }: Props) {
   return (
     <Modal
       visible={visible}
@@ -86,17 +81,34 @@ const styles = StyleSheet.create({
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   titleGroup: { flex: 1 },
-  eyebrow: { color: Colors.primary, fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
-  title: { color: Colors.text, fontSize: 22, lineHeight: 29, fontWeight: '900', marginTop: 2 },
+  eyebrow: {
+    color: Colors.primary,
+    fontSize: Type.caption2,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  title: {
+    color: Colors.text,
+    fontSize: Type.title2,
+    lineHeight: 29,
+    fontWeight: '900',
+    marginTop: 2,
+  },
   closeButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,
   },
-  description: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 5, marginBottom: 8 },
+  description: {
+    color: Colors.subtext,
+    fontSize: Type.footnote,
+    lineHeight: 19,
+    marginTop: 5,
+    marginBottom: 8,
+  },
   doneButton: {
     minHeight: 50,
     borderRadius: 25,
@@ -105,5 +117,5 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     marginTop: 8,
   },
-  doneText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  doneText: { color: Colors.onPrimary, fontSize: Type.callout, fontWeight: '800' },
 });

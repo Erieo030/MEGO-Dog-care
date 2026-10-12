@@ -3,13 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { Colors } from '../../../constants/Colors';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   upcomingDays?: number;
   scheduledDate?: string;
   count: number;
   showMissingSource: boolean;
-  onCreate: () => void;
+  /** 回憶中的毛孩不提供新增；未傳入時不顯示按鈕。 */
+  onCreate?: () => void;
 };
 
 export default function ReminderListHeader({
@@ -28,18 +30,20 @@ export default function ReminderListHeader({
     : null;
   return (
     <>
-      <AppButton
-        variant="primary"
-        style={styles.primary}
-        onPress={onCreate}
-        accessibilityLabel="新增提醒"
-      >
-        <Ionicons name="add" size={20} color="#FFF" />
-        <Text style={styles.primaryText}>新增提醒</Text>
-      </AppButton>
+      {onCreate ? (
+        <AppButton
+          variant="primary"
+          style={styles.primary}
+          onPress={onCreate}
+          accessibilityLabel="新增提醒"
+        >
+          <Ionicons name="add" size={20} color={Colors.onPrimary} />
+          <Text style={styles.primaryText}>新增提醒</Text>
+        </AppButton>
+      ) : null}
       <View style={styles.listContext}>
         <View style={styles.contextIcon}>
-          <Ionicons name="notifications-outline" size={18} color={Colors.primary} />
+          <Ionicons name="notifications-outline" size={18} color={Colors.primaryDecoration} />
         </View>
         <View style={styles.flex}>
           <Text style={styles.contextTitle}>
@@ -79,7 +83,7 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 16,
   },
-  primaryText: { color: '#FFF', fontWeight: '800' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '800' },
   listContext: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,8 +100,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primarySoft,
   },
   flex: { flex: 1, minWidth: 0 },
-  contextTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  contextHint: { color: Colors.subtext, fontSize: 12, marginTop: 2 },
-  count: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
-  sourceMissing: { color: '#C55B5B', textAlign: 'center', marginBottom: 12 },
+  contextTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  contextHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2 },
+  count: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
+  sourceMissing: { color: Colors.dangerText, textAlign: 'center', marginBottom: 12 },
 });

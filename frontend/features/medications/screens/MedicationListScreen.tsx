@@ -22,6 +22,7 @@ import { getMedications } from '../../../services/medicationService';
 import type { MedicationCourse } from '../../../types';
 import { medicationStyles as styles } from '../medicationStyles';
 import { mealTimingLabels } from '../types';
+import { MemorialReadOnlyNotice } from '../../../components/MemorialReadOnlyNotice';
 
 type ListEntry =
   | { kind: 'section'; id: string; title: string }
@@ -38,23 +39,25 @@ export function MedicationListScreen() {
   const [error, setError] = useState('');
   const requestId = useRef(0);
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    const current = ++requestId.current;
-    if (!session?.userId || !selectedPet) return;
-    setLoading(true);
-    try {
-      const result = await getMedications(session.userId, selectedPet.id, undefined, signal);
-      if (current === requestId.current) {
-        setData(result.records);
-        setError('');
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const current = ++requestId.current;
+      if (!session?.userId || !selectedPet) return;
+      setLoading(true);
+      try {
+        const result = await getMedications(session.userId, selectedPet.id, undefined, signal);
+        if (current === requestId.current) {
+          setData(result.records);
+          setError('');
+        }
+      } catch (caught) {
+        if (current === requestId.current && !signal?.aborted) setError((caught as Error).message);
+      } finally {
+        if (current === requestId.current) setLoading(false);
       }
-    } catch (caught) {
-      if (current === requestId.current && !signal?.aborted)
-        setError((caught as Error).message);
-    } finally {
-      if (current === requestId.current) setLoading(false);
-    }
-  }, [selectedPet, session?.userId]);
+    },
+    [selectedPet, session?.userId],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -99,7 +102,7 @@ export function MedicationListScreen() {
         <>
           <View style={styles.listHeader}>
             <View style={styles.listHeaderIcon}>
-              <Ionicons name="medical-outline" size={23} color={Colors.success} />
+              <Ionicons name="medical-outline" size={23} color={Colors.successDecoration} />
             </View>
             <View style={styles.listHeaderBody}>
               <Text style={styles.title}>用藥管理</Text>
@@ -113,15 +116,19 @@ export function MedicationListScreen() {
               <Text style={styles.error}>{error}（重試）</Text>
             </TouchableOpacity>
           ) : null}
-          <AppButton
-            variant="primary"
-            style={styles.primary}
-            onPress={() => navigation.navigate('MedicationForm')}
-            accessibilityLabel="新增用藥療程"
-          >
-            <Ionicons name="add" size={20} color="#FFF" />
-            <Text style={styles.primaryText}>新增用藥療程</Text>
-          </AppButton>
+          {selectedPet?.memorial ? (
+            <MemorialReadOnlyNotice petName={selectedPet.name} />
+          ) : (
+            <AppButton
+              variant="primary"
+              style={styles.primary}
+              onPress={() => navigation.navigate('MedicationForm')}
+              accessibilityLabel="新增用藥療程"
+            >
+              <Ionicons name="add" size={20} color={Colors.onPrimary} />
+              <Text style={styles.primaryText}>新增用藥療程</Text>
+            </AppButton>
+          )}
           {!data.length ? (
             <View style={styles.emptyBox}>
               <SoftEntrance>
@@ -150,7 +157,7 @@ export function MedicationListScreen() {
           >
             <View style={styles.cardTitleRow}>
               <View style={styles.cardIcon}>
-                <Ionicons name="medical-outline" size={18} color={Colors.success} />
+                <Ionicons name="medical-outline" size={18} color={Colors.successDecoration} />
               </View>
               <Text style={styles.name}>{medication.name}</Text>
               <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />

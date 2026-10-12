@@ -1,8 +1,10 @@
-import React, { useRef } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/Colors';
 import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
+import { usePressFeedback } from '../../../hooks/usePressFeedback';
+import { Type } from '../../../constants/Typography';
 
 export function SettingsHomeSection({
   title,
@@ -22,6 +24,7 @@ export function SettingsHomeSection({
 type RowProps = {
   title: string;
   value?: string;
+  description?: string;
   onPress: () => void;
   danger?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
@@ -32,22 +35,21 @@ type RowProps = {
 export function SettingsHomeRow({
   title,
   value,
+  description,
   onPress,
   danger = false,
   icon = 'ellipse-outline',
   imageAttachmentId,
   imageUserId,
 }: RowProps) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const feedback = usePressFeedback();
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
+    <View>
+      <Pressable
         accessibilityRole="button"
-        accessibilityLabel={value ? `${title} ${value}` : title}
-        style={styles.row}
+        accessibilityLabel={[title, value, description].filter(Boolean).join('，')}
+        style={({ pressed }) => [styles.row, feedback(pressed)]}
         onPress={onPress}
-        onPressIn={() => Animated.spring(scale, { toValue: 0.98, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start()}
       >
         <View style={styles.rowIcon}>
           {imageAttachmentId && imageUserId ? (
@@ -55,13 +57,26 @@ export function SettingsHomeRow({
               attachmentId={imageAttachmentId}
               userId={imageUserId}
               style={styles.rowAvatar}
-              fallback={<Ionicons name={icon} size={19} color={danger ? Colors.danger : Colors.success} />}
+              fallback={
+                <Ionicons
+                  name={icon}
+                  size={19}
+                  color={danger ? Colors.dangerDecoration : Colors.successDecoration}
+                />
+              }
             />
           ) : (
-            <Ionicons name={icon} size={19} color={danger ? Colors.danger : Colors.success} />
+            <Ionicons
+              name={icon}
+              size={19}
+              color={danger ? Colors.dangerDecoration : Colors.successDecoration}
+            />
           )}
         </View>
-        <Text style={[styles.title, danger && styles.danger]}>{title}</Text>
+        <View style={styles.copy}>
+          <Text style={[styles.title, danger && styles.danger]}>{title}</Text>
+          {description ? <Text style={styles.description}>{description}</Text> : null}
+        </View>
         <View style={styles.accessory}>
           {value ? (
             <Text
@@ -74,14 +89,14 @@ export function SettingsHomeRow({
           ) : null}
           <Text style={[styles.chevron, danger && styles.danger]}>›</Text>
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
-    fontSize: 13,
+    fontSize: Type.footnote,
     fontWeight: '800',
     color: Colors.subtext,
     marginTop: 20,
@@ -115,9 +130,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   rowAvatar: { width: 32, height: 32, borderRadius: 10 },
-  title: { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.text },
+  copy: { flex: 1, minWidth: 0 },
+  description: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 4 },
+  title: { fontSize: Type.body, fontWeight: '700', color: Colors.text },
   accessory: { maxWidth: '42%', flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
-  value: { flexShrink: 1, fontSize: 13, color: Colors.subtext, textAlign: 'right' },
-  chevron: { marginLeft: 8, fontSize: 22, lineHeight: 22, color: Colors.subtext },
+  value: { flexShrink: 1, fontSize: Type.footnote, color: Colors.subtext, textAlign: 'right' },
+  chevron: { marginLeft: 8, fontSize: Type.title2, lineHeight: 22, color: Colors.subtext },
   danger: { color: Colors.danger },
 });

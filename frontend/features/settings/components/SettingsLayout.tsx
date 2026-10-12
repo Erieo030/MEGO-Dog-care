@@ -8,15 +8,17 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
+import { Colors } from '../../../constants/Colors';
+import { Type } from '../../../constants/Typography';
 
 export const settingsPalette = {
-  bg: '#F7F4EE',
-  surface: '#FFFFFF',
-  text: '#2F2925',
-  sub: '#746B63',
-  border: '#E4DDD4',
-  primary: '#B7653B',
-  danger: '#C94C4C',
+  bg: Colors.background,
+  surface: Colors.onPrimary,
+  text: Colors.text,
+  sub: Colors.subtext,
+  border: Colors.border,
+  primary: Colors.primary,
+  danger: Colors.dangerText,
 };
 
 export function SettingsDocumentHero({
@@ -105,13 +107,13 @@ const documentStyles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#F3E1D5',
+    backgroundColor: Colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  title: { color: settingsPalette.text, fontSize: 21, fontWeight: '800' },
-  subtitle: { color: settingsPalette.sub, fontSize: 14, lineHeight: 21, marginTop: 6 },
+  title: { color: settingsPalette.text, fontSize: Type.title3, fontWeight: '800' },
+  subtitle: { color: settingsPalette.sub, fontSize: Type.subhead, lineHeight: 21, marginTop: 6 },
   section: {
     padding: 16,
     borderRadius: 18,
@@ -127,12 +129,17 @@ const documentStyles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3E1D5',
+    backgroundColor: Colors.primarySoft,
     marginRight: 12,
   },
-  number: { color: settingsPalette.primary, fontSize: 11, fontWeight: '800', marginBottom: 2 },
+  number: {
+    color: settingsPalette.primary,
+    fontSize: Type.caption2,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
   copy: { flex: 1 },
-  sectionTitle: { color: settingsPalette.text, fontSize: 16, fontWeight: '800' },
+  sectionTitle: { color: settingsPalette.text, fontSize: Type.callout, fontWeight: '800' },
   rows: { gap: 11 },
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   infoMarker: {
@@ -143,9 +150,14 @@ const documentStyles = StyleSheet.create({
     marginTop: 7,
   },
   infoCopy: { flex: 1 },
-  infoLabel: { color: settingsPalette.text, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  body: { color: settingsPalette.sub, fontSize: 14, lineHeight: 22 },
-  emphasisRow: { padding: 11, borderRadius: 13, backgroundColor: '#FFF4E8' },
+  infoLabel: {
+    color: settingsPalette.text,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  body: { color: settingsPalette.sub, fontSize: Type.subhead, lineHeight: 22 },
+  emphasisRow: { padding: 11, borderRadius: 13, backgroundColor: Colors.surfaceWarm },
   emphasisMarker: { backgroundColor: settingsPalette.primary },
   emphasisLabel: { color: settingsPalette.primary },
   emphasisBody: { color: settingsPalette.text },
@@ -221,14 +233,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(228,221,212,0.70)',
-    backgroundColor: '#FFF4E8',
+    backgroundColor: Colors.surfaceWarm,
     flexDirection: 'row',
     alignItems: 'center',
   },
   rowIcon: { marginRight: 10 },
-  rowTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: settingsPalette.text },
+  rowTitle: { flex: 1, fontSize: Type.body, fontWeight: '700', color: settingsPalette.text },
   accessory: { maxWidth: '42%', flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
-  value: { flexShrink: 1, color: settingsPalette.sub, fontSize: 13, textAlign: 'right' },
-  chevron: { marginLeft: 8, color: settingsPalette.sub, fontSize: 22, lineHeight: 22 },
+  value: { flexShrink: 1, color: settingsPalette.sub, fontSize: Type.footnote, textAlign: 'right' },
+  chevron: { marginLeft: 8, color: settingsPalette.sub, fontSize: Type.title2, lineHeight: 22 },
   danger: { color: settingsPalette.danger },
 });

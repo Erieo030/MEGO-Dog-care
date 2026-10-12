@@ -29,6 +29,7 @@ import {
   AIChatMessage,
   AIChatMessageBubble,
 } from '../features/ai/components/AIChatContent';
+import { Type } from '../constants/Typography';
 
 const CONTEXT_WARNING_TOKENS = 12000;
 
@@ -55,40 +56,43 @@ export default function AIChatScreen() {
   const isNearEndRef = useRef(true);
   const sessionRequestId = useRef(0);
   const sessionOwnerKey = useRef('');
-  const loadSession = React.useCallback(async (isCurrent: () => boolean) => {
-    if (!session?.userId || !selectedPet?.id) {
-      sessionOwnerKey.current = '';
-      setMessages([]);
-      setActiveSessionId(undefined);
-      setUsage(null);
-      setSessionLoading(false);
-      setSessionLoadError('');
-      return;
-    }
-    const ownerKey = `${session.userId}:${selectedPet.id}`;
-    if (sessionOwnerKey.current !== ownerKey) {
-      sessionOwnerKey.current = ownerKey;
-      setMessages([]);
-      setActiveSessionId(undefined);
-      setUsage(null);
-    }
-    setSessionLoading(true);
-    setSessionLoadError('');
-    try {
-      const saved = await loadAISession(session.userId, selectedPet.id);
-      if (!isCurrent()) return;
-      shouldScrollToEndRef.current = true;
-      setActiveSessionId(saved.sessionId);
-      setMessages(saved.messages || []);
-      setUsage(saved.usage ?? null);
-    } catch {
-      if (isCurrent()) {
-        setSessionLoadError('無法讀取這段對話，為避免覆蓋原有內容，請先重新載入。');
+  const loadSession = React.useCallback(
+    async (isCurrent: () => boolean) => {
+      if (!session?.userId || !selectedPet?.id) {
+        sessionOwnerKey.current = '';
+        setMessages([]);
+        setActiveSessionId(undefined);
+        setUsage(null);
+        setSessionLoading(false);
+        setSessionLoadError('');
+        return;
       }
-    } finally {
-      if (isCurrent()) setSessionLoading(false);
-    }
-  }, [session?.userId, selectedPet?.id]);
+      const ownerKey = `${session.userId}:${selectedPet.id}`;
+      if (sessionOwnerKey.current !== ownerKey) {
+        sessionOwnerKey.current = ownerKey;
+        setMessages([]);
+        setActiveSessionId(undefined);
+        setUsage(null);
+      }
+      setSessionLoading(true);
+      setSessionLoadError('');
+      try {
+        const saved = await loadAISession(session.userId, selectedPet.id);
+        if (!isCurrent()) return;
+        shouldScrollToEndRef.current = true;
+        setActiveSessionId(saved.sessionId);
+        setMessages(saved.messages || []);
+        setUsage(saved.usage ?? null);
+      } catch {
+        if (isCurrent()) {
+          setSessionLoadError('無法讀取這段對話，為避免覆蓋原有內容，請先重新載入。');
+        }
+      } finally {
+        if (isCurrent()) setSessionLoading(false);
+      }
+    },
+    [session?.userId, selectedPet?.id],
+  );
   useFocusEffect(
     React.useCallback(() => {
       let active = true;
@@ -111,7 +115,8 @@ export default function AIChatScreen() {
   );
   const send = async (value = input) => {
     const text = value.trim();
-    if (!text || !session?.userId || !selectedPet || loading || sessionLoading || sessionLoadError) return;
+    if (!text || !session?.userId || !selectedPet || loading || sessionLoading || sessionLoadError)
+      return;
     setInput('');
     setError('');
     shouldScrollToEndRef.current = true;
@@ -160,13 +165,15 @@ export default function AIChatScreen() {
         await saveActiveAISession(
           session.userId,
           selectedPet.id,
-          nextMessages.map(({ role, text: messageText, sources, knowledgeSources, contextTokens }) => ({
-            role,
-            text: messageText,
-            sources,
-            knowledgeSources,
-            contextTokens,
-          })),
+          nextMessages.map(
+            ({ role, text: messageText, sources, knowledgeSources, contextTokens }) => ({
+              role,
+              text: messageText,
+              sources,
+              knowledgeSources,
+              contextTokens,
+            }),
+          ),
           result.usage,
         );
       } catch {
@@ -239,19 +246,19 @@ export default function AIChatScreen() {
                     style={s.avatar}
                     fallback={
                       <View style={s.avatarFallback}>
-                        <Ionicons name="paw-outline" size={19} color={Colors.primary} />
+                        <Ionicons name="paw-outline" size={19} color={Colors.primaryDecoration} />
                       </View>
                     }
                   />
                 ) : (
                   <View style={s.avatarFallback}>
-                    <Ionicons name="paw-outline" size={19} color={Colors.primary} />
+                    <Ionicons name="paw-outline" size={19} color={Colors.primaryDecoration} />
                   </View>
                 )}
               </View>
               {usage && (
                 <View style={s.usageBadge}>
-                  <Ionicons name="sparkles-outline" size={14} color={Colors.primary} />
+                  <Ionicons name="sparkles-outline" size={14} color={Colors.primaryDecoration} />
                   <Text style={s.usage}>
                     {usage.unlimited
                       ? `今日已用 ${usage.used} 次 · 不限次數`
@@ -308,11 +315,13 @@ export default function AIChatScreen() {
               {contextWarningVisible && (
                 <View style={s.contextWarning}>
                   <View style={s.contextWarningHeading}>
-                    <Ionicons name="warning-outline" size={19} color="#A86B24" />
+                    <Ionicons name="warning-outline" size={19} color={Colors.warningTitle} />
                     <Text style={s.contextWarningTitle}>這段對話的上下文已偏長</Text>
                   </View>
                   <Text style={s.contextWarningText}>
-                    本次送出的內容已達約 12,000 tokens。為降低後續回覆超出模型可處理範圍的風險，建議返回 MEGO AI 主頁並另開新對話；目前對話仍會保留在最近對話中。
+                    本次送出的內容已達約 12,000
+                    tokens。為降低後續回覆超出模型可處理範圍的風險，建議返回 MEGO AI
+                    主頁並另開新對話；目前對話仍會保留在最近對話中。
                   </Text>
                   <TouchableOpacity
                     accessibilityRole="button"
@@ -328,7 +337,7 @@ export default function AIChatScreen() {
                     }}
                   >
                     <Text style={s.contextWarningActionText}>返回 AI 主頁另開對話</Text>
-                    <Ionicons name="chevron-forward" size={15} color={Colors.primary} />
+                    <Ionicons name="chevron-forward" size={15} color={Colors.primaryDecoration} />
                   </TouchableOpacity>
                 </View>
               )}
@@ -353,11 +362,12 @@ export default function AIChatScreen() {
             />
             <TouchableOpacity
               accessibilityLabel="送出問題"
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               style={[s.send, (loading || sessionLoading || !!sessionLoadError) && s.sendDisabled]}
               onPress={() => send()}
               disabled={loading || sessionLoading || !!sessionLoadError}
             >
-              <Ionicons name="arrow-up" size={22} color="#FFF" />
+              <Ionicons name="arrow-up" size={22} color={Colors.onPrimary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -378,11 +388,16 @@ const s = StyleSheet.create({
   },
   content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 12 },
   titleBody: { flex: 1, marginLeft: 8 },
-  eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4, color: Colors.primary },
-  title: { fontSize: 23, fontWeight: '800', color: Colors.text, marginTop: 2 },
+  eyebrow: {
+    fontSize: Type.caption2,
+    fontWeight: '800',
+    letterSpacing: 1.4,
+    color: Colors.primary,
+  },
+  title: { fontSize: Type.title2, fontWeight: '800', color: Colors.text, marginTop: 2 },
   headerAction: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -410,19 +425,19 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.primarySoft,
   },
-  usage: { fontSize: 12, color: Colors.primary, fontWeight: '700' },
+  usage: { fontSize: Type.caption, color: Colors.primary, fontWeight: '700' },
   subtitle: {
     marginTop: 8,
     marginBottom: 12,
     color: Colors.subtext,
-    fontSize: 15,
+    fontSize: Type.body,
     lineHeight: 22,
   },
   muted: { color: Colors.subtext },
   error: { color: Colors.danger },
   sessionState: { alignItems: 'flex-start', gap: 8, marginBottom: 12 },
   sessionRetry: {
-    minHeight: 40,
+    minHeight: 44,
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: 14,
@@ -435,16 +450,21 @@ const s = StyleSheet.create({
     padding: 13,
     gap: 7,
     borderRadius: 16,
-    backgroundColor: '#FFF3DF',
+    backgroundColor: Colors.warningSoft,
     borderWidth: 1,
-    borderColor: '#E9C990',
+    borderColor: Colors.warningBorder,
   },
   contextWarningHeading: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  contextWarningTitle: { color: '#7A4C18', fontSize: 14, fontWeight: '800' },
-  contextWarningText: { color: '#68513A', fontSize: 12, lineHeight: 18 },
-  contextWarningAction: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 2 },
-  contextWarningActionText: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
-  disclaimer: { fontSize: 12, color: Colors.subtext, marginTop: 12, lineHeight: 18 },
+  contextWarningTitle: { color: Colors.warningTitle, fontSize: Type.subhead, fontWeight: '800' },
+  contextWarningText: { color: Colors.warningText, fontSize: Type.caption, lineHeight: 18 },
+  contextWarningAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+  },
+  contextWarningActionText: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
+  disclaimer: { fontSize: Type.caption, color: Colors.subtext, marginTop: 12, lineHeight: 18 },
   composer: {
     paddingHorizontal: 20,
     paddingVertical: 18,
@@ -467,7 +487,7 @@ const s = StyleSheet.create({
     paddingRight: 70,
     color: Colors.text,
     backgroundColor: Colors.surfaceSoft,
-    fontSize: 16,
+    fontSize: Type.callout,
   },
   send: {
     position: 'absolute',

@@ -42,6 +42,14 @@ import {
 import { classifyStoolPhoto, StoolClassification } from '../services/stoolClassifierService';
 import { DailyLog, DailyEnergyLevel, DailyStoolLevel, DailyWaterLevel } from '../types';
 import { taipeiDateKey } from '../utils/taipeiDate';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
+import {
+  dailyLogDateLabel,
+  dailyLogSnapshot,
+  emptyDailyLog,
+  shouldAutoApplyStool,
+} from '../features/daily-logs/dailyLogContent';
+import { Type } from '../constants/Typography';
 const DAILY_ARTWORKS = {
   'morning-home': require('../assets/artwork/themes/morning-home/page-decorations/daily-checkin-v1.webp'),
   'afternoon-living-room': require('../assets/artwork/themes/afternoon-living-room/page-decorations/daily-checkin-v1.webp'),
@@ -71,12 +79,27 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   const { settings } = useSettings();
   const quickEntry = route.params?.quickEntry === true;
   const [record, setRecord] = useState<DailyLog | null>(null);
-  const [draft, setDraft] = useState<Partial<DailyLog>>({
-    localDate: dateKey(),
-    loggedAt: new Date().toISOString(),
-  });
+  const requestedDate = route.params?.recordDate?.slice(0, 10) || dateKey();
+  const [draft, setDraft] = useState<Partial<DailyLog>>(() => emptyDailyLog(requestedDate));
+  const [baseline, setBaseline] = useState(() => emptyDailyLog(requestedDate));
+  const dirty = dailyLogSnapshot(draft) !== dailyLogSnapshot(baseline);
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const discard = useCallback(() => setDraft(baseline), [baseline]);
+  useUnsavedChangesGuard(dirty, discard);
+  const recordDate = draft.localDate || requestedDate;
+  const dateLabel = dailyLogDateLabel(recordDate);
+  React.useEffect(() => {
+    navigation.setOptions({ title: `${dateLabel}紀錄` });
+  }, [dateLabel, navigation]);
+  const [classifierExpanded, setClassifierExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const mutationInFlight = useRef(false);
+  const deleteConfirmationOpen = useRef(false);
   const [error, setError] = useState('');
   const [classifying, setClassifying] = useState(false);
   const [stoolSuggestion, setStoolSuggestion] = useState<StoolClassification | null>(null);
@@ -87,7 +110,9 @@ export default function DailyLogScreen({ route, navigation }: Props) {
         setLoading(false);
         return;
       }
+      if (dirtyRef.current) return;
       setLoading(true);
+      setError('');
       try {
         const result = route.params?.recordId
           ? await getDailyLog(session.userId, route.params.recordId, signal)
@@ -100,14 +125,18 @@ export default function DailyLogScreen({ route, navigation }: Props) {
         if (signal?.aborted) return;
         const selectedRecord = result.record;
         setRecord(selectedRecord);
-        setDraft(selectedRecord || { localDate: dateKey(), loggedAt: new Date().toISOString() });
+        if (!dirtyRef.current) {
+          const next = selectedRecord || emptyDailyLog(requestedDate);
+          setDraft(next);
+          setBaseline(next);
+        }
       } catch (e) {
         if (!signal?.aborted) setError((e as Error).message || '載入失敗');
       } finally {
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [session?.userId, selectedPet, route.params?.recordId, route.params?.recordDate],
+    [session?.userId, selectedPet, route.params?.recordId, route.params?.recordDate, requestedDate],
   );
   useFocusEffect(
     useCallback(() => {
@@ -131,7 +160,11 @@ export default function DailyLogScreen({ route, navigation }: Props) {
       });
       if (!result) return;
       setStoolSuggestion(result);
-      if (result.status === 'ok' && result.suggestedStoolLevel) {
+      if (
+        result.status === 'ok' &&
+        result.suggestedStoolLevel &&
+        shouldAutoApplyStool(draftRef.current.stoolLevel)
+      ) {
         set('stoolLevel', result.suggestedStoolLevel);
       }
     } catch (classificationError) {
@@ -145,45 +178,86 @@ export default function DailyLogScreen({ route, navigation }: Props) {
     }
   };
   const save = async () => {
-    if (!session?.userId || !selectedPet || saving) return;
+    if (!session?.userId || !selectedPet || saving || deleting || mutationInFlight.current) return;
+    mutationInFlight.current = true;
     setSaving(true);
     try {
       const data = {
         ...draft,
-        localDate: draft.localDate || dateKey(),
-        loggedAt: draft.loggedAt || new Date().toISOString(),
+        localDate: recordDate,
+        loggedAt: draft.loggedAt || emptyDailyLog(recordDate).loggedAt!,
       };
-      if (record) await updateDailyLog(session.userId, record.id, data);
-      else await createDailyLog(session.userId, selectedPet.id, data);
+      const saved = record
+        ? await updateDailyLog(session.userId, record.id, data)
+        : await createDailyLog(session.userId, selectedPet.id, data);
+      setRecord(saved.record);
+      setBaseline(data);
+      dirtyRef.current = dailyLogSnapshot(draftRef.current) !== dailyLogSnapshot(data);
+      setError('');
       if (quickEntry) {
-        Alert.alert('已記錄', '今天的日常觀察已更新。完整紀錄可到「紀錄」查看。', [
+        Alert.alert('已記錄', `${dateLabel}的日常觀察已更新。完整紀錄可到「紀錄」查看。`, [
           { text: '完成', onPress: () => navigation.popToTop() },
         ]);
       } else {
-        Alert.alert('已儲存', '今日紀錄已更新');
+        Alert.alert('已儲存', `${dateLabel}紀錄已更新`);
         await load();
       }
     } catch (e) {
       setError((e as Error).message || '儲存失敗');
     } finally {
+      mutationInFlight.current = false;
       setSaving(false);
     }
   };
   const remove = () => {
-    if (!record || !session?.userId) return;
-    Alert.alert('刪除紀錄', '確定刪除這筆日常紀錄？', [
-      { text: '取消' },
-      {
-        text: '刪除',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteDailyLog(session.userId, record.id);
-          setRecord(null);
-          setDraft({ localDate: dateKey(), loggedAt: new Date().toISOString() });
-          await load();
+    if (
+      !record ||
+      !session?.userId ||
+      saving ||
+      deleting ||
+      mutationInFlight.current ||
+      deleteConfirmationOpen.current
+    )
+      return;
+    deleteConfirmationOpen.current = true;
+    Alert.alert(
+      '刪除紀錄',
+      '確定刪除這筆日常紀錄？',
+      [
+        {
+          text: '取消',
+          style: 'cancel',
+          onPress: () => {
+            deleteConfirmationOpen.current = false;
+          },
         },
-      },
-    ]);
+        {
+          text: '刪除',
+          style: 'destructive',
+          onPress: async () => {
+            deleteConfirmationOpen.current = false;
+            if (mutationInFlight.current) return;
+            mutationInFlight.current = true;
+            setDeleting(true);
+            try {
+              await deleteDailyLog(session.userId, record.id);
+              const next = emptyDailyLog(recordDate);
+              setRecord(null);
+              setDraft(next);
+              setBaseline(next);
+              dirtyRef.current = false;
+              setError('');
+            } catch (e) {
+              setError((e as Error).message || '刪除失敗，請稍後再試');
+            } finally {
+              mutationInFlight.current = false;
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+      { cancelable: false },
+    );
   };
   if (loading) return <ScreenState loading text="載入中…" />;
   return (
@@ -202,17 +276,20 @@ export default function DailyLogScreen({ route, navigation }: Props) {
       </View>
       <View style={s.intro}>
         <View style={s.introIcon}>
-          <Ionicons name="paw-outline" size={20} color={Colors.primary} />
+          <Ionicons name="paw-outline" size={20} color={Colors.primaryDecoration} />
         </View>
         <View style={s.introCopy}>
-          <Text style={s.introTitle}>今天的日常觀察</Text>
-          <Text style={s.introHint}>用幾個小選項，留下毛孩今天的狀況。</Text>
+          <Text style={s.introTitle}>{dateLabel}的日常觀察</Text>
+          <Text style={s.introHint}>用幾個小選項，留下毛孩這一天的狀況。</Text>
         </View>
       </View>
       {error ? (
-        <TouchableOpacity onPress={() => void load()}>
-          <Text style={s.error}>{error}（點擊重試）</Text>
-        </TouchableOpacity>
+        <Text accessibilityRole="alert" style={s.error}>
+          {error}
+        </Text>
+      ) : null}
+      {error && !dirty ? (
+        <AppButton title="重新載入" variant="tertiary" onPress={() => void load()} />
       ) : null}
       <Text style={s.label}>喝水量</Text>
       <Options values={water} value={draft.waterLevel} onPick={(v) => set('waterLevel', v)} />
@@ -223,42 +300,57 @@ export default function DailyLogScreen({ route, navigation }: Props) {
       <Text style={s.label}>大便狀況</Text>
       <Options values={stool} value={draft.stoolLevel} onPick={(v) => set('stoolLevel', v)} />
       <View style={s.classifierSection}>
-        <View style={s.classifierHeading}>
-          <Ionicons name="scan-outline" size={18} color={Colors.primary} />
-          <Text style={s.classifierTitle}>照片分類建議</Text>
-        </View>
-        <Text style={s.classifierHint}>
-          你選擇辨識後，照片會送至 MEGO 後端暫時處理，不會存入照護紀錄或附件，也不會傳給 MEGO
-          AI。結果僅供參考，請確認下方選項。
-        </Text>
-        <View style={s.classifierActions}>
-          <AppButton
-            title={classifying ? '辨識中…' : '拍照辨識'}
-            variant="secondary"
-            disabled={classifying}
-            accessibilityLabel="拍攝糞便照片並取得分類建議"
-            style={s.classifierButton}
-            onPress={() => void runStoolClassification('camera')}
-          >
-            {classifying ? (
-              <ActivityIndicator color={Colors.success} />
-            ) : (
-              <Ionicons name="camera-outline" size={19} color={Colors.success} />
-            )}
-            <Text style={s.classifierButtonText}>{classifying ? '辨識中…' : '拍照辨識'}</Text>
-          </AppButton>
-          <AppButton
-            title="從相簿選擇"
-            variant="secondary"
-            disabled={classifying}
-            accessibilityLabel="從相簿選取糞便照片並取得分類建議"
-            style={s.classifierButton}
-            onPress={() => void runStoolClassification('library')}
-          >
-            <Ionicons name="images-outline" size={19} color={Colors.success} />
-            <Text style={s.classifierButtonText}>從相簿選擇</Text>
-          </AppButton>
-        </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded: classifierExpanded }}
+          accessibilityLabel="用照片取得建議"
+          style={s.classifierHeading}
+          onPress={() => setClassifierExpanded((value) => !value)}
+        >
+          <Ionicons name="scan-outline" size={18} color={Colors.primaryDecoration} />
+          <Text style={s.classifierTitle}>用照片取得建議</Text>
+          <Ionicons
+            name={classifierExpanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={Colors.subtext}
+          />
+        </TouchableOpacity>
+        {classifierExpanded ? (
+          <>
+            <Text style={s.classifierHint}>
+              你選擇辨識後，照片會送至 MEGO 後端暫時處理，不會存入照護紀錄或附件，也不會傳給 MEGO
+              AI。結果僅供參考，請確認大便狀況選項。
+            </Text>
+            <View style={s.classifierActions}>
+              <AppButton
+                title={classifying ? '辨識中…' : '拍照辨識'}
+                variant="secondary"
+                disabled={classifying}
+                accessibilityLabel="拍攝糞便照片並取得分類建議"
+                style={s.classifierButton}
+                onPress={() => void runStoolClassification('camera')}
+              >
+                {classifying ? (
+                  <ActivityIndicator color={Colors.success} />
+                ) : (
+                  <Ionicons name="camera-outline" size={19} color={Colors.successDecoration} />
+                )}
+                <Text style={s.classifierButtonText}>{classifying ? '辨識中…' : '拍照辨識'}</Text>
+              </AppButton>
+              <AppButton
+                title="從相簿選擇"
+                variant="secondary"
+                disabled={classifying}
+                accessibilityLabel="從相簿選取糞便照片並取得分類建議"
+                style={s.classifierButton}
+                onPress={() => void runStoolClassification('library')}
+              >
+                <Ionicons name="images-outline" size={19} color={Colors.successDecoration} />
+                <Text style={s.classifierButtonText}>從相簿選擇</Text>
+              </AppButton>
+            </View>
+          </>
+        ) : null}
         {stoolSuggestion ? (
           <View style={s.suggestion} accessibilityLiveRegion="polite">
             <Text style={s.suggestionTitle}>
@@ -271,6 +363,15 @@ export default function DailyLogScreen({ route, navigation }: Props) {
                 ? `目前選擇：${stool.find(([value]) => value === draft.stoolLevel)?.[1] || '尚未選擇'}。請確認或手動修改，再儲存紀錄。`
                 : '請重新拍攝，或直接手動選擇大便狀況。'}
             </Text>
+            {stoolSuggestion.status === 'ok' &&
+            stoolSuggestion.suggestedStoolLevel &&
+            draft.stoolLevel !== stoolSuggestion.suggestedStoolLevel ? (
+              <AppButton
+                title={`採用建議：${stoolSuggestion.suggestedStoolLabel}`}
+                variant="secondary"
+                onPress={() => set('stoolLevel', stoolSuggestion.suggestedStoolLevel!)}
+              />
+            ) : null}
             <Text style={s.suggestionDisclaimer}>{stoolSuggestion.disclaimer}</Text>
           </View>
         ) : null}
@@ -281,9 +382,17 @@ export default function DailyLogScreen({ route, navigation }: Props) {
         maxLength={150}
       />
       <AppButton
-        title={saving ? '儲存中…' : record ? '儲存這筆紀錄' : '儲存今日紀錄'}
+        title={
+          saving
+            ? '儲存中…'
+            : record
+              ? '儲存這筆紀錄'
+              : recordDate === dateKey()
+                ? '儲存今日紀錄'
+                : '儲存這天的紀錄'
+        }
         variant="primary"
-        disabled={saving}
+        disabled={saving || deleting}
         busy={saving}
         style={s.save}
         textStyle={s.saveText}
@@ -292,7 +401,9 @@ export default function DailyLogScreen({ route, navigation }: Props) {
       {record && !quickEntry ? (
         <RecordActionButton
           kind="delete"
-          label="刪除這筆紀錄"
+          label={deleting ? '刪除中…' : '刪除這筆紀錄'}
+          disabled={saving || deleting}
+          busy={deleting}
           style={s.deleteAction}
           onPress={remove}
         />
@@ -313,6 +424,9 @@ function Options({
     <View style={s.options}>
       {values.map(([v, l]) => (
         <TouchableOpacity
+          accessibilityRole="radio"
+          accessibilityState={{ checked: value === v }}
+          accessibilityLabel={l}
           key={String(v)}
           style={[s.chip, value === v && s.selected]}
           onPress={() => onPick(v)}
@@ -347,10 +461,10 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  introHint: { color: Colors.subtext, fontSize: 12, marginTop: 2, lineHeight: 17 },
+  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  introHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2, lineHeight: 17 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 14, color: Colors.text },
+  title: { fontSize: Type.title1, fontWeight: '700', marginBottom: 14, color: Colors.text },
   label: {
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
     fontWeight: FORM_FIELD_LABEL_FONT_WEIGHT,
@@ -367,9 +481,9 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  classifierHeading: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  classifierTitle: { color: Colors.text, fontSize: 14, fontWeight: '800' },
-  classifierHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 5 },
+  classifierHeading: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 48 },
+  classifierTitle: { color: Colors.text, fontSize: Type.subhead, fontWeight: '800' },
+  classifierHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 5 },
   classifierActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   classifierButton: {
     flex: 1,
@@ -379,16 +493,31 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
   },
-  classifierButtonText: { color: Colors.success, fontSize: 13, fontWeight: '700', flexShrink: 1 },
+  classifierButtonText: {
+    color: Colors.success,
+    fontSize: Type.footnote,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
   suggestion: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
   },
-  suggestionTitle: { color: Colors.text, fontSize: 13, lineHeight: 19, fontWeight: '800' },
-  suggestionText: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 3 },
-  suggestionDisclaimer: { color: Colors.subtext, fontSize: 11, lineHeight: 16, marginTop: 5 },
+  suggestionTitle: {
+    color: Colors.text,
+    fontSize: Type.footnote,
+    lineHeight: 19,
+    fontWeight: '800',
+  },
+  suggestionText: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 3 },
+  suggestionDisclaimer: {
+    color: Colors.subtext,
+    fontSize: Type.caption2,
+    lineHeight: 16,
+    marginTop: 5,
+  },
   chip: {
     paddingHorizontal: 14,
     minHeight: 44,
@@ -400,7 +529,7 @@ const s = StyleSheet.create({
   },
   selected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { color: Colors.text, fontWeight: '700' },
-  selectedText: { color: '#FFF' },
+  selectedText: { color: Colors.onPrimary },
   save: {
     marginTop: 22,
     backgroundColor: Colors.primary,
@@ -409,7 +538,7 @@ const s = StyleSheet.create({
     borderRadius: FORM_BUTTON_RADIUS,
     alignItems: 'center',
   },
-  saveText: { color: '#fff', fontWeight: '700' },
+  saveText: { color: Colors.onPrimary, fontWeight: '700' },
   error: { color: Colors.danger, marginBottom: 8 },
   deleteAction: {
     alignSelf: 'center',

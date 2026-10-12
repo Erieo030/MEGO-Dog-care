@@ -7,7 +7,7 @@ import secrets
 from fastapi import HTTPException
 
 from app.db import db
-from app.schemas import PetCreateRequest, PetUpdateRequest
+from app.schemas import PetCreateRequest, PetMemorialRequest, PetUpdateRequest
 from app.services.attachment_service import _delete_document
 
 
@@ -45,6 +45,9 @@ def serialize_pet(pet: dict) -> dict:
         "distinctiveFeatures": pet.get("distinctiveFeatures", ""),
         "latestWeightKg": pet.get("latestWeightKg"),
         "latestWeightAt": pet.get("latestWeightAt"),
+        "memorial": bool(pet.get("memorial", False)),
+        "passedAwayDate": pet.get("passedAwayDate", ""),
+        "memorialNote": pet.get("memorialNote", ""),
     }
 
 
@@ -125,3 +128,71 @@ def delete_pet(pet_id: str, user_id: str) -> dict:
         _delete_document(attachment)
     db.lost_pet_profiles.delete_many(child_query)
     return {"success": True, "message": "毛孩資料已刪除"}
+
+
+MEMORIAL_BLOCKED_MESSAGE = "這隻毛孩已移到回憶，不能再新增紀錄"
+
+
+def ensure_pet_active(pet_id: str, user_id: str) -> None:
+    """新增紀錄前確認毛孩屬於目前帳號，且還沒有移到回憶。"""
+    pet = db.pets.find_one({"_id": _object_id(pet_id, "毛孩 ID "), "userId": user_id}, {"memorial": 1})
+    if not pet:
+        raise HTTPException(status_code=404, detail="找不到毛孩資料")
+    if pet.get("memorial"):
+        raise HTTPException(status_code=409, detail=MEMORIAL_BLOCKED_MESSAGE)
+
+
+def set_memorial(pet_id: str, user_id: str, data: PetMemorialRequest) -> dict:
+    """把毛孩移到回憶：保留所有紀錄，停止尚未完成的提醒，並關閉身份 QR 公開頁。"""
+    pet_object_id = _object_id(pet_id, "毛孩 ID ")
+    existing = db.pets.find_one({"_id": pet_object_id, "userId": user_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="找不到毛孩資料")
+    today = now_taipei().date().isoformat()
+    if data.passedAwayDate > today:
+        raise HTTPException(status_code=422, detail="離開日期不能晚於今天")
+    earliest = max(existing.get("birthday") or "", existing.get("arrivalDate") or "")
+    if earliest and data.passedAwayDate < earliest:
+        raise HTTPException(status_code=422, detail="離開日期不能早於生日或到家日")
+    now = now_taipei()
+    result = db.pets.find_one_and_update(
+        {"_id": pet_object_id, "userId": user_id},
+        {"$set": {
+            "memorial": True,
+            "passedAwayDate": data.passedAwayDate,
+            "memorialNote": data.memorialNote.strip(),
+            "memorializedAt": now,
+        }},
+        return_document=True,
+    )
+    stopped = db.reminders.update_many(
+        {"petId": pet_id, "status": {"$in": ["pending", "snoozed"]}},
+        {"$set": {"status": "skipped", "memorialSkipped": True, "updatedAt": now}},
+    ).modified_count
+    db.lost_pet_profiles.update_many(
+        {"petId": pet_id, "enabled": True},
+        {"$set": {"enabled": False, "lostMode": False, "disabledByMemorial": True, "updatedAt": now}},
+    )
+    return {
+        "success": True,
+        "message": "已移到回憶",
+        "petData": serialize_pet(result),
+        "stoppedReminderCount": stopped,
+    }
+
+
+def clear_memorial(pet_id: str, user_id: str) -> dict:
+    """誤設回憶時可以還原；已停止的提醒不會自動恢復，需要時再重新建立。"""
+    pet_object_id = _object_id(pet_id, "毛孩 ID ")
+    result = db.pets.find_one_and_update(
+        {"_id": pet_object_id, "userId": user_id},
+        {"$unset": {"memorial": "", "passedAwayDate": "", "memorialNote": "", "memorializedAt": ""}},
+        return_document=True,
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="找不到毛孩資料")
+    db.lost_pet_profiles.update_many(
+        {"petId": pet_id, "disabledByMemorial": True},
+        {"$set": {"enabled": True, "updatedAt": now_taipei()}, "$unset": {"disabledByMemorial": ""}},
+    )
+    return {"success": True, "message": "已從回憶還原", "petData": serialize_pet(result)}

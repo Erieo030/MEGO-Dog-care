@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
+import { Type } from '../constants/Typography';
 
 const LOGIN_DOG = require('../assets/artwork/auth/login-dog-v1.webp');
 const LOGIN_PAW = require('../assets/artwork/auth/login-paw-v1.webp');
@@ -232,7 +233,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
               >
                 <Text style={styles.registerSecondary}>還沒有帳號？</Text>
                 <Text style={styles.registerAccent}>立即註冊</Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
+                <Ionicons name="chevron-forward" size={16} color={Colors.primaryDecoration} />
               </TouchableOpacity>
             </View>
           </View>
@@ -265,14 +266,14 @@ const styles = StyleSheet.create({
   brandName: {
     marginTop: 3,
     color: Colors.primary,
-    fontSize: 28,
+    fontSize: Type.display,
     fontWeight: '900',
     letterSpacing: 2.6,
   },
-  brandSlogan: { marginTop: 7, color: Colors.subtext, fontSize: 14 },
+  brandSlogan: { marginTop: 7, color: Colors.subtext, fontSize: Type.subhead },
   formSection: { width: '100%', maxWidth: 480, alignSelf: 'center' },
-  welcomeTitle: { color: Colors.text, fontSize: 25, fontWeight: '800' },
-  welcomeSubtitle: { color: Colors.subtext, fontSize: 15, lineHeight: 22, marginTop: 7 },
+  welcomeTitle: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  welcomeSubtitle: { color: Colors.subtext, fontSize: Type.body, lineHeight: 22, marginTop: 7 },
   form: { marginTop: 27, gap: 15 },
   inputShell: {
     height: 56,
@@ -290,7 +291,7 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingHorizontal: 12,
     color: Colors.text,
-    fontSize: 16,
+    fontSize: Type.callout,
   },
   visibilityButton: {
     width: 44,
@@ -309,8 +310,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   loginButtonSubmitting: { opacity: 0.88 },
-  loginButtonText: { color: '#FFF9F1', fontSize: 18, fontWeight: '700', letterSpacing: 0.3 },
-  loadingPaw: { width: 22, height: 22, resizeMode: 'contain', tintColor: '#FFF9F1' },
+  loginButtonText: {
+    color: Colors.onPrimary,
+    fontSize: Type.headline,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  loadingPaw: { width: 22, height: 22, resizeMode: 'contain', tintColor: Colors.onPrimary },
   registerLinkButton: {
     minHeight: 44,
     flexDirection: 'row',
@@ -319,6 +325,6 @@ const styles = StyleSheet.create({
     gap: 3,
     marginTop: 2,
   },
-  registerSecondary: { color: Colors.subtext, fontSize: 15 },
-  registerAccent: { color: Colors.primary, fontSize: 15, fontWeight: '700' },
+  registerSecondary: { color: Colors.subtext, fontSize: Type.body },
+  registerAccent: { color: Colors.primary, fontSize: Type.body, fontWeight: '700' },
 });

@@ -1,5 +1,6 @@
 """用途：提供具使用者所有權檢查的就醫紀錄 CRUD API。"""
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, Response, status, Depends
+from app.api.dependencies import require_active_pet
 from app.schemas.medical_visit import MedicalVisitRequest
 from app.services import medical_visit_service
 
@@ -9,7 +10,7 @@ router = APIRouter(tags=["medical-visits"])
 def list_medical_visits(pet_id: str, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "取得就醫紀錄成功", "data": {"visits": medical_visit_service.list_visits(pet_id, user_id)}}
 
-@router.post("/pets/{pet_id}/medical-visits", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/medical-visits", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_medical_visit(pet_id: str, data: MedicalVisitRequest, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "就醫紀錄已建立", "data": {"visit": medical_visit_service.create_visit(pet_id, user_id, data)}}
 

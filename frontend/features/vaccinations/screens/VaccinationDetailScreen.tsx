@@ -1,5 +1,5 @@
 /** 用途：查看疫苗資料，提供編輯、複製新增與刪除。 */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -15,6 +15,7 @@ import type { HomeStackParamList } from '../../../navigation/types';
 import { deleteVaccination, getVaccination } from '../../../services/vaccinationService';
 import type { Vaccination } from '../../../types';
 import { vaccinationStyles as styles } from '../vaccinationStyles';
+import { usePet } from '../../../contexts/PetContext';
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
@@ -26,6 +27,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 export function VaccinationDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
+  const { selectedPet } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'VaccinationDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<Vaccination | null>(null);
@@ -33,6 +35,7 @@ export function VaccinationDetailScreen() {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const mutationLock = useRef(false);
   const userId = session?.userId;
   const recordId = route.params?.recordId;
   useFocusEffect(
@@ -81,7 +84,8 @@ export function VaccinationDetailScreen() {
         text: '刪除',
         style: 'destructive',
         onPress: async () => {
-          if (!userId || deleting) return;
+          if (!userId || deleting || mutationLock.current) return;
+          mutationLock.current = true;
           setDeleting(true);
           try {
             await deleteVaccination(userId, record.id);
@@ -89,6 +93,7 @@ export function VaccinationDetailScreen() {
           } catch (caught) {
             Alert.alert('刪除失敗', (caught as Error).message || '請稍後再試');
           } finally {
+            mutationLock.current = false;
             setDeleting(false);
           }
         },
@@ -98,7 +103,7 @@ export function VaccinationDetailScreen() {
     <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
       <View style={styles.detailHero}>
         <View style={styles.detailHeroIcon}>
-          <Ionicons name="medkit-outline" size={23} color={Colors.success} />
+          <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
         </View>
         <View style={styles.detailHeroCopy}>
           <Text numberOfLines={2} style={styles.detailTitle}>
@@ -123,16 +128,20 @@ export function VaccinationDetailScreen() {
         <RecordActionButton
           kind="edit"
           label="編輯紀錄"
+          disabled={deleting}
           style={styles.actionButton}
           onPress={() => navigation.navigate('VaccinationForm', { record })}
         />
-        <AppButton
-          title="複製新增"
-          variant="secondary"
-          fullWidth={false}
-          style={[styles.secondary, styles.actionButton]}
-          onPress={() => navigation.navigate('VaccinationForm', { record, duplicate: true })}
-        />
+        {!selectedPet?.memorial && (
+          <AppButton
+            title="複製新增"
+            disabled={deleting}
+            variant="secondary"
+            fullWidth={false}
+            style={[styles.secondary, styles.actionButton]}
+            onPress={() => navigation.navigate('VaccinationForm', { record, duplicate: true })}
+          />
+        )}
       </View>
       <RecordActionButton
         kind="delete"

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Colors } from '../../../constants/Colors';
 import type { ChatResponse } from '../../../services/aiService';
 import { AIChatMarkdown } from './AIChatMarkdown';
+import { Type } from '../../../constants/Typography';
 
 export type AIChatMessage = {
   role: 'user' | 'assistant';
@@ -32,7 +33,7 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
         <Ionicons
           name={isUser ? 'person-outline' : 'sparkles-outline'}
           size={13}
-          color={isUser ? Colors.primary : Colors.success}
+          color={isUser ? Colors.primaryDecoration : Colors.successDecoration}
         />
         <Text
           style={[
@@ -60,13 +61,13 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
           <Ionicons
             name={expanded ? 'chevron-up' : 'chevron-down'}
             size={15}
-            color={Colors.primary}
+            color={Colors.primaryDecoration}
           />
         </TouchableOpacity>
       )}
       {!isUser && !!item.sources?.length && (
         <View style={styles.sources}>
-          <Ionicons name="document-text-outline" size={13} color={Colors.success} />
+          <Ionicons name="document-text-outline" size={13} color={Colors.successDecoration} />
           <Text style={styles.sourcesText}>
             參考你的 MEGO 紀錄：{item.sources.map((source) => source.label).join('、')}
           </Text>
@@ -75,7 +76,7 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
       {!isUser && !!item.knowledgeSources?.length && (
         <View style={styles.knowledgeSources}>
           <View style={styles.knowledgeHeading}>
-            <Ionicons name="book-outline" size={13} color={Colors.primary} />
+            <Ionicons name="book-outline" size={13} color={Colors.primaryDecoration} />
             <Text style={styles.knowledgeHeadingText}>參考資料</Text>
           </View>
           {item.knowledgeSources.map((source) => (
@@ -84,12 +85,16 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
               accessibilityRole="link"
               accessibilityLabel={`開啟參考資料：${source.title}`}
               style={styles.knowledgeLink}
-              onPress={() => { void Linking.openURL(source.url).catch(() => undefined); }}
+              onPress={() => {
+                void Linking.openURL(source.url).catch(() =>
+                  Alert.alert('無法開啟參考資料', '請稍後再試。'),
+                );
+              }}
             >
               <Text style={styles.knowledgeLinkText}>
                 {source.title} · {source.section || source.documentTitle}
               </Text>
-              <Ionicons name="open-outline" size={12} color={Colors.primary} />
+              <Ionicons name="open-outline" size={12} color={Colors.primaryDecoration} />
             </TouchableOpacity>
           ))}
         </View>
@@ -108,7 +113,7 @@ export function AIChatEmptyConversation({
   return (
     <View style={styles.emptyConversation}>
       <View style={styles.emptyConversationIcon}>
-        <Ionicons name="chatbubble-ellipses-outline" size={22} color={Colors.primary} />
+        <Ionicons name="chatbubble-ellipses-outline" size={22} color={Colors.primaryDecoration} />
       </View>
       <Text style={styles.emptyConversationTitle}>從一個問題開始</Text>
       <View style={styles.introGroup}>
@@ -116,7 +121,7 @@ export function AIChatEmptyConversation({
         <Text style={styles.intro}>毛孩照護紀錄、一般生活與知識問題</Text>
       </View>
       <View style={styles.safetyNote}>
-        <Ionicons name="heart-outline" size={16} color={Colors.success} />
+        <Ionicons name="heart-outline" size={16} color={Colors.successDecoration} />
         <Text style={styles.safetyNoteText}>疾病診斷與用藥仍請交由獸醫判斷。</Text>
       </View>
       <TouchableOpacity
@@ -125,12 +130,12 @@ export function AIChatEmptyConversation({
         style={styles.vetTool}
         onPress={onOpenVetBrief}
       >
-        <Ionicons name="medkit-outline" size={19} color="#5F9274" />
+        <Ionicons name="medkit-outline" size={19} color={Colors.successDecoration} />
         <View style={styles.vetToolText}>
           <Text style={styles.vetToolTitle}>準備看醫生</Text>
           <Text style={styles.vetToolHint}>整理近期紀錄，帶著重點和獸醫溝通</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color="#8A8179" />
+        <Ionicons name="chevron-forward" size={18} color={Colors.muted} />
       </TouchableOpacity>
       <Text style={styles.quickPromptTitle}>可以先問問看</Text>
       <View style={styles.quickPrompts}>
@@ -142,7 +147,11 @@ export function AIChatEmptyConversation({
             style={styles.quickPrompt}
             onPress={() => onSend(prompt)}
           >
-            <Ionicons name="chatbubble-ellipses-outline" size={16} color={Colors.success} />
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={16}
+              color={Colors.successDecoration}
+            />
             <Text style={styles.quickPromptText}>{prompt}</Text>
           </TouchableOpacity>
         ))}
@@ -161,13 +170,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  quickPromptTitle: { fontSize: 14, fontWeight: '700', color: Colors.text, marginTop: 4 },
+  quickPromptTitle: { fontSize: Type.subhead, fontWeight: '700', color: Colors.text, marginTop: 4 },
   quickPrompts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   quickPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '48%',
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 14,
@@ -175,10 +184,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  quickPromptText: { flex: 1, marginLeft: 6, color: Colors.text, fontSize: 13, fontWeight: '600' },
+  quickPromptText: {
+    flex: 1,
+    marginLeft: 6,
+    color: Colors.text,
+    fontSize: Type.footnote,
+    fontWeight: '600',
+  },
   vetToolText: { flex: 1, marginLeft: 10 },
-  vetToolTitle: { color: Colors.success, fontWeight: '700', fontSize: 15 },
-  vetToolHint: { color: Colors.subtext, fontSize: 12, marginTop: 3 },
+  vetToolTitle: { color: Colors.success, fontWeight: '700', fontSize: Type.body },
+  vetToolHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 3 },
   emptyConversation: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
@@ -196,10 +211,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyConversationTitle: { color: Colors.text, fontSize: 17, fontWeight: '800', marginBottom: -6 },
+  emptyConversationTitle: {
+    color: Colors.text,
+    fontSize: Type.headline,
+    fontWeight: '800',
+    marginBottom: -6,
+  },
   introGroup: { width: '100%', gap: 3 },
-  introLabel: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  intro: { color: Colors.subtext, lineHeight: 20, fontSize: 14 },
+  introLabel: { color: Colors.text, fontSize: Type.footnote, fontWeight: '800' },
+  intro: { color: Colors.subtext, lineHeight: 20, fontSize: Type.subhead },
   safetyNote: {
     width: '100%',
     flexDirection: 'row',
@@ -209,7 +229,7 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: Colors.successSoft,
   },
-  safetyNoteText: { flex: 1, color: Colors.subtext, fontSize: 12, lineHeight: 18 },
+  safetyNoteText: { flex: 1, color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
   bubble: { maxWidth: '90%', paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20 },
   userBubble: {
     alignSelf: 'flex-end',
@@ -224,10 +244,10 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 6,
   },
   bubbleHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  bubbleLabel: { fontSize: 11, fontWeight: '800' },
+  bubbleLabel: { fontSize: Type.caption2, fontWeight: '800' },
   userBubbleLabel: { color: Colors.primary },
   assistantBubbleLabel: { color: Colors.success },
-  bubbleText: { color: Colors.text, lineHeight: 23, fontSize: 16 },
+  bubbleText: { color: Colors.text, lineHeight: 23, fontSize: Type.callout },
   expandAnswer: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -236,7 +256,7 @@ const styles = StyleSheet.create({
     marginTop: 7,
     paddingVertical: 3,
   },
-  expandAnswerText: { color: Colors.primary, fontSize: 13, fontWeight: '800' },
+  expandAnswerText: { color: Colors.primary, fontSize: Type.footnote, fontWeight: '800' },
   sources: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -246,7 +266,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
   },
-  sourcesText: { flex: 1, color: Colors.success, fontSize: 12, lineHeight: 17 },
+  sourcesText: { flex: 1, color: Colors.success, fontSize: Type.caption, lineHeight: 17 },
   knowledgeSources: {
     marginTop: 10,
     paddingTop: 8,
@@ -255,7 +275,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   knowledgeHeading: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  knowledgeHeadingText: { color: Colors.primary, fontSize: 12, fontWeight: '700' },
+  knowledgeHeadingText: { color: Colors.primary, fontSize: Type.caption, fontWeight: '700' },
   knowledgeLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
-  knowledgeLinkText: { color: Colors.primary, fontSize: 12, lineHeight: 17, textDecorationLine: 'underline' },
+  knowledgeLinkText: {
+    color: Colors.primary,
+    fontSize: Type.caption,
+    lineHeight: 17,
+    textDecorationLine: 'underline',
+  },
 });

@@ -1,5 +1,5 @@
 /** 用途：查看驅蟲紀錄，提供編輯、複製新增與刪除。 */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useRef } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import { deleteDeworming, getDeworming } from '../../../services/dewormingServic
 import type { Deworming } from '../../../types';
 import { dewormingStyles as styles } from '../dewormingStyles';
 import { dewormingTypeLabels } from '../types';
+import { usePet } from '../../../contexts/PetContext';
 
 function DetailRow({
   label,
@@ -37,6 +38,7 @@ function DetailRow({
 export function DewormingDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
+  const { selectedPet } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'DewormingDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<Deworming | null>(null);
@@ -44,6 +46,7 @@ export function DewormingDetailScreen() {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const mutationLock = useRef(false);
   const userId = session?.userId;
   const recordId = route.params?.recordId;
   useFocusEffect(
@@ -92,7 +95,8 @@ export function DewormingDetailScreen() {
         text: '刪除',
         style: 'destructive',
         onPress: async () => {
-          if (!userId || deleting) return;
+          if (!userId || deleting || mutationLock.current) return;
+          mutationLock.current = true;
           setDeleting(true);
           try {
             await deleteDeworming(userId, record.id);
@@ -100,6 +104,7 @@ export function DewormingDetailScreen() {
           } catch (caught) {
             Alert.alert('刪除失敗', (caught as Error).message || '請稍後再試');
           } finally {
+            mutationLock.current = false;
             setDeleting(false);
           }
         },
@@ -109,7 +114,7 @@ export function DewormingDetailScreen() {
     <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
       <View style={styles.detailHero}>
         <View style={styles.detailHeroIcon}>
-          <Ionicons name="shield-checkmark-outline" size={24} color={Colors.success} />
+          <Ionicons name="shield-checkmark-outline" size={24} color={Colors.successDecoration} />
         </View>
         <View style={styles.detailHeroCopy}>
           <Text style={styles.formEyebrow}>{dewormingTypeLabels[record.type]}</Text>
@@ -136,16 +141,20 @@ export function DewormingDetailScreen() {
         <RecordActionButton
           kind="edit"
           label="編輯紀錄"
+          disabled={deleting}
           style={styles.actionButton}
           onPress={() => navigation.navigate('DewormingForm', { record })}
         />
-        <AppButton
-          title="複製新增"
-          variant="secondary"
-          fullWidth={false}
-          style={[styles.secondary, styles.actionButton]}
-          onPress={() => navigation.navigate('DewormingForm', { record, duplicate: true })}
-        />
+        {!selectedPet?.memorial && (
+          <AppButton
+            title="複製新增"
+            disabled={deleting}
+            variant="secondary"
+            fullWidth={false}
+            style={[styles.secondary, styles.actionButton]}
+            onPress={() => navigation.navigate('DewormingForm', { record, duplicate: true })}
+          />
+        )}
       </View>
       <RecordActionButton
         kind="delete"

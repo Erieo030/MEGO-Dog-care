@@ -13,7 +13,10 @@ import React, {
 import { useAuth } from './AuthContext';
 import * as petService from '../services/petService';
 import { deleteAttachment, uploadPetAvatarImage } from '../services/attachmentService';
-import { Pet, PetFormData } from '../types';
+import { Pet, PetFormData, PetMemorialData } from '../types';
+
+/** 預設選取還在照顧中的毛孩；全部都在回憶中時才選第一隻。 */
+const defaultPetId = (pets: Pet[]) => (pets.find((pet) => !pet.memorial) ?? pets[0])?.id ?? null;
 
 interface PetContextValue {
   pets: Pet[];
@@ -26,6 +29,9 @@ interface PetContextValue {
   createPet: (data: PetFormData) => Promise<Pet>;
   updateSelectedPet: (data: PetFormData) => Promise<void>;
   deleteSelectedPet: () => Promise<void>;
+  /** 回傳被停止的提醒數量。 */
+  memorializeSelectedPet: (data: PetMemorialData) => Promise<number>;
+  restoreSelectedPet: () => Promise<void>;
 }
 
 const PetContext = createContext<PetContextValue | undefined>(undefined);
@@ -33,7 +39,9 @@ const PetContext = createContext<PetContextValue | undefined>(undefined);
 export function PetProvider({ children }: PropsWithChildren) {
   const { session } = useAuth();
   const [pets, setPets] = useState<Pet[]>(session?.pets ?? []);
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(session?.pets[0]?.id ?? null);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(
+    defaultPetId(session?.pets ?? []),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +52,7 @@ export function PetProvider({ children }: PropsWithChildren) {
     loadRequestId.current += 1;
     const nextPets = session?.pets ?? [];
     setPets(nextPets);
-    setSelectedPetId(nextPets[0]?.id ?? null);
+    setSelectedPetId(defaultPetId(nextPets));
     setIsLoading(false);
     setIsRefreshing(false);
     setError(null);
@@ -63,7 +71,7 @@ export function PetProvider({ children }: PropsWithChildren) {
         if (requestId !== loadRequestId.current) return;
         setPets(result);
         setSelectedPetId((current) =>
-          result.some((pet) => pet.id === current) ? current : (result[0]?.id ?? null),
+          result.some((pet) => pet.id === current) ? current : defaultPetId(result),
         );
       } catch (requestError) {
         if (requestId === loadRequestId.current)
@@ -133,6 +141,21 @@ export function PetProvider({ children }: PropsWithChildren) {
           throw error;
         }
         setPets((current) => current.map((pet) => (pet.id === updated.id ? updated : pet)));
+      },
+      memorializeSelectedPet: async (data) => {
+        if (!session?.userId || !selectedPet) return 0;
+        const { pet, stoppedReminderCount } = await petService.setPetMemorial(
+          session.userId,
+          selectedPet.id,
+          data,
+        );
+        setPets((current) => current.map((item) => (item.id === pet.id ? pet : item)));
+        return stoppedReminderCount;
+      },
+      restoreSelectedPet: async () => {
+        if (!session?.userId || !selectedPet) return;
+        const pet = await petService.clearPetMemorial(session.userId, selectedPet.id);
+        setPets((current) => current.map((item) => (item.id === pet.id ? pet : item)));
       },
       deleteSelectedPet: async () => {
         if (!session?.userId || !selectedPet) return;

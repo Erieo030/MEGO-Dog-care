@@ -1,4 +1,4 @@
-/** 用途：組合功能 Stack 與六個底部分頁；照片、地圖暫時為獨立入口。 */
+/** 用途：組合功能 Stack 與四個底部分頁；照護相簿收在紀錄分頁，就醫地圖從首頁與就醫紀錄進入。 */
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import {
   type BottomTabBarButtonProps,
 } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, type EventArg } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
@@ -21,6 +21,7 @@ import HomeScreen from '../screens/HomeScreen';
 import HomeThemeScreen from '../screens/HomeThemeScreen';
 import AIAssistantHubScreen from '../screens/AIAssistantHubScreen';
 import { AddPetScreen, EditPetScreen } from '../screens/ManagePetScreen';
+import PetMemorialScreen from '../features/pets/screens/PetMemorialScreen';
 import SettingsHomeScreen from '../screens/SettingsHomeScreen';
 import {
   AccountInfoScreen,
@@ -41,17 +42,18 @@ import { Colors } from '../constants/Colors';
 import { BottomNavigationDock } from '../components/navigation/BottomNavigationDock';
 import { renderSharedHealthScreens } from './SharedHealthScreens';
 import CarePhotosScreen from '../features/care-photos/CarePhotosScreen';
-import VetMapScreen from '../features/vet-map/VetMapScreen';
 import {
   DOCK_HORIZONTAL_PADDING,
   TAB_ITEM_MARGIN,
 } from '../components/navigation/bottomNavigationLayout';
+import { guardTabNavigation } from '../hooks/useUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 const Tabs = createBottomTabNavigator<MainTabParamList>();
 
 const styles = StyleSheet.create({
   tabLabel: { alignItems: 'center', justifyContent: 'center', marginTop: 0 },
-  tabLabelText: { fontSize: 11, lineHeight: 16, fontWeight: '600' },
+  tabLabelText: { fontSize: Type.caption2, lineHeight: 16, fontWeight: '600' },
   tabLabelActive: { fontWeight: '700' },
   tabIcon: {
     width: 24,
@@ -73,34 +75,6 @@ const Stack = createNativeStackNavigator<HomeStackParamList>();
 const HealthStackNav = createNativeStackNavigator<HomeStackParamList>();
 const TimelineStackNav = createNativeStackNavigator<HomeStackParamList>();
 const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
-const PhotosStackNav = createNativeStackNavigator<HomeStackParamList>();
-const MapStackNav = createNativeStackNavigator<HomeStackParamList>();
-
-function PhotosStack() {
-  return (
-    <PhotosStackNav.Navigator id="PhotosStack" screenOptions={getIosSwipeStackOptions()}>
-      <PhotosStackNav.Screen
-        name="PhotosOverview"
-        component={CarePhotosScreen}
-        options={{ headerShown: false }}
-      />
-      {renderSharedHealthScreens(PhotosStackNav)}
-    </PhotosStackNav.Navigator>
-  );
-}
-
-function MapStack() {
-  return (
-    <MapStackNav.Navigator id="MapStack" screenOptions={getIosSwipeStackOptions()}>
-      <MapStackNav.Screen
-        name="VetMap"
-        component={VetMapScreen}
-        initialParams={{ entry: 'tab' }}
-        options={{ headerShown: false, gestureEnabled: false }}
-      />
-    </MapStackNav.Navigator>
-  );
-}
 
 function resetTabStackToRoot(
   navigation: BottomTabNavigationProp<MainTabParamList>,
@@ -151,9 +125,10 @@ function HomeStack() {
           contentStyle: { backgroundColor: 'transparent' },
         }}
       />
-      <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ title: '今日紀錄' }} />
+      <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ title: '日常紀錄' }} />
       <Stack.Screen name="AddPet" component={AddPetScreen} options={{ title: '新增毛孩' }} />
       <Stack.Screen name="EditPet" component={EditPetScreen} options={{ title: '編輯毛孩資料' }} />
+      <Stack.Screen name="PetMemorial" component={PetMemorialScreen} options={{ title: '回憶' }} />
       <Stack.Screen
         name="ReminderList"
         component={ReminderListScreen}
@@ -203,6 +178,11 @@ function TimelineStack() {
         options={{ headerShown: false }}
       />
       <TimelineStackNav.Screen
+        name="PhotosOverview"
+        component={CarePhotosScreen}
+        options={{ headerShown: false }}
+      />
+      <TimelineStackNav.Screen
         name="ReminderList"
         component={ReminderListScreen}
         options={{ title: '提醒' }}
@@ -210,7 +190,7 @@ function TimelineStack() {
       <TimelineStackNav.Screen
         name="DailyLog"
         component={DailyLogScreen}
-        options={{ title: '今日紀錄' }}
+        options={{ title: '日常紀錄' }}
       />
       <TimelineStackNav.Screen
         name="CreateReminder"
@@ -253,6 +233,11 @@ function ProfileStack() {
         name="EditPet"
         component={EditPetScreen}
         options={{ title: '編輯毛孩資料' }}
+      />
+      <ProfileStackNav.Screen
+        name="PetMemorial"
+        component={PetMemorialScreen}
+        options={{ title: '回憶' }}
       />
       <ProfileStackNav.Screen
         name="AccountInfo"
@@ -374,7 +359,16 @@ export default function MainTabs() {
           tabBarAccessibilityLabel: '首頁',
         }}
         listeners={({ navigation, route }) => ({
-          tabPress: () => resetTabStackToRoot(navigation, route.key, 'HomeOverview'),
+          tabPress: (event) => {
+            if (
+              guardTabNavigation(() => {
+                resetTabStackToRoot(navigation, route.key, 'HomeOverview');
+                navigation.navigate(route.name);
+              })
+            )
+              (event as EventArg<'tabPress', true, undefined>).preventDefault();
+            else resetTabStackToRoot(navigation, route.key, 'HomeOverview');
+          },
         })}
       />
       <Tabs.Screen
@@ -387,31 +381,17 @@ export default function MainTabs() {
           tabBarAccessibilityLabel: '紀錄',
         }}
         listeners={({ navigation, route }) => ({
-          tabPress: () => resetTabStackToRoot(navigation, route.key, 'TimelineOverview'),
+          tabPress: (event) => {
+            if (
+              guardTabNavigation(() => {
+                resetTabStackToRoot(navigation, route.key, 'TimelineOverview');
+                navigation.navigate(route.name);
+              })
+            )
+              (event as EventArg<'tabPress', true, undefined>).preventDefault();
+            else resetTabStackToRoot(navigation, route.key, 'TimelineOverview');
+          },
         })}
-      />
-      <Tabs.Screen
-        name="Photos"
-        component={PhotosStack}
-        options={{
-          tabBarButton: TabBubbleButton,
-          tabBarIcon: icon('images-outline'),
-          tabBarLabel: tabLabel('照片'),
-          tabBarAccessibilityLabel: '照護照片',
-        }}
-        listeners={({ navigation, route }) => ({
-          tabPress: () => resetTabStackToRoot(navigation, route.key, 'PhotosOverview'),
-        })}
-      />
-      <Tabs.Screen
-        name="Map"
-        component={MapStack}
-        options={{
-          tabBarButton: TabBubbleButton,
-          tabBarIcon: icon('map-outline'),
-          tabBarLabel: tabLabel('地圖'),
-          tabBarAccessibilityLabel: '就醫地圖',
-        }}
       />
       <Tabs.Screen
         name="Health"
@@ -424,7 +404,16 @@ export default function MainTabs() {
           tabBarAccessibilityLabel: 'MEGO AI',
         }}
         listeners={({ navigation, route }) => ({
-          tabPress: () => resetTabStackToRoot(navigation, route.key, 'HealthOverview'),
+          tabPress: (event) => {
+            if (
+              guardTabNavigation(() => {
+                resetTabStackToRoot(navigation, route.key, 'HealthOverview');
+                navigation.navigate(route.name);
+              })
+            )
+              (event as EventArg<'tabPress', true, undefined>).preventDefault();
+            else resetTabStackToRoot(navigation, route.key, 'HealthOverview');
+          },
         })}
       />
       <Tabs.Screen
@@ -437,7 +426,16 @@ export default function MainTabs() {
           tabBarAccessibilityLabel: '設定',
         }}
         listeners={({ navigation, route }) => ({
-          tabPress: () => resetTabStackToRoot(navigation, route.key, 'ProfileOverview'),
+          tabPress: (event) => {
+            if (
+              guardTabNavigation(() => {
+                resetTabStackToRoot(navigation, route.key, 'ProfileOverview');
+                navigation.navigate(route.name);
+              })
+            )
+              (event as EventArg<'tabPress', true, undefined>).preventDefault();
+            else resetTabStackToRoot(navigation, route.key, 'ProfileOverview');
+          },
         })}
       />
     </Tabs.Navigator>
