@@ -6,7 +6,6 @@ import { Alert, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { Colors } from '../../../constants/Colors';
@@ -94,16 +93,12 @@ export function VaccinationFormScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={styles.formIntro}>
-          <View style={styles.formIntroIcon}>
-            <Ionicons name="medkit-outline" size={22} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.formIntroCopy}>
-            <Text style={styles.formEyebrow}>接種照護</Text>
-            <Text style={styles.title}>{existing ? '編輯疫苗' : '新增疫苗'}</Text>
-            <Text style={styles.formHint}>保留接種日期與下次安排，日後更容易回看。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.formIntro}
+          title={existing ? '編輯疫苗' : '新增疫苗'}
+          description="記下接種日期與下次安排"
+          icon="medkit-outline"
+        />
         {fields
           .filter(([key]) => key !== 'notes')
           .map(([key, label]) => {

@@ -78,7 +78,7 @@ export function renderSharedHealthScreens(Screen: HomeStackNavigator) {
       <Screen.Screen
         name="WeightList"
         component={WeightListScreen}
-        options={{ title: '體重紀錄' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="VaccinationList"

@@ -26,6 +26,7 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import ScreenState from '../components/ScreenState';
+import { ScreenPageHeader, ScreenPageFrame, ScreenPageState } from '../components/ScreenPageHeader';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { SoftEntrance } from '../components/SoftMotion';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
@@ -91,9 +92,8 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   useUnsavedChangesGuard(dirty, discard);
   const recordDate = draft.localDate || requestedDate;
   const dateLabel = dailyLogDateLabel(recordDate);
-  React.useEffect(() => {
-    navigation.setOptions({ title: `${dateLabel}紀錄` });
-  }, [dateLabel, navigation]);
+  const headerDescription =
+    recordDate === dateKey() ? '記下今天的吃喝與精神' : '記下這一天的吃喝與精神';
   const [classifierExpanded, setClassifierExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -259,156 +259,162 @@ export default function DailyLogScreen({ route, navigation }: Props) {
       { cancelable: false },
     );
   };
-  if (loading) return <ScreenState loading text="載入中…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="日常紀錄" description={headerDescription} icon="book-outline">
+        <ScreenState loading text="載入中…" />
+      </ScreenPageState>
+    );
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={[s.page, { paddingBottom: bottomContentPadding }]}
-    >
-      <View style={s.pageDecoration}>
-        <SoftEntrance>
-          <Image
-            accessible={false}
-            resizeMode="contain"
-            source={DAILY_ARTWORKS[settings.homeTheme]}
-            style={s.pageArtwork}
-          />
-        </SoftEntrance>
-      </View>
-      <View style={s.intro}>
-        <View style={s.introIcon}>
-          <Ionicons name="paw-outline" size={20} color={Colors.primaryDecoration} />
-        </View>
-        <View style={s.introCopy}>
-          <Text style={s.introTitle}>{dateLabel}的日常觀察</Text>
-          <Text style={s.introHint}>用幾個小選項，留下毛孩這一天的狀況。</Text>
-        </View>
-      </View>
-      {error ? (
-        <Text accessibilityRole="alert" style={s.error}>
-          {error}
-        </Text>
-      ) : null}
-      {error && !dirty ? (
-        <AppButton title="重新載入" variant="tertiary" onPress={() => void load()} />
-      ) : null}
-      <Text style={s.label}>喝水量</Text>
-      <Options values={water} value={draft.waterLevel} onPick={(v) => set('waterLevel', v)} />
-      <Text style={s.label}>飼料量</Text>
-      <Options values={water} value={draft.foodLevel} onPick={(v) => set('foodLevel', v)} />
-      <Text style={s.label}>精神狀態</Text>
-      <Options values={energy} value={draft.energyLevel} onPick={(v) => set('energyLevel', v)} />
-      <Text style={s.label}>大便狀況</Text>
-      <Options values={stool} value={draft.stoolLevel} onPick={(v) => set('stoolLevel', v)} />
-      <View style={s.classifierSection}>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityState={{ expanded: classifierExpanded }}
-          accessibilityLabel="用照片取得建議"
-          style={s.classifierHeading}
-          onPress={() => setClassifierExpanded((value) => !value)}
-        >
-          <Ionicons name="scan-outline" size={18} color={Colors.primaryDecoration} />
-          <Text style={s.classifierTitle}>用照片取得建議</Text>
-          <Ionicons
-            name={classifierExpanded ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color={Colors.subtext}
-          />
-        </TouchableOpacity>
-        {classifierExpanded ? (
-          <>
-            <Text style={s.classifierHint}>
-              你選擇辨識後，照片會送至 MEGO 後端暫時處理，不會存入照護紀錄或附件，也不會傳給 MEGO
-              AI。結果僅供參考，請確認大便狀況選項。
-            </Text>
-            <View style={s.classifierActions}>
-              <AppButton
-                title={classifying ? '辨識中…' : '拍照辨識'}
-                variant="secondary"
-                disabled={classifying}
-                accessibilityLabel="拍攝糞便照片並取得分類建議"
-                style={s.classifierButton}
-                onPress={() => void runStoolClassification('camera')}
-              >
-                {classifying ? (
-                  <ActivityIndicator color={Colors.success} />
-                ) : (
-                  <Ionicons name="camera-outline" size={19} color={Colors.successDecoration} />
-                )}
-                <Text style={s.classifierButtonText}>{classifying ? '辨識中…' : '拍照辨識'}</Text>
-              </AppButton>
-              <AppButton
-                title="從相簿選擇"
-                variant="secondary"
-                disabled={classifying}
-                accessibilityLabel="從相簿選取糞便照片並取得分類建議"
-                style={s.classifierButton}
-                onPress={() => void runStoolClassification('library')}
-              >
-                <Ionicons name="images-outline" size={19} color={Colors.successDecoration} />
-                <Text style={s.classifierButtonText}>從相簿選擇</Text>
-              </AppButton>
-            </View>
-          </>
-        ) : null}
-        {stoolSuggestion ? (
-          <View style={s.suggestion} accessibilityLiveRegion="polite">
-            <Text style={s.suggestionTitle}>
-              {stoolSuggestion.status === 'ok'
-                ? `照片建議：${stoolSuggestion.suggestedStoolLabel}（信心 ${Math.round(stoolSuggestion.confidence * 100)}%）`
-                : stoolSuggestion.message || '目前無法判斷照片'}
-            </Text>
-            <Text style={s.suggestionText}>
-              {stoolSuggestion.status === 'ok'
-                ? `目前選擇：${stool.find(([value]) => value === draft.stoolLevel)?.[1] || '尚未選擇'}。請確認或手動修改，再儲存紀錄。`
-                : '請重新拍攝，或直接手動選擇大便狀況。'}
-            </Text>
-            {stoolSuggestion.status === 'ok' &&
-            stoolSuggestion.suggestedStoolLevel &&
-            draft.stoolLevel !== stoolSuggestion.suggestedStoolLevel ? (
-              <AppButton
-                title={`採用建議：${stoolSuggestion.suggestedStoolLabel}`}
-                variant="secondary"
-                onPress={() => set('stoolLevel', stoolSuggestion.suggestedStoolLevel!)}
-              />
-            ) : null}
-            <Text style={s.suggestionDisclaimer}>{stoolSuggestion.disclaimer}</Text>
-          </View>
-        ) : null}
-      </View>
-      <SupplementalNotesField
-        value={draft.notes || ''}
-        onChange={(value) => set('notes', value)}
-        maxLength={150}
-      />
-      <AppButton
-        title={
-          saving
-            ? '儲存中…'
-            : record
-              ? '儲存這筆紀錄'
-              : recordDate === dateKey()
-                ? '儲存今日紀錄'
-                : '儲存這天的紀錄'
-        }
-        variant="primary"
-        disabled={saving || deleting}
-        busy={saving}
-        style={s.save}
-        textStyle={s.saveText}
-        onPress={save}
-      />
-      {record && !quickEntry ? (
-        <RecordActionButton
-          kind="delete"
-          label={deleting ? '刪除中…' : '刪除這筆紀錄'}
-          disabled={saving || deleting}
-          busy={deleting}
-          style={s.deleteAction}
-          onPress={remove}
+    <ScreenPageFrame>
+      <KeyboardAwareScrollView
+        contentContainerStyle={[s.page, { paddingBottom: bottomContentPadding }]}
+      >
+        <ScreenPageHeader
+          title="日常紀錄"
+          description={headerDescription}
+          icon="book-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
         />
-      ) : null}
-    </KeyboardAwareScrollView>
+        <View style={s.pageDecoration}>
+          <SoftEntrance>
+            <Image
+              accessible={false}
+              resizeMode="contain"
+              source={DAILY_ARTWORKS[settings.homeTheme]}
+              style={s.pageArtwork}
+            />
+          </SoftEntrance>
+        </View>
+        <Text style={s.introHint}>紀錄日期：{dateLabel}</Text>
+        {error ? (
+          <Text accessibilityRole="alert" style={s.error}>
+            {error}
+          </Text>
+        ) : null}
+        {error && !dirty ? (
+          <AppButton title="重新載入" variant="tertiary" onPress={() => void load()} />
+        ) : null}
+        <Text style={s.label}>喝水量</Text>
+        <Options values={water} value={draft.waterLevel} onPick={(v) => set('waterLevel', v)} />
+        <Text style={s.label}>飼料量</Text>
+        <Options values={water} value={draft.foodLevel} onPick={(v) => set('foodLevel', v)} />
+        <Text style={s.label}>精神狀態</Text>
+        <Options values={energy} value={draft.energyLevel} onPick={(v) => set('energyLevel', v)} />
+        <Text style={s.label}>大便狀況</Text>
+        <Options values={stool} value={draft.stoolLevel} onPick={(v) => set('stoolLevel', v)} />
+        <View style={s.classifierSection}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ expanded: classifierExpanded }}
+            accessibilityLabel="用照片取得建議"
+            style={s.classifierHeading}
+            onPress={() => setClassifierExpanded((value) => !value)}
+          >
+            <Ionicons name="scan-outline" size={18} color={Colors.primaryDecoration} />
+            <Text style={s.classifierTitle}>用照片取得建議</Text>
+            <Ionicons
+              name={classifierExpanded ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={Colors.subtext}
+            />
+          </TouchableOpacity>
+          {classifierExpanded ? (
+            <>
+              <Text style={s.classifierHint}>
+                你選擇辨識後，照片會送至 MEGO 後端暫時處理，不會存入照護紀錄或附件，也不會傳給 MEGO
+                AI。結果僅供參考，請確認大便狀況選項。
+              </Text>
+              <View style={s.classifierActions}>
+                <AppButton
+                  title={classifying ? '辨識中…' : '拍照辨識'}
+                  variant="secondary"
+                  disabled={classifying}
+                  accessibilityLabel="拍攝糞便照片並取得分類建議"
+                  style={s.classifierButton}
+                  onPress={() => void runStoolClassification('camera')}
+                >
+                  {classifying ? (
+                    <ActivityIndicator color={Colors.success} />
+                  ) : (
+                    <Ionicons name="camera-outline" size={19} color={Colors.successDecoration} />
+                  )}
+                  <Text style={s.classifierButtonText}>{classifying ? '辨識中…' : '拍照辨識'}</Text>
+                </AppButton>
+                <AppButton
+                  title="從相簿選擇"
+                  variant="secondary"
+                  disabled={classifying}
+                  accessibilityLabel="從相簿選取糞便照片並取得分類建議"
+                  style={s.classifierButton}
+                  onPress={() => void runStoolClassification('library')}
+                >
+                  <Ionicons name="images-outline" size={19} color={Colors.successDecoration} />
+                  <Text style={s.classifierButtonText}>從相簿選擇</Text>
+                </AppButton>
+              </View>
+            </>
+          ) : null}
+          {stoolSuggestion ? (
+            <View style={s.suggestion} accessibilityLiveRegion="polite">
+              <Text style={s.suggestionTitle}>
+                {stoolSuggestion.status === 'ok'
+                  ? `照片建議：${stoolSuggestion.suggestedStoolLabel}（信心 ${Math.round(stoolSuggestion.confidence * 100)}%）`
+                  : stoolSuggestion.message || '目前無法判斷照片'}
+              </Text>
+              <Text style={s.suggestionText}>
+                {stoolSuggestion.status === 'ok'
+                  ? `目前選擇：${stool.find(([value]) => value === draft.stoolLevel)?.[1] || '尚未選擇'}。請確認或手動修改，再儲存紀錄。`
+                  : '請重新拍攝，或直接手動選擇大便狀況。'}
+              </Text>
+              {stoolSuggestion.status === 'ok' &&
+              stoolSuggestion.suggestedStoolLevel &&
+              draft.stoolLevel !== stoolSuggestion.suggestedStoolLevel ? (
+                <AppButton
+                  title={`採用建議：${stoolSuggestion.suggestedStoolLabel}`}
+                  variant="secondary"
+                  onPress={() => set('stoolLevel', stoolSuggestion.suggestedStoolLevel!)}
+                />
+              ) : null}
+              <Text style={s.suggestionDisclaimer}>{stoolSuggestion.disclaimer}</Text>
+            </View>
+          ) : null}
+        </View>
+        <SupplementalNotesField
+          value={draft.notes || ''}
+          onChange={(value) => set('notes', value)}
+          maxLength={150}
+        />
+        <AppButton
+          title={
+            saving
+              ? '儲存中…'
+              : record
+                ? '儲存這筆紀錄'
+                : recordDate === dateKey()
+                  ? '儲存今日紀錄'
+                  : '儲存這天的紀錄'
+          }
+          variant="primary"
+          disabled={saving || deleting}
+          busy={saving}
+          style={s.save}
+          textStyle={s.saveText}
+          onPress={save}
+        />
+        {record && !quickEntry ? (
+          <RecordActionButton
+            kind="delete"
+            label={deleting ? '刪除中…' : '刪除這筆紀錄'}
+            disabled={saving || deleting}
+            busy={deleting}
+            style={s.deleteAction}
+            onPress={remove}
+          />
+        ) : null}
+      </KeyboardAwareScrollView>
+    </ScreenPageFrame>
   );
 }
 function Options({
@@ -441,27 +447,6 @@ const s = StyleSheet.create({
   page: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
   pageDecoration: { alignItems: 'flex-end', minHeight: 20, marginBottom: 2 },
   pageArtwork: { width: 76, height: 51 },
-  intro: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.60)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(183,101,59,0.12)',
-    padding: 12,
-    marginBottom: 2,
-  },
-  introIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
   introHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2, lineHeight: 17 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   title: { fontSize: Type.title1, fontWeight: '700', marginBottom: 14, color: Colors.text },

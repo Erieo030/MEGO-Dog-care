@@ -6,7 +6,7 @@ import DailyLogScreen from '../DailyLogScreen';
 import * as logs from '../../services/dailyLogService';
 import { classifyStoolPhoto } from '../../services/stoolClassifierService';
 const mockPet = { id: 'p1' };
-const mockNavigation = { setOptions: jest.fn(), popToTop: jest.fn() };
+const mockNavigation = { setOptions: jest.fn(), popToTop: jest.fn(), goBack: jest.fn() };
 let mockFocus = 0;
 jest.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
@@ -22,6 +22,7 @@ jest.mock('@react-navigation/native', () => {
   const react = jest.requireActual('react');
   return {
     useFocusEffect: (callback: () => void) => react.useEffect(callback, [callback, mockFocus]),
+    useNavigation: () => mockNavigation,
   };
 });
 jest.mock('../../hooks/useUnsavedChangesGuard', () => ({ useUnsavedChangesGuard: jest.fn() }));
@@ -33,7 +34,11 @@ jest.mock('../../contexts/SettingsContext', () => ({
 jest.mock('../../components/navigation/useTabContentBottomPadding', () => ({
   useTabContentBottomPadding: () => 96,
 }));
-jest.mock('../../components/SoftMotion', () => ({ SoftEntrance: 'SoftEntrance' }));
+jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
+jest.mock('../../components/SoftMotion', () => ({
+  SoftEntrance: 'SoftEntrance',
+  SoftButton: 'SoftButton',
+}));
 jest.mock('../../components/AppButton', () => ({ AppButton: 'AppButton' }));
 jest.mock('../../components/RecordActionButton', () => ({
   RecordActionButton: 'RecordActionButton',
@@ -92,7 +97,19 @@ test('saving a backdated entry uses the requested date and matching title', asyn
     'p1',
     expect.objectContaining({ localDate: '2026-10-03' }),
   );
-  expect(mockNavigation.setOptions).toHaveBeenCalledWith({ title: '2026 年 10 月 3 日紀錄' });
+  expect(
+    screen.root.findAll(
+      (node) => node.type === ('Text' as never) && node.props.children === '日常紀錄',
+    ),
+  ).toHaveLength(1);
+  expect(
+    screen.root.findAll(
+      (node) =>
+        node.type === ('Text' as never) &&
+        JSON.stringify(node.props.children).includes('2026 年 10 月 3 日'),
+    ),
+  ).toHaveLength(1);
+  expect(mockNavigation.setOptions).not.toHaveBeenCalled();
 });
 test('returning focus does not reload over edited choices', async () => {
   await mount();

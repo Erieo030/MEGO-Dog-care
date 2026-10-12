@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePet } from '../../contexts/PetContext';
 import FilterChip from '../../components/FilterChip';
+import { ScreenPageHeader } from '../../components/ScreenPageHeader';
 import { Colors } from '../../constants/Colors';
 import { useTabContentBottomPadding } from '../../components/navigation/useTabContentBottomPadding';
 import type { HomeStackParamList } from '../../navigation/types';
@@ -82,16 +83,11 @@ export default function CarePhotosScreen({ navigation }: Props) {
         refreshing={data.loading}
         ListHeaderComponent={
           <View style={styles.header}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="返回紀錄"
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="chevron-back" size={22} color={Colors.text} />
-            </TouchableOpacity>
-            <Text style={styles.title}>照護相簿</Text>
-            <Text style={styles.subtitle}>把照護留下的照片，依日期收在一起。</Text>
+            <ScreenPageHeader
+              title="照護相簿"
+              description="依日期回顧毛孩照護照片"
+              icon="images-outline"
+            />
             <View style={styles.petRow}>
               <Ionicons name="paw-outline" size={22} color={Colors.primaryDecoration} />
               <Text numberOfLines={2} style={styles.petName}>

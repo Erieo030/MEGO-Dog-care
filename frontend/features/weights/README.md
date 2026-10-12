@@ -8,3 +8,5 @@
 `WeightLineChart` 以內層繪圖容器的實際寬度定位圖點，保留邊緣空間避免節點裁切。`WeightListScreen` 的歷史紀錄預設顯示最新 3 筆，可展開全部；篩選仍同時套用趨勢圖及清單。
 
 既有 `WeightListScreen` 保留 navigator route、資料載入、刪除、重新整理與表單導航。
+
+首頁捷徑開啟 `WeightFormScreen`，不是 `WeightListScreen`。表單的「新增體重／編輯體重」使用共用 `ScreenPageHeader` 排版 F；標題列沒有舊卡片外框，與其他快速紀錄頁一致。體重輸入、日期驗證、附件與儲存流程保持原樣。

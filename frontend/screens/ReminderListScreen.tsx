@@ -43,6 +43,7 @@ import {
   default as ReminderListState,
 } from '../features/reminders/components/ReminderListState';
 import { Type } from '../constants/Typography';
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'ReminderList'>;
 
@@ -176,8 +177,18 @@ export default function ReminderListScreen({ navigation, route }: Props) {
     setMoreItem(null);
     requestAnimationFrame(() => requestAnimationFrame(action));
   };
-  if (loading) return <ReminderListLoadingState />;
-  if (error) return <ReminderListState text={error} onAction={load} />;
+  if (loading)
+    return (
+      <ScreenPageState title="提醒" description="管理待辦與通知時間" icon="notifications">
+        <ReminderListLoadingState />
+      </ScreenPageState>
+    );
+  if (error)
+    return (
+      <ScreenPageState title="提醒" description="管理待辦與通知時間" icon="notifications">
+        <ReminderListState text={error} onAction={load} />
+      </ScreenPageState>
+    );
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <FlatList
@@ -200,6 +211,14 @@ export default function ReminderListScreen({ navigation, route }: Props) {
         }
         ListHeaderComponent={
           <>
+            <ScreenPageHeader
+              title="提醒"
+              description="管理待辦與通知時間"
+              icon="notifications"
+              iconColor={Colors.primaryDecoration}
+              iconBackground={Colors.primarySoft}
+              style={{ marginBottom: 12 }}
+            />
             {customItem && (
               <DatePickerField
                 label="自訂延後時間"

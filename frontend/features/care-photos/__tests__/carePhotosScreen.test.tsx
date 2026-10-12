@@ -5,6 +5,7 @@ import CarePhotosScreen from '../CarePhotosScreen';
 import { photo } from './carePhotoFixture';
 
 const mockNavigate = jest.fn();
+const mockGoBack = jest.fn();
 const mockRefresh = jest.fn();
 const mockLoadMore = jest.fn();
 const mockPhoto = photo('a');
@@ -45,6 +46,8 @@ jest.mock('react-native', () => {
 });
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: mockGoBack }) }));
+jest.mock('../../../components/SoftMotion', () => ({ SoftButton: 'SoftButton' }));
 jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({ session: { userId: 'u1' } }),
 }));
@@ -94,6 +97,30 @@ beforeEach(() => {
 });
 afterEach(async () => {
   if (screen) await act(async () => screen.unmount());
+});
+
+test('album uses the shared one-row heading and returns through the same back action', async () => {
+  await mount();
+  const title = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === '照護相簿',
+  );
+  expect(title).toHaveLength(1);
+  expect(title[0].props.accessibilityRole).toBe('header');
+  const description = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === '依日期回顧毛孩照護照片',
+  )[0];
+  expect(description.props.numberOfLines).toBe(2);
+  const back = byLabel('返回上一頁');
+  expect(back.props.style).toEqual(
+    expect.objectContaining({ width: 44, height: 44, borderRadius: 14 }),
+  );
+  await act(async () => back.props.onPress());
+  expect(mockGoBack).toHaveBeenCalledTimes(1);
+  expect(
+    screen.root.findAll(
+      (node) => node.type === ('Icon' as never) && node.props.name === 'images-outline',
+    ),
+  ).toHaveLength(1);
 });
 
 test('sensitive thumbnails start hidden, previews open full screen, and original records remain reachable', async () => {

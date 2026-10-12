@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Colors } from '../constants/Colors';
@@ -31,15 +32,14 @@ export default function AbnormalRecordTypeScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="heart-outline" size={22} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.title}>發生什麼狀況？</Text>
-            <Text style={styles.subtitle}>只記錄需要注意的異常，不必每天填寫。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title="記錄異常"
+          description="發生什麼狀況？選一種記下"
+          icon="alert-circle"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         {TYPES.map(([type, label, icon]) => (
           <TouchableOpacity
             key={type}

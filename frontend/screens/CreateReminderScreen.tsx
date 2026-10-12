@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -152,17 +153,14 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="notifications-outline" size={20} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.introTitle}>
-              {existing ? '調整照護安排' : '安排下一件照護事項'}
-            </Text>
-            <Text style={styles.introHint}>完成後會保留在 App 內，並依通知設定提醒你。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={existing ? '編輯提醒' : '新增提醒'}
+          description="安排照護與通知時間"
+          icon="notifications"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <Label text="提醒類型（必填）" />
         <View style={styles.chips}>
           {REMINDER_TYPES.map((item) => (
@@ -230,27 +228,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 13,
-  },
-  introIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
-  introHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
+  intro: { marginBottom: 12 },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,

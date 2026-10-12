@@ -77,7 +77,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
   );
   if (loading)
     return (
-      <ScreenPageState title="就醫紀錄">
+      <ScreenPageState title="就醫紀錄" description="回顧每次看診重點" icon="business-outline">
         <ScreenState loading text="正在載入就醫紀錄…" />
       </ScreenPageState>
     );
@@ -102,17 +102,12 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
         }
         ListHeaderComponent={
           <>
-            <ScreenPageHeader style={s.listHeader}>
-              <View style={s.listHeaderIcon}>
-                <Ionicons name="business-outline" size={23} color={Colors.successDecoration} />
-              </View>
-              <View style={s.listHeaderBody}>
-                <Text style={s.title}>就醫紀錄</Text>
-                <Text style={s.listSubtitle}>
-                  保存 {selectedPet?.name || '毛孩'} 每次看診的重要內容
-                </Text>
-              </View>
-            </ScreenPageHeader>
+            <ScreenPageHeader
+              style={s.listHeader}
+              title="就醫紀錄"
+              description="回顧每次看診重點"
+              icon="business-outline"
+            />
             {selectedPet?.memorial ? (
               <MemorialReadOnlyNotice petName={selectedPet.name} />
             ) : (

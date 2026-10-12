@@ -26,10 +26,41 @@ test('page header exposes a labeled 44-unit back button and delegates navigation
   expect(back.props.accessibilityLabel).toBe('返回上一頁');
   const style = back.props.style({ pressed: false });
   expect(style).toEqual(
-    expect.arrayContaining([expect.objectContaining({ width: 44, minHeight: 44 })]),
+    expect.arrayContaining([
+      expect.objectContaining({
+        width: 44,
+        height: 44,
+        borderRadius: 14,
+        backgroundColor: expect.any(String),
+      }),
+    ]),
   );
   await act(async () => back.props.onPress());
   expect(mockGoBack).toHaveBeenCalledTimes(1);
+});
+test('layout F keeps title and two-line description between the back button and optional icon', async () => {
+  await act(async () => {
+    screen = create(
+      <ScreenPageHeader title="疫苗紀錄" description="查看接種與下次日期" icon="medkit-outline" />,
+    );
+  });
+  const description = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === '查看接種與下次日期',
+  )[0];
+  expect(description.props.numberOfLines).toBe(2);
+  expect(description.props.ellipsizeMode).toBe('tail');
+  const header = screen.root.findAllByType('View' as never)[0];
+  expect(header.children).toHaveLength(3);
+  expect(screen.root.findAllByType('Icon' as never).map((node) => node.props.name)).toEqual([
+    'chevron-back',
+    'medkit-outline',
+  ]);
+});
+test('the category icon is optional', async () => {
+  await act(async () => {
+    screen = create(<ScreenPageHeader title="提醒" />);
+  });
+  expect(screen.root.findAllByType('Icon' as never)).toHaveLength(1);
 });
 test.each(['載入中', '載入失敗', '找不到紀錄'])(
   'state %s retains top safe area and visible back action',

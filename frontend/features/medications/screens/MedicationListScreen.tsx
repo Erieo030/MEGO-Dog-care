@@ -77,7 +77,7 @@ export function MedicationListScreen() {
 
   if (loading)
     return (
-      <ScreenPageState title="用藥紀錄">
+      <ScreenPageState title="用藥紀錄" description="查看療程與用藥提醒" icon="medical-outline">
         <ScreenState loading text="載入中…" />
       </ScreenPageState>
     );
@@ -111,17 +111,12 @@ export function MedicationListScreen() {
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
         ListHeaderComponent={
           <>
-            <ScreenPageHeader style={styles.listHeader}>
-              <View style={styles.listHeaderIcon}>
-                <Ionicons name="medical-outline" size={23} color={Colors.successDecoration} />
-              </View>
-              <View style={styles.listHeaderBody}>
-                <Text style={styles.title}>用藥管理</Text>
-                <Text style={styles.listSubtitle}>
-                  整理 {selectedPet?.name || '毛孩'} 的療程與提醒
-                </Text>
-              </View>
-            </ScreenPageHeader>
+            <ScreenPageHeader
+              style={styles.listHeader}
+              title="用藥紀錄"
+              description="查看療程與用藥提醒"
+              icon="medical-outline"
+            />
             {error ? (
               <TouchableOpacity onPress={() => void load()}>
                 <Text style={styles.error}>{error}（重試）</Text>

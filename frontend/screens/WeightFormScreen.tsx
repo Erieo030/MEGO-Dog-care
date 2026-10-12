@@ -4,9 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
-import { Alert, View, StyleSheet, Text, TextInput } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
@@ -33,7 +32,6 @@ import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/weightService';
 import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
-import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'WeightForm'>;
 
@@ -116,15 +114,12 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="scale-outline" size={20} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.introTitle}>{record ? '更新這次測量' : '記下今天的體重'}</Text>
-            <Text style={styles.introHint}>固定在相近條件下量測，更容易比較變化。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={record ? '編輯體重' : '新增體重'}
+          description="相近條件量測更容易比較"
+          icon="scale-outline"
+        />
         <Text style={styles.label}>體重（kg）（必填）</Text>
         <TextInput
           style={styles.input}
@@ -174,27 +169,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 13,
-  },
-  introIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: Colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
-  introHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
+  intro: { marginBottom: 12 },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,

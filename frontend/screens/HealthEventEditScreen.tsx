@@ -5,7 +5,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
@@ -177,16 +176,14 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={styles.formIntro}>
-          <View style={styles.formIntroIcon}>
-            <Ionicons name="heart-outline" size={23} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.formIntroCopy}>
-            <Text style={styles.formEyebrow}>健康觀察</Text>
-            <Text style={styles.title}>編輯健康紀錄</Text>
-            <Text style={styles.formHint}>保留當時看到的狀況，方便日後回看趨勢。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.formIntro}
+          title="編輯健康紀錄"
+          description="保留當時看到的狀況"
+          icon="heart-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <Text style={styles.sectionHeading}>這次觀察</Text>
         <Text style={styles.label}>異常類型（必填）</Text>
         <View style={styles.chips}>

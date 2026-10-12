@@ -3,6 +3,7 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { Alert } from 'react-native';
 import { guardTabNavigation } from '../../hooks/useUnsavedChangesGuard';
+import { ScreenPageHeader } from '../../components/ScreenPageHeader';
 import MedicalVisitFormScreen from '../MedicalVisitFormScreen';
 import StoolHealthEventScreen from '../StoolHealthEventScreen';
 import VomitingHealthEventScreen from '../VomitingHealthEventScreen';
@@ -152,6 +153,55 @@ beforeEach(() => {
 afterEach(async () => {
   if (screen) await act(async () => screen.unmount());
 });
+
+test.each([
+  [WeightFormScreen, { quickEntry: true }, '新增體重', 'scale-outline'],
+  [
+    WeightFormScreen,
+    { record: { id: 'w1', petId: 'p1', weightKg: 8, measuredAt: '2026-10-01T12:00:00+08:00' } },
+    '編輯體重',
+    'scale-outline',
+  ],
+  [CreateReminderScreen, { quickEntry: true }, '新增提醒', 'notifications'],
+  [
+    CreateReminderScreen,
+    {
+      reminder: {
+        id: 'r1',
+        type: 'other',
+        title: '回診',
+        scheduledAt: '2030-10-01T12:00:00+08:00',
+        status: 'pending',
+      },
+    },
+    '編輯提醒',
+    'notifications',
+  ],
+])(
+  'weight and reminder entry forms use the shared heading: %s %j',
+  async (Component, params, title, icon) => {
+    mockRoute = { params };
+    await act(async () => {
+      screen = create(
+        React.createElement(Component as unknown as React.ComponentType<Record<string, unknown>>, {
+          navigation: mockNavigation,
+          route: { params },
+        }),
+      );
+    });
+    const header = screen.root.findByType(ScreenPageHeader);
+    expect(header.props.title).toBe(title);
+    expect(header.props.icon).toBe(icon);
+    expect(header.props.description.length).toBeLessThanOrEqual(14);
+    expect(header.props.style).toEqual({ marginBottom: 12 });
+    const back = screen.root.findAll(
+      (node) => typeof node.type === 'string' && node.props.accessibilityLabel === '返回上一頁',
+    )[0];
+    await act(async () => back.props.onPress());
+    expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
+    expect(guardTabNavigation(jest.fn())).toBe(false);
+  },
+);
 test.each(cases)(
   '%s form preserves edits until discard is confirmed',
   async (_name, Component, params) => {

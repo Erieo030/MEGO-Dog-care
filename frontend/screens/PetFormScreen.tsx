@@ -63,7 +63,6 @@ export default function PetFormScreen({
   pageHeader = false,
 }: PetFormScreenProps) {
   const { session } = useAuth();
-  const Intro = pageHeader ? ScreenPageHeader : View;
   const [form, setForm] = useState<PetData>({ ...emptyPetData, ...initialData });
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(form, setForm);
@@ -125,16 +124,27 @@ export default function PetFormScreen({
             bottomContentPadding !== undefined && { paddingBottom: bottomContentPadding },
           ]}
         >
-          <Intro style={styles.formIntro}>
-            <View style={styles.formIntroIcon}>
-              <Ionicons name="paw" size={23} color={Colors.primaryDecoration} />
+          {pageHeader ? (
+            <ScreenPageHeader
+              style={styles.formIntro}
+              title={title}
+              description="先完成毛孩的基本資料"
+              icon="paw"
+              iconColor={Colors.primaryDecoration}
+              iconBackground={Colors.primarySoft}
+            />
+          ) : (
+            <View style={styles.formIntro}>
+              <View style={styles.formIntroIcon}>
+                <Ionicons name="paw" size={23} color={Colors.primaryDecoration} />
+              </View>
+              <View style={styles.formIntroCopy}>
+                <Text style={styles.formEyebrow}>毛孩資料</Text>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.formHint}>先完成基本資料，日後照護紀錄會更貼近牠。</Text>
+              </View>
             </View>
-            <View style={styles.formIntroCopy}>
-              <Text style={styles.formEyebrow}>毛孩資料</Text>
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.formHint}>先完成基本資料，日後照護紀錄會更貼近牠。</Text>
-            </View>
-          </Intro>
+          )}
 
           <PetAvatarPicker
             avatarUri={form.avatarUri}

@@ -5,16 +5,7 @@ import { Type } from '../../constants/Typography';
 export const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: Colors.background },
   list: { paddingHorizontal: 20 },
-  header: { paddingTop: 16, paddingBottom: 20 },
-  backButton: {
-    width: 44,
-    height: 44,
-    marginLeft: -8,
-    marginBottom: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: { fontSize: Type.display, lineHeight: 36, fontWeight: '800', color: Colors.text },
+  header: { paddingTop: 18, paddingBottom: 20 },
   subtitle: { fontSize: Type.subhead, lineHeight: 21, color: Colors.subtext, marginTop: 6 },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, marginBottom: 16 },
   petName: { flex: 1, minWidth: 0, fontSize: Type.headline, fontWeight: '700', color: Colors.text },

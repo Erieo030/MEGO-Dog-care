@@ -186,18 +186,14 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         ref={scrollRef}
         contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={s.formIntro}>
-          <View style={s.formIntroIcon}>
-            <Ionicons name="medical-outline" size={23} color={Colors.primaryDecoration} />
-          </View>
-          <View style={s.formIntroCopy}>
-            <Text style={s.formEyebrow}>就醫照護</Text>
-            <Text style={s.title}>
-              {duplicate ? '複製新增就醫紀錄' : existing ? '編輯就醫紀錄' : '新增就醫紀錄'}
-            </Text>
-            <Text style={s.notice}>保存這次看診重點，方便日後回看或和獸醫溝通。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={s.formIntro}
+          title={duplicate ? '複製新增就醫紀錄' : existing ? '編輯就醫紀錄' : '新增就醫紀錄'}
+          description="保存這次看診的重要內容"
+          icon="medical-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <Text style={s.sectionHeading}>必填與看診資料</Text>
         <View onLayout={position('visitedAt')}>
           <DatePickerField

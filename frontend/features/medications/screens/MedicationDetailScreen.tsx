@@ -8,14 +8,12 @@ import {
  * API：../../../services/medicationService.ts
  */
 import React, { useCallback, useState, useRef } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { RecordActionButton } from '../../../components/RecordActionButton';
-import { Colors } from '../../../constants/Colors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import ScreenState from '../../../components/ScreenState';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -124,24 +122,18 @@ export function MedicationDetailScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader style={styles.detailHero}>
-          <View style={styles.detailHeroIcon}>
-            <Ionicons name="medical-outline" size={24} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.detailHeroCopy}>
-            <Text style={styles.formEyebrow}>用藥療程</Text>
-            <Text style={styles.title} numberOfLines={2}>
-              {record.name}
-            </Text>
-            <Text style={styles.formHint}>
-              {record.status === 'active'
-                ? '目前服用中'
-                : record.status === 'completed'
-                  ? '療程已完成'
-                  : '療程已停止'}
-            </Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.detailHero}
+          title={record.name}
+          description={
+            record.status === 'active'
+              ? '目前服用中'
+              : record.status === 'completed'
+                ? '療程已完成'
+                : '療程已停止'
+          }
+          icon="medical-outline"
+        />
 
         <View style={styles.detailGroup}>
           <MedicationDetailRow label="使用說明" value={record.instructions || '未填寫'} multiline />

@@ -24,13 +24,7 @@ export const weightListStyles = StyleSheet.create({
     marginTop: 18,
   },
   retryText: { color: Colors.onPrimary, fontWeight: '800' },
-  listContext: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 2,
-    marginTop: 16,
-  },
+  listContext: { marginBottom: 12 },
   contextIcon: {
     width: 38,
     height: 38,

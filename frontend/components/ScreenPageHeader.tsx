@@ -9,29 +9,49 @@ import { SoftButton } from './SoftMotion';
 
 /** Page-owned heading and back action; navigation guards still handle goBack. */
 export function ScreenPageHeader({
-  children,
   title,
+  description,
+  icon,
+  iconColor,
+  iconBackground = Colors.successSoft,
   style,
 }: {
-  children?: React.ReactNode;
-  title?: string;
+  title: string;
+  description?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconColor?: string;
+  iconBackground?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const navigation = useNavigation();
   return (
-    <View style={[styles.header, style]}>
+    <View style={[style, styles.header]}>
       <SoftButton
         accessibilityRole="button"
         accessibilityLabel="返回上一頁"
         style={styles.back}
         onPress={() => navigation.goBack()}
       >
-        <Ionicons name="chevron-back" size={23} color={Colors.text} />
+        <Ionicons name="chevron-back" size={22} color={Colors.text} />
       </SoftButton>
-      {children || (
+      <View style={styles.copy}>
         <Text accessibilityRole="header" style={styles.title}>
           {title}
         </Text>
+        {!!description && (
+          <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
+            {description}
+          </Text>
+        )}
+      </View>
+      {!!icon && (
+        <View
+          style={[styles.icon, { backgroundColor: iconBackground }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Ionicons name={icon} size={23} color={iconColor ?? Colors.successDecoration} />
+        </View>
       )}
     </View>
   );
@@ -47,10 +67,25 @@ export function ScreenPageFrame({ children }: { children: React.ReactNode }) {
 }
 
 /** Loading, missing-data and error views must retain a visible way back. */
-export function ScreenPageState({ title, children }: { title: string; children: React.ReactNode }) {
+export function ScreenPageState({
+  title,
+  description,
+  icon,
+  children,
+}: {
+  title: string;
+  description?: string;
+  icon?: keyof typeof Ionicons.glyphMap;
+  children: React.ReactNode;
+}) {
   return (
     <ScreenPageFrame>
-      <ScreenPageHeader title={title} style={styles.stateHeader} />
+      <ScreenPageHeader
+        title={title}
+        description={description}
+        icon={icon}
+        style={styles.stateHeader}
+      />
       {children}
     </ScreenPageFrame>
   );
@@ -58,8 +93,30 @@ export function ScreenPageState({ title, children }: { title: string; children: 
 
 const styles = StyleSheet.create({
   frame: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  back: { width: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  title: { flex: 1, minWidth: 0, color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 8, paddingBottom: 7, gap: 0 },
+  back: {
+    width: 44,
+    height: 44,
+    minHeight: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceSoft,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  copy: { flex: 1, minWidth: 0, marginLeft: 8 },
+  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
+  description: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
+  icon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   stateHeader: { marginHorizontal: 18, marginTop: 18, marginBottom: 12 },
 });

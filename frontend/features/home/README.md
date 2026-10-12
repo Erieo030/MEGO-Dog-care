@@ -8,3 +8,7 @@
 - `components/HomeTodayOverview.tsx`：今日待辦與健康觀察摘要。
 
 資料來源：`dashboardService.ts`、`reminderService.ts`、`healthTrendEngine.ts`。背景由 `components/home/HomeBackgroundScene.tsx` 管理。
+
+首頁八個功能的目的地頁面統一採 `components/ScreenPageHeader.tsx` 排版 F：左側 44×44 圓角返回鍵、中間大標＋最多兩行說明、右側可選類別圖示。日常、記錄異常、體重及提醒改用頁內標題並關閉原生標題；相關表單、詳細頁及載入／錯誤狀態也沿用同一元件。首頁本身與 AI 對話標頭不變；儲存及未儲存離開確認仍走既有流程。
+
+首頁「體重」實際開啟 `WeightForm`，「提醒」實際開啟 `CreateReminder`，不是紀錄清單。這兩個表單也採排版 F，標題依模式顯示「新增體重／編輯體重」與「新增提醒／編輯提醒」，不套舊標題卡外框；首頁與紀錄 Stack 的新增提醒 route 均關閉原生標題，避免入口不同造成重複標題。

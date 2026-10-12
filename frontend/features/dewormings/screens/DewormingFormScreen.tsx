@@ -6,7 +6,6 @@ import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { Colors } from '../../../constants/Colors';
@@ -104,16 +103,12 @@ export function DewormingFormScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={styles.formIntro}>
-          <View style={styles.formIntroIcon}>
-            <Ionicons name="shield-checkmark-outline" size={22} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.formIntroCopy}>
-            <Text style={styles.formEyebrow}>日常預防</Text>
-            <Text style={styles.title}>{existing ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}</Text>
-            <Text style={styles.formHint}>記下產品與使用日期，下一次安排更清楚。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.formIntro}
+          title={existing ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}
+          description="記下產品與下次日期"
+          icon="shield-checkmark-outline"
+        />
         <Text style={styles.section}>驅蟲類型</Text>
         <View style={styles.options}>
           {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (

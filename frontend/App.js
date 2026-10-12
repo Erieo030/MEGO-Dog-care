@@ -1,7 +1,7 @@
 /** 用途：組合全域 Provider 與 RootNavigator，保持根元件單純。 */
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AuthProvider } from './contexts/AuthContext';
@@ -13,7 +13,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
-        <SafeAreaProvider>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
           <SettingsProvider>
             <AuthProvider>
               <PetProvider>

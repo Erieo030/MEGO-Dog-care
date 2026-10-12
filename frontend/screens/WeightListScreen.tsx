@@ -11,6 +11,7 @@ import FilterChip from '../components/FilterChip';
 import { Colors } from '../constants/Colors';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import ScreenState from '../components/ScreenState';
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
@@ -120,17 +121,24 @@ export default function WeightListScreen({ navigation, route }: Props) {
       },
     ]);
 
-  if (loading) return <ScreenState loading text="正在載入體重紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="體重紀錄" description="查看體重變化與歷史" icon="scale-outline">
+        <ScreenState loading text="正在載入體重紀錄…" />
+      </ScreenPageState>
+    );
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.stateTitle}>載入失敗</Text>
-        <Text style={styles.stateText}>{error}</Text>
-        <TouchableOpacity style={styles.retry} onPress={() => void load()}>
-          <Text style={styles.retryText}>重試</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenPageState title="體重紀錄" description="查看體重變化與歷史" icon="scale-outline">
+        <View style={styles.center}>
+          <Text style={styles.stateTitle}>載入失敗</Text>
+          <Text style={styles.stateText}>{error}</Text>
+          <TouchableOpacity style={styles.retry} onPress={() => void load()}>
+            <Text style={styles.retryText}>重試</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenPageState>
     );
   }
 
@@ -147,15 +155,12 @@ export default function WeightListScreen({ navigation, route }: Props) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
         ListHeaderComponent={
           <>
-            <View style={styles.listContext}>
-              <View style={styles.contextIcon}>
-                <Ionicons name="scale-outline" size={18} color={Colors.successDecoration} />
-              </View>
-              <View style={styles.flex}>
-                <Text style={styles.contextTitle}>用固定頻率記錄，就能看見變化</Text>
-                <Text style={styles.contextHint}>選擇期間查看趨勢與歷史資料</Text>
-              </View>
-            </View>
+            <ScreenPageHeader
+              style={styles.listContext}
+              title="體重紀錄"
+              description="查看體重變化與歷史"
+              icon="scale-outline"
+            />
             <WeightSummaryCard summary={summary} />
             <Text style={styles.heading}>查看期間</Text>
             <View style={styles.filters}>

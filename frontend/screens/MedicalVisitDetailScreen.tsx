@@ -5,7 +5,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { RecordActionButton } from '../components/RecordActionButton';
 import { Colors } from '../constants/Colors';
@@ -141,21 +140,14 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.container}>
       <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader style={s.detailHero}>
-          <View style={s.detailHeroIcon}>
-            <Ionicons name="medical-outline" size={25} color={Colors.primaryDecoration} />
-          </View>
-          <View style={s.detailHeroCopy}>
-            <Text style={s.detailEyebrow}>就醫紀錄</Text>
-            <Text style={s.detailTitle} numberOfLines={2}>
-              {item.reason}
-            </Text>
-            <Text style={s.detailHint}>
-              {formatMedicalVisitDate(item.visitedAt)}
-              {item.clinicName ? `・${item.clinicName}` : ''}
-            </Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={s.detailHero}
+          title={item.reason}
+          description={`${formatMedicalVisitDate(item.visitedAt)}${item.clinicName ? `・${item.clinicName}` : ''}`}
+          icon="medical-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <View style={s.actions}>
           <RecordActionButton
             kind="edit"

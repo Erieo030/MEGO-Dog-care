@@ -49,41 +49,58 @@ test('the color guard detects hex, RGB and quoted foreground keys while allowing
   expect(rawForegroundColors('fixture.tsx', input)).toHaveLength(2);
 });
 
+function decorationColorMisuses(file: string, text: string) {
+  const invalid: string[] = [];
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isPropertyAccessExpression(node) &&
+      node.expression.getText(source) === 'Colors' &&
+      /^(primary|success|danger)Decoration$/.test(node.name.text)
+    ) {
+      let ancestor: ts.Node | undefined = node.parent;
+      while (ancestor && !ts.isJsxAttribute(ancestor)) ancestor = ancestor.parent;
+      const element = ancestor?.parent.parent;
+      const tag =
+        element && (ts.isJsxOpeningElement(element) || ts.isJsxSelfClosingElement(element))
+          ? element.tagName.getText(source)
+          : '';
+      const attribute =
+        ancestor && ts.isJsxAttribute(ancestor) ? ancestor.name.getText(source) : '';
+      // ScreenPageHeader 只將 iconColor 傳給 Ionicons，不可套到內文或背景。
+      const isIconColor =
+        (tag === 'Ionicons' && attribute === 'color') ||
+        (tag === 'ScreenPageHeader' && attribute === 'iconColor');
+      if (!isIconColor) invalid.push(file);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return invalid;
+}
+
 test('decoration tokens are restricted to icon colors, not text or background properties', () => {
   const frontend = path.resolve(__dirname, '../..');
-  const invalid: string[] = [];
-  for (const file of ['screens', 'features', 'components', 'navigation'].flatMap((dir) =>
-    sourceFiles(path.join(frontend, dir)),
-  )) {
-    const source = ts.createSourceFile(
-      file,
-      fs.readFileSync(file, 'utf8'),
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.TSX,
-    );
-    const visit = (node: ts.Node) => {
-      if (
-        ts.isPropertyAccessExpression(node) &&
-        node.expression.getText(source) === 'Colors' &&
-        /^(primary|success|danger)Decoration$/.test(node.name.text)
-      ) {
-        let ancestor: ts.Node | undefined = node.parent;
-        while (ancestor && !ts.isJsxAttribute(ancestor)) ancestor = ancestor.parent;
-        const element = ancestor?.parent.parent;
-        if (
-          !ancestor ||
-          !ts.isJsxAttribute(ancestor) ||
-          ancestor.name.getText(source) !== 'color' ||
-          !element ||
-          !(ts.isJsxOpeningElement(element) || ts.isJsxSelfClosingElement(element)) ||
-          element.tagName.getText(source) !== 'Ionicons'
-        )
-          invalid.push(file);
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(source);
-  }
+  const invalid = ['screens', 'features', 'components', 'navigation']
+    .flatMap((dir) => sourceFiles(path.join(frontend, dir)))
+    .flatMap((file) => decorationColorMisuses(file, fs.readFileSync(file, 'utf8')));
   expect(invalid).toEqual([]);
+});
+
+test('header icon colors are allowed but decoration tokens remain forbidden for text and backgrounds', () => {
+  expect(
+    decorationColorMisuses(
+      'fixture.tsx',
+      '<ScreenPageHeader iconColor={Colors.primaryDecoration} />',
+    ),
+  ).toEqual([]);
+  expect(
+    decorationColorMisuses('fixture.tsx', '<Text color={Colors.primaryDecoration} />'),
+  ).toEqual(['fixture.tsx']);
+  expect(
+    decorationColorMisuses(
+      'fixture.tsx',
+      '<ScreenPageHeader iconBackground={Colors.successDecoration} />',
+    ),
+  ).toEqual(['fixture.tsx']);
 });

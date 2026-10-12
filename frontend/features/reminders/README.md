@@ -7,3 +7,5 @@
 - 畫面入口仍在 `../../screens/ReminderListScreen.tsx` 與 `../../screens/CreateReminderScreen.tsx`，維持既有 navigator routes。
 
 `ReminderListScreen` 目前保留既有 navigator route；由時間軸開啟提醒來源會帶入選取日期，直接進入提醒分頁仍顯示全年排程。提醒卡片直接呈現完成／延後；編輯、略過、刪除由「更多」選單提供。操作 handler、通知同步與 API 不變。
+
+首頁捷徑進入的是 `CreateReminderScreen`，表單採共用 `ScreenPageHeader` 排版 F（返回鍵／大標＋兩行內說明／右側提醒圖示）；新增與編輯共用版型，只切換標題。Home、Timeline 的 `CreateReminder` 都使用 `headerShown: false`，不另外顯示原生標題。提醒儲存、通知排程與未儲存離開確認不變。

@@ -125,24 +125,24 @@ function HomeStack() {
           contentStyle: { backgroundColor: 'transparent' },
         }}
       />
-      <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ title: '日常紀錄' }} />
+      <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddPet" component={AddPetScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditPet" component={EditPetScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PetMemorial" component={PetMemorialScreen} options={{ title: '回憶' }} />
       <Stack.Screen
         name="ReminderList"
         component={ReminderListScreen}
-        options={{ title: '提醒' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CreateReminder"
         component={CreateReminderScreen}
-        options={{ title: '新增提醒' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="AbnormalType"
         component={AbnormalRecordTypeScreen}
-        options={{ title: '記錄異常' }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="CreateHealthEvent"
@@ -185,17 +185,17 @@ function TimelineStack() {
       <TimelineStackNav.Screen
         name="ReminderList"
         component={ReminderListScreen}
-        options={{ title: '提醒' }}
+        options={{ headerShown: false }}
       />
       <TimelineStackNav.Screen
         name="DailyLog"
         component={DailyLogScreen}
-        options={{ title: '日常紀錄' }}
+        options={{ headerShown: false }}
       />
       <TimelineStackNav.Screen
         name="CreateReminder"
         component={CreateReminderScreen}
-        options={{ title: '新增提醒' }}
+        options={{ headerShown: false }}
       />
       {renderSharedHealthScreens(TimelineStackNav)}
     </TimelineStackNav.Navigator>

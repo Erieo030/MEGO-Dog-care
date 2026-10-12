@@ -25,11 +25,7 @@ import {
   saveLostProfile,
   rotateLostToken,
 } from '../../../services/lostPetService';
-import {
-  IdentityHeader,
-  IdentityInfoBox,
-  identityStyles as styles,
-} from '../components/IdentityPresentation';
+import { IdentityInfoBox, identityStyles as styles } from '../components/IdentityPresentation';
 import {
   DEFAULT_PROFILE,
   contactFields,
@@ -202,13 +198,11 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader>
-          <IdentityHeader
-            eyebrow="公開資訊設定"
-            title="毛孩資訊 QR"
-            subtitle={`讓家人、照護者或獸醫快速認識 ${selectedPet?.name || '毛孩'}`}
-          />
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          title="毛孩資訊 QR"
+          description="選擇要公開的毛孩資訊"
+          icon="qr-code-outline"
+        />
         <View style={styles.petCard}>
           <View style={styles.petAvatar}>
             {selectedPet?.avatarAttachmentId && userId ? (
@@ -446,13 +440,11 @@ export function LostPetQrScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader>
-          <IdentityHeader
-            eyebrow="毛孩資訊頁"
-            title={`${selectedPet?.name || '毛孩'} 的資訊 QR`}
-            subtitle="掃描後只會看到你選擇公開的資料。"
-          />
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          title={`${selectedPet?.name || '毛孩'} 的資訊 QR`}
+          description="只公開你選擇的資料"
+          icon="qr-code-outline"
+        />
         <View style={styles.qrCard}>
           <View style={styles.qrFrame}>
             <QRCode value={url} size={224} />

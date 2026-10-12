@@ -9,10 +9,8 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { RecordActionButton } from '../../../components/RecordActionButton';
-import { Colors } from '../../../constants/Colors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import ScreenState from '../../../components/ScreenState';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -114,19 +112,12 @@ export function VaccinationDetailScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader style={styles.detailHero}>
-          <View style={styles.detailHeroIcon}>
-            <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.detailHeroCopy}>
-            <Text numberOfLines={2} style={styles.detailTitle}>
-              {record.vaccineName}
-            </Text>
-            <Text style={styles.detailDate}>
-              接種於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
-            </Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.detailHero}
+          title={record.vaccineName}
+          description={`接種於 ${new Date(record.administeredAt).toLocaleDateString('zh-TW')}`}
+          icon="medkit-outline"
+        />
         <View style={styles.detailGroup}>
           {record.hospitalName ? <DetailRow label="動物醫院" value={record.hospitalName} /> : null}
           <DetailRow

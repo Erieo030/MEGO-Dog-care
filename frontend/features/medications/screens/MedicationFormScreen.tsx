@@ -10,7 +10,6 @@ import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { RecordActionButton } from '../../../components/RecordActionButton';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
@@ -132,16 +131,12 @@ export function MedicationFormScreen() {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader style={styles.formIntro}>
-          <View style={styles.formIntroIcon}>
-            <Ionicons name="medical-outline" size={22} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.formIntroCopy}>
-            <Text style={styles.formEyebrow}>用藥照護</Text>
-            <Text style={styles.title}>{existing ? '編輯用藥' : '新增用藥療程'}</Text>
-            <Text style={styles.formHint}>依獸醫指示記下療程與提醒，避免漏服或重複記錄。</Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.formIntro}
+          title={existing ? '編輯用藥' : '新增用藥療程'}
+          description="依獸醫指示記下療程"
+          icon="medical-outline"
+        />
 
         {fields
           .filter(([key]) => key !== 'notes')

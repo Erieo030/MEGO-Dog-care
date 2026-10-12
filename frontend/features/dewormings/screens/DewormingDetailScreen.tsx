@@ -9,10 +9,8 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { RecordActionButton } from '../../../components/RecordActionButton';
-import { Colors } from '../../../constants/Colors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import ScreenState from '../../../components/ScreenState';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -125,20 +123,12 @@ export function DewormingDetailScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader style={styles.detailHero}>
-          <View style={styles.detailHeroIcon}>
-            <Ionicons name="shield-checkmark-outline" size={24} color={Colors.successDecoration} />
-          </View>
-          <View style={styles.detailHeroCopy}>
-            <Text style={styles.formEyebrow}>{dewormingTypeLabels[record.type]}</Text>
-            <Text style={styles.title} numberOfLines={2}>
-              {record.productName}
-            </Text>
-            <Text style={styles.formHint}>
-              使用於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
-            </Text>
-          </View>
-        </ScreenPageHeader>
+        <ScreenPageHeader
+          style={styles.detailHero}
+          title={record.productName}
+          description={`${dewormingTypeLabels[record.type]} · ${new Date(record.administeredAt).toLocaleDateString('zh-TW')}`}
+          icon="shield-checkmark-outline"
+        />
         <View style={styles.detailGroup}>
           <DetailRow
             label="下次日期"

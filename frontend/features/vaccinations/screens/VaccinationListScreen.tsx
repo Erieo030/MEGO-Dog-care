@@ -65,7 +65,7 @@ export function VaccinationListScreen() {
   );
   if (loading)
     return (
-      <ScreenPageState title="疫苗紀錄">
+      <ScreenPageState title="疫苗紀錄" description="查看接種與下次日期" icon="medkit-outline">
         <ScreenState loading text="載入中…" />
       </ScreenPageState>
     );
@@ -81,17 +81,12 @@ export function VaccinationListScreen() {
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
         ListHeaderComponent={
           <>
-            <ScreenPageHeader style={styles.listHeader}>
-              <View style={styles.listHeaderIcon}>
-                <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
-              </View>
-              <View style={styles.listHeaderBody}>
-                <Text style={styles.title}>疫苗紀錄</Text>
-                <Text style={styles.listSubtitle}>
-                  查看 {selectedPet?.name || '毛孩'} 的接種與下次日期
-                </Text>
-              </View>
-            </ScreenPageHeader>
+            <ScreenPageHeader
+              style={styles.listHeader}
+              title="疫苗紀錄"
+              description="查看接種與下次日期"
+              icon="medkit-outline"
+            />
             {error ? (
               <TouchableOpacity onPress={() => void load()}>
                 <Text style={styles.error}>{error}（重試）</Text>

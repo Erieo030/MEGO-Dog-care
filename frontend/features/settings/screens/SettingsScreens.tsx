@@ -28,7 +28,6 @@ import {
   NotificationPermissionState,
 } from '../../../services/notificationService';
 import {
-  SettingsDocumentHero,
   SettingsDocumentParagraph,
   SettingsDocumentSection,
   SettingsPage as Page,
@@ -143,12 +142,11 @@ export function NotificationSettingsScreen() {
   };
   return (
     <Page>
-      <ScreenPageHeader>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.heading}>手機權限與提醒</Text>
-          <Text style={s.note}>在這裡查看 MEGO 使用通知、相簿、相機與定位的權限狀態。</Text>
-        </View>
-      </ScreenPageHeader>
+      <ScreenPageHeader
+        title="手機權限與提醒"
+        description="查看照片、定位與通知權限"
+        icon="settings-outline"
+      />
       <Text style={s.subheading}>通知與照護提醒</Text>
       <Text style={s.sectionDescription}>讓 MEGO 在用藥、回診與日常照護時間提醒你。</Text>
       <View style={s.notificationCard}>
@@ -266,13 +264,11 @@ export function AboutScreen() {
 export function PrivacyPolicyScreen() {
   return (
     <Page>
-      <ScreenPageHeader>
-        <SettingsDocumentHero
-          title="MEGO 隱私政策"
-          subtitle="了解你提供的資料如何用於毛孩照護記錄與 App 功能。"
-          icon="shield-checkmark-outline"
-        />
-      </ScreenPageHeader>
+      <ScreenPageHeader
+        title="MEGO 隱私政策"
+        description="了解個人資料的使用方式"
+        icon="shield-checkmark-outline"
+      />
       <SettingsDocumentSection title="資料與用途" index={1} icon="folder-open-outline">
         <SettingsDocumentParagraph label="處理的資料">
           MEGO
@@ -328,13 +324,11 @@ export function PrivacyPolicyScreen() {
 export function TermsOfUseScreen() {
   return (
     <Page>
-      <ScreenPageHeader>
-        <SettingsDocumentHero
-          title="使用條款"
-          subtitle="使用 MEGO 前，請了解照護資訊、AI 功能與服務使用原則。"
-          icon="document-text-outline"
-        />
-      </ScreenPageHeader>
+      <ScreenPageHeader
+        title="使用條款"
+        description="了解 MEGO 的服務使用原則"
+        icon="document-text-outline"
+      />
       <SettingsDocumentSection title="帳號與 App 使用" index={1} icon="phone-portrait-outline">
         <SettingsDocumentParagraph>
           使用 MEGO 即表示你同意使用本 App
