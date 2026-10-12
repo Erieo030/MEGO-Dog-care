@@ -1,3 +1,8 @@
+import {
+  ScreenPageHeader,
+  ScreenPageFrame,
+  ScreenPageState,
+} from '../../../components/ScreenPageHeader';
 /**
  * 用途：查看用藥療程、執行編輯、複製、完成、停止、刪除。
  * API：../../../services/medicationService.ts
@@ -73,14 +78,21 @@ export function MedicationDetailScreen() {
     }, [recordId, retryKey, userId]),
   );
 
-  if (loading) return <ScreenState loading text="正在載入用藥紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="用藥紀錄">
+        <ScreenState loading text="正在載入用藥紀錄…" />
+      </ScreenPageState>
+    );
   if (error || !record) {
     return (
-      <ScreenState
-        error
-        text={error || '找不到用藥紀錄'}
-        action={() => setRetryKey((key) => key + 1)}
-      />
+      <ScreenPageState title="用藥紀錄">
+        <ScreenState
+          error
+          text={error || '找不到用藥紀錄'}
+          action={() => setRetryKey((key) => key + 1)}
+        />
+      </ScreenPageState>
     );
   }
 
@@ -110,89 +122,94 @@ export function MedicationDetailScreen() {
     ]);
 
   return (
-    <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-      <View style={styles.detailHero}>
-        <View style={styles.detailHeroIcon}>
-          <Ionicons name="medical-outline" size={24} color={Colors.successDecoration} />
-        </View>
-        <View style={styles.detailHeroCopy}>
-          <Text style={styles.formEyebrow}>用藥療程</Text>
-          <Text style={styles.title} numberOfLines={2}>
-            {record.name}
-          </Text>
-          <Text style={styles.formHint}>
-            {record.status === 'active'
-              ? '目前服用中'
-              : record.status === 'completed'
-                ? '療程已完成'
-                : '療程已停止'}
-          </Text>
-        </View>
-      </View>
+    <ScreenPageFrame>
+      <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <ScreenPageHeader style={styles.detailHero}>
+          <View style={styles.detailHeroIcon}>
+            <Ionicons name="medical-outline" size={24} color={Colors.successDecoration} />
+          </View>
+          <View style={styles.detailHeroCopy}>
+            <Text style={styles.formEyebrow}>用藥療程</Text>
+            <Text style={styles.title} numberOfLines={2}>
+              {record.name}
+            </Text>
+            <Text style={styles.formHint}>
+              {record.status === 'active'
+                ? '目前服用中'
+                : record.status === 'completed'
+                  ? '療程已完成'
+                  : '療程已停止'}
+            </Text>
+          </View>
+        </ScreenPageHeader>
 
-      <View style={styles.detailGroup}>
-        <MedicationDetailRow label="使用說明" value={record.instructions || '未填寫'} multiline />
-        <MedicationDetailRow label="每日次數" value={`每天 ${record.timesPerDay} 次`} />
-        <MedicationDetailRow
-          label="療程期間"
-          value={`${record.startDate}${record.endDate ? ` ～ ${record.endDate}` : ' 起'}`}
-        />
-        <MedicationDetailRow label="用餐時間" value={mealTimingLabels[record.mealTiming]} />
-        <MedicationDetailRow label="提醒時間" value={record.reminderTimes.join('、') || '未設定'} />
-        {record.notes ? (
-          <MedicationDetailRow label="補充備註" value={record.notes} multiline />
+        <View style={styles.detailGroup}>
+          <MedicationDetailRow label="使用說明" value={record.instructions || '未填寫'} multiline />
+          <MedicationDetailRow label="每日次數" value={`每天 ${record.timesPerDay} 次`} />
+          <MedicationDetailRow
+            label="療程期間"
+            value={`${record.startDate}${record.endDate ? ` ～ ${record.endDate}` : ' 起'}`}
+          />
+          <MedicationDetailRow label="用餐時間" value={mealTimingLabels[record.mealTiming]} />
+          <MedicationDetailRow
+            label="提醒時間"
+            value={record.reminderTimes.join('、') || '未設定'}
+          />
+          {record.notes ? (
+            <MedicationDetailRow label="補充備註" value={record.notes} multiline />
+          ) : null}
+        </View>
+
+        <View style={styles.actionRow}>
+          <RecordActionButton
+            kind="edit"
+            label="編輯紀錄"
+            disabled={submitting}
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('MedicationForm', { record })}
+          />
+          {!selectedPet?.memorial && (
+            <AppButton
+              title="複製新增"
+              disabled={submitting}
+              variant="secondary"
+              fullWidth={false}
+              style={[styles.secondary, styles.actionButton]}
+              onPress={() => navigation.navigate('MedicationForm', { record, duplicate: true })}
+            />
+          )}
+        </View>
+        {record.status === 'active' ? (
+          <>
+            <AppButton
+              title="完成療程"
+              variant="secondary"
+              fullWidth={false}
+              disabled={submitting}
+              busy={submitting}
+              style={styles.secondaryAction}
+              onPress={() => confirmAction(completeMedication, '完成療程')}
+            />
+            <AppButton
+              title="停止療程"
+              variant="secondary"
+              fullWidth={false}
+              disabled={submitting}
+              busy={submitting}
+              style={styles.secondaryAction}
+              onPress={() => confirmAction(stopMedication, '停止療程')}
+            />
+          </>
         ) : null}
-      </View>
-
-      <View style={styles.actionRow}>
         <RecordActionButton
-          kind="edit"
-          label="編輯紀錄"
+          kind="delete"
+          label={submitting ? '刪除中…' : '刪除'}
           disabled={submitting}
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('MedicationForm', { record })}
+          busy={submitting}
+          style={styles.deleteButton}
+          onPress={() => confirmAction(deleteMedication, '刪除用藥紀錄')}
         />
-        {!selectedPet?.memorial && (
-          <AppButton
-            title="複製新增"
-            disabled={submitting}
-            variant="secondary"
-            fullWidth={false}
-            style={[styles.secondary, styles.actionButton]}
-            onPress={() => navigation.navigate('MedicationForm', { record, duplicate: true })}
-          />
-        )}
-      </View>
-      {record.status === 'active' ? (
-        <>
-          <AppButton
-            title="完成療程"
-            variant="secondary"
-            fullWidth={false}
-            disabled={submitting}
-            busy={submitting}
-            style={styles.secondaryAction}
-            onPress={() => confirmAction(completeMedication, '完成療程')}
-          />
-          <AppButton
-            title="停止療程"
-            variant="secondary"
-            fullWidth={false}
-            disabled={submitting}
-            busy={submitting}
-            style={styles.secondaryAction}
-            onPress={() => confirmAction(stopMedication, '停止療程')}
-          />
-        </>
-      ) : null}
-      <RecordActionButton
-        kind="delete"
-        label={submitting ? '刪除中…' : '刪除'}
-        disabled={submitting}
-        busy={submitting}
-        style={styles.deleteButton}
-        onPress={() => confirmAction(deleteMedication, '刪除用藥紀錄')}
-      />
-    </ScrollView>
+      </ScrollView>
+    </ScreenPageFrame>
   );
 }

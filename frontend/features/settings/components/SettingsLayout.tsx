@@ -96,6 +96,8 @@ export function SettingsDocumentParagraph({
 
 const documentStyles = StyleSheet.create({
   hero: {
+    flex: 1,
+    minWidth: 0,
     padding: 18,
     borderRadius: 20,
     backgroundColor: settingsPalette.surface,

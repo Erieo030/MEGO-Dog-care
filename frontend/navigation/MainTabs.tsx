@@ -126,8 +126,8 @@ function HomeStack() {
         }}
       />
       <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ title: '日常紀錄' }} />
-      <Stack.Screen name="AddPet" component={AddPetScreen} options={{ title: '新增毛孩' }} />
-      <Stack.Screen name="EditPet" component={EditPetScreen} options={{ title: '編輯毛孩資料' }} />
+      <Stack.Screen name="AddPet" component={AddPetScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="EditPet" component={EditPetScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PetMemorial" component={PetMemorialScreen} options={{ title: '回憶' }} />
       <Stack.Screen
         name="ReminderList"
@@ -232,7 +232,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="EditPet"
         component={EditPetScreen}
-        options={{ title: '編輯毛孩資料' }}
+        options={{ headerShown: false }}
       />
       <ProfileStackNav.Screen
         name="PetMemorial"
@@ -252,7 +252,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="NotificationSettings"
         component={NotificationSettingsScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <ProfileStackNav.Screen
         name="ExportCenter"
@@ -262,12 +262,12 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="LostPetSettings"
         component={LostPetSettingsScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <ProfileStackNav.Screen
         name="LostPetQr"
         component={LostPetQrScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <ProfileStackNav.Screen
         name="About"
@@ -277,12 +277,12 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="PrivacyPolicy"
         component={PrivacyPolicyScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <ProfileStackNav.Screen
         name="TermsOfUse"
         component={TermsOfUseScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
     </ProfileStackNav.Navigator>
   );

@@ -1,3 +1,8 @@
+import {
+  ScreenPageHeader,
+  ScreenPageFrame,
+  ScreenPageState,
+} from '../../../components/ScreenPageHeader';
 /** 用途：查看疫苗資料，提供編輯、複製新增與刪除。 */
 import React, { useCallback, useState, useRef } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
@@ -68,14 +73,21 @@ export function VaccinationDetailScreen() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [recordId, retryKey, userId]),
   );
-  if (loading) return <ScreenState loading text="正在載入疫苗紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="疫苗紀錄">
+        <ScreenState loading text="正在載入疫苗紀錄…" />
+      </ScreenPageState>
+    );
   if (error || !record)
     return (
-      <ScreenState
-        error
-        text={error || '找不到疫苗紀錄'}
-        action={() => setRetryKey((key) => key + 1)}
-      />
+      <ScreenPageState title="疫苗紀錄">
+        <ScreenState
+          error
+          text={error || '找不到疫苗紀錄'}
+          action={() => setRetryKey((key) => key + 1)}
+        />
+      </ScreenPageState>
     );
   const deleteRecord = () =>
     Alert.alert('刪除疫苗', '確定刪除？', [
@@ -100,57 +112,59 @@ export function VaccinationDetailScreen() {
       },
     ]);
   return (
-    <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-      <View style={styles.detailHero}>
-        <View style={styles.detailHeroIcon}>
-          <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
-        </View>
-        <View style={styles.detailHeroCopy}>
-          <Text numberOfLines={2} style={styles.detailTitle}>
-            {record.vaccineName}
-          </Text>
-          <Text style={styles.detailDate}>
-            接種於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.detailGroup}>
-        {record.hospitalName ? <DetailRow label="動物醫院" value={record.hospitalName} /> : null}
-        <DetailRow
-          label="下次接種"
-          value={
-            record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
-          }
-        />
-        {record.notes ? <DetailRow label="補充備註" value={record.notes} /> : null}
-      </View>
-      <View style={styles.actionRow}>
-        <RecordActionButton
-          kind="edit"
-          label="編輯紀錄"
-          disabled={deleting}
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('VaccinationForm', { record })}
-        />
-        {!selectedPet?.memorial && (
-          <AppButton
-            title="複製新增"
-            disabled={deleting}
-            variant="secondary"
-            fullWidth={false}
-            style={[styles.secondary, styles.actionButton]}
-            onPress={() => navigation.navigate('VaccinationForm', { record, duplicate: true })}
+    <ScreenPageFrame>
+      <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <ScreenPageHeader style={styles.detailHero}>
+          <View style={styles.detailHeroIcon}>
+            <Ionicons name="medkit-outline" size={23} color={Colors.successDecoration} />
+          </View>
+          <View style={styles.detailHeroCopy}>
+            <Text numberOfLines={2} style={styles.detailTitle}>
+              {record.vaccineName}
+            </Text>
+            <Text style={styles.detailDate}>
+              接種於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
+            </Text>
+          </View>
+        </ScreenPageHeader>
+        <View style={styles.detailGroup}>
+          {record.hospitalName ? <DetailRow label="動物醫院" value={record.hospitalName} /> : null}
+          <DetailRow
+            label="下次接種"
+            value={
+              record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
+            }
           />
-        )}
-      </View>
-      <RecordActionButton
-        kind="delete"
-        label={deleting ? '刪除中…' : '刪除'}
-        style={styles.deleteButton}
-        onPress={deleteRecord}
-        disabled={deleting}
-        busy={deleting}
-      />
-    </ScrollView>
+          {record.notes ? <DetailRow label="補充備註" value={record.notes} /> : null}
+        </View>
+        <View style={styles.actionRow}>
+          <RecordActionButton
+            kind="edit"
+            label="編輯紀錄"
+            disabled={deleting}
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('VaccinationForm', { record })}
+          />
+          {!selectedPet?.memorial && (
+            <AppButton
+              title="複製新增"
+              disabled={deleting}
+              variant="secondary"
+              fullWidth={false}
+              style={[styles.secondary, styles.actionButton]}
+              onPress={() => navigation.navigate('VaccinationForm', { record, duplicate: true })}
+            />
+          )}
+        </View>
+        <RecordActionButton
+          kind="delete"
+          label={deleting ? '刪除中…' : '刪除'}
+          style={styles.deleteButton}
+          onPress={deleteRecord}
+          disabled={deleting}
+          busy={deleting}
+        />
+      </ScrollView>
+    </ScreenPageFrame>
   );
 }

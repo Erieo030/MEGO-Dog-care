@@ -1,3 +1,4 @@
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示就醫完整內容，提供編輯、連動刪除與規則式文字分享。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -118,22 +119,29 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
       setSharePreparing(false);
     }
   };
-  if (loading) return <MedicalVisitDetailState loading text="正在載入就醫紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="就醫紀錄">
+        <MedicalVisitDetailState loading text="正在載入就醫紀錄…" />
+      </ScreenPageState>
+    );
   if (error || !item)
     return (
-      <MedicalVisitDetailState
-        text={error || '找不到就醫紀錄'}
-        onRetry={() => {
-          setLoading(true);
-          load();
-        }}
-      />
+      <ScreenPageState title="就醫紀錄">
+        <MedicalVisitDetailState
+          text={error || '找不到就醫紀錄'}
+          onRetry={() => {
+            setLoading(true);
+            load();
+          }}
+        />
+      </ScreenPageState>
     );
   const rows = buildMedicalVisitDetailRows(item);
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.container}>
       <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}>
-        <View style={s.detailHero}>
+        <ScreenPageHeader style={s.detailHero}>
           <View style={s.detailHeroIcon}>
             <Ionicons name="medical-outline" size={25} color={Colors.primaryDecoration} />
           </View>
@@ -147,7 +155,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
               {item.clinicName ? `・${item.clinicName}` : ''}
             </Text>
           </View>
-        </View>
+        </ScreenPageHeader>
         <View style={s.actions}>
           <RecordActionButton
             kind="edit"

@@ -1,3 +1,4 @@
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：編輯健康異常紀錄既有的通用欄位，保留詳細資料與本機圖片 URI。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -152,16 +153,23 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
     }
   };
 
-  if (loading) return <HealthEventLoadingState />;
+  if (loading)
+    return (
+      <ScreenPageState title="編輯健康紀錄">
+        <HealthEventLoadingState />
+      </ScreenPageState>
+    );
   if (error || !item)
     return (
-      <HealthEventErrorState
-        text={error || '找不到健康紀錄'}
-        onRetry={() => {
-          setLoading(true);
-          load();
-        }}
-      />
+      <ScreenPageState title="編輯健康紀錄">
+        <HealthEventErrorState
+          text={error || '找不到健康紀錄'}
+          onRetry={() => {
+            setLoading(true);
+            load();
+          }}
+        />
+      </ScreenPageState>
     );
 
   return (
@@ -169,7 +177,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.formIntro}>
+        <ScreenPageHeader style={styles.formIntro}>
           <View style={styles.formIntroIcon}>
             <Ionicons name="heart-outline" size={23} color={Colors.primaryDecoration} />
           </View>
@@ -178,7 +186,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
             <Text style={styles.title}>編輯健康紀錄</Text>
             <Text style={styles.formHint}>保留當時看到的狀況，方便日後回看趨勢。</Text>
           </View>
-        </View>
+        </ScreenPageHeader>
         <Text style={styles.sectionHeading}>這次觀察</Text>
         <Text style={styles.label}>異常類型（必填）</Text>
         <View style={styles.chips}>

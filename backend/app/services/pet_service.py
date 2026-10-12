@@ -52,7 +52,7 @@ def serialize_pet(pet: dict) -> dict:
 
 
 def list_pets(user_id: str) -> list[dict]:
-    """取得指定使用者的全部毛孩，並補建舊資料的固定身份 QR。"""
+    """取得指定使用者的全部毛孩，並補建舊資料的固定身分 QR。"""
     _ensure_user(user_id)
     user = db.users.find_one({"_id": _object_id(user_id, "使用者 ID ")}, {"email": 1}) or {}
     pets = list(db.pets.find({"userId": user_id}))
@@ -143,7 +143,7 @@ def ensure_pet_active(pet_id: str, user_id: str) -> None:
 
 
 def set_memorial(pet_id: str, user_id: str, data: PetMemorialRequest) -> dict:
-    """把毛孩移到回憶：保留所有紀錄，停止尚未完成的提醒，並關閉身份 QR 公開頁。"""
+    """把毛孩移到回憶：保留所有紀錄，停止尚未完成的提醒，並關閉身分 QR 公開頁。"""
     pet_object_id = _object_id(pet_id, "毛孩 ID ")
     existing = db.pets.find_one({"_id": pet_object_id, "userId": user_id})
     if not existing:

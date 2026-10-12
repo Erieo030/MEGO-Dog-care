@@ -4,7 +4,7 @@
 
 - `components/SettingsLayout.tsx`：共用 `SettingsPage`、`SettingsRow`、色彩 token 與設定文件的標題區／章節卡／段落元件；AI 資料使用說明、隱私政策與使用條款採同一閱讀層級。
 - `components/SettingsHomeRows.tsx`：設定首頁分組與可點擊資料列。
-- 毛孩身份卡統一使用 `../pets/components/PetIdentityCarousel.tsx`，由設定與首頁選擇器共用同一套卡片、滑動與切換行為。
+- 毛孩身分卡統一使用 `../pets/components/PetIdentityCarousel.tsx`，由設定與首頁選擇器共用同一套卡片、滑動與切換行為。
 - `screens/SettingsScreens.tsx`：毛孩管理、手機權限與提醒（通知、相簿、相機、定位）、關於 MEGO、隱私政策、使用條款。
 - `screens/AIUsageScreen.tsx`：顯示今天的 AI 使用次數與近 7 天每日用量，由 `getAIUsage`、`getAIUsageHistory` 讀取；僅供查看，不改額度規則。
 - `screens/AIDataUseInfoScreen.tsx`：唯讀呈現 MEGO AI 問答及毛孩資料使用方式；同意於首次啟動對話時記錄，不在此頁切換。

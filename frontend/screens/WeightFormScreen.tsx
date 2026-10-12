@@ -1,3 +1,4 @@
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：新增或編輯體重，驗證公斤數與有效測量日期並防止重複提交。 */
 import React, { useState } from 'react';
@@ -115,7 +116,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
+        <ScreenPageHeader style={styles.intro}>
           <View style={styles.introIcon}>
             <Ionicons name="scale-outline" size={20} color={Colors.successDecoration} />
           </View>
@@ -123,7 +124,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
             <Text style={styles.introTitle}>{record ? '更新這次測量' : '記下今天的體重'}</Text>
             <Text style={styles.introHint}>固定在相近條件下量測，更容易比較變化。</Text>
           </View>
-        </View>
+        </ScreenPageHeader>
         <Text style={styles.label}>體重（kg）（必填）</Text>
         <TextInput
           style={styles.input}

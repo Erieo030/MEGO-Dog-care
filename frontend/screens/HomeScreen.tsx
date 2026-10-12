@@ -217,6 +217,23 @@ export default function HomeScreen() {
               />
             ) : (
               <>
+                <HomeTodayOverview
+                  compact={compact}
+                  loading={loading}
+                  error={error}
+                  reminders={reminders}
+                  observations={observations}
+                  onRetry={refresh}
+                  onOpenReminders={() =>
+                    navigation.getParent()?.navigate('Timeline', {
+                      screen: 'ReminderList',
+                      params: { upcomingDays: 0 },
+                    })
+                  }
+                  onOpenObservations={() =>
+                    navigation.getParent()?.navigate('Timeline', { screen: 'HealthObservation' })
+                  }
+                />
                 <HomeSectionHeading
                   title="今天想做什麼？"
                   icon="sunny-outline"
@@ -236,23 +253,6 @@ export default function HomeScreen() {
                     />
                   ))}
                 </View>
-                <HomeTodayOverview
-                  compact={compact}
-                  loading={loading}
-                  error={error}
-                  reminders={reminders}
-                  observations={observations}
-                  onRetry={refresh}
-                  onOpenReminders={() =>
-                    navigation.getParent()?.navigate('Timeline', {
-                      screen: 'ReminderList',
-                      params: { upcomingDays: 0 },
-                    })
-                  }
-                  onOpenObservations={() =>
-                    navigation.getParent()?.navigate('Timeline', { screen: 'HealthObservation' })
-                  }
-                />
                 <View style={s.careHeadingRow}>
                   <HomeSectionHeading
                     title="健康管理"

@@ -1,3 +1,4 @@
+jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 import React from 'react';
@@ -15,6 +16,7 @@ jest.mock('react-native', () => ({
   View: 'View',
   Switch: 'Switch',
   TouchableOpacity: 'TouchableOpacity',
+  Pressable: 'TouchableOpacity',
   StyleSheet: { create: (styles: object) => styles },
   Platform: { OS: 'ios' },
   Alert: { alert: jest.fn() },
@@ -27,6 +29,7 @@ jest.mock('react-native', () => ({
   },
 }));
 jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ goBack: jest.fn() }),
   useFocusEffect: (callback: () => void) => require('react').useEffect(callback, [callback]),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));

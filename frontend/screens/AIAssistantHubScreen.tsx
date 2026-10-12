@@ -205,10 +205,12 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
           )}
           <View style={styles.petHeaderText}>
             <Text style={styles.eyebrow}>MEGO AI 助手</Text>
-            <Text style={styles.title}>和 {selectedPet?.name || '毛孩'} 一起整理</Text>
+            <Text style={styles.title}>一起整理照護</Text>
           </View>
         </View>
-        <Text style={styles.subtitle}>把散落的照護紀錄，整理成容易理解的答案。</Text>
+        <Text style={styles.subtitle}>
+          把 {selectedPet?.name || '毛孩'} 的照護紀錄，整理成容易理解的答案。
+        </Text>
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="開始新的 MEGO AI 對話"
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primarySoft,
   },
-  petHeaderText: { flex: 1 },
+  petHeaderText: { flex: 1, minWidth: 0 },
   eyebrow: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800', letterSpacing: 1 },
   title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800', marginTop: 2 },
   subtitle: { color: Colors.subtext, lineHeight: 21, marginBottom: 14 },

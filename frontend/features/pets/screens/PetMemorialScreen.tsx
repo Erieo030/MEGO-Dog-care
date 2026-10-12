@@ -87,7 +87,7 @@ export default function PetMemorialScreen({ navigation }: Props) {
   const confirmRestore = () =>
     Alert.alert(
       `把${pet.name}從回憶還原？`,
-      '還原後可以再新增紀錄。之前停止的提醒不會自動恢復，需要時請重新建立；身份 QR 公開頁會重新開啟。',
+      '還原後可以再新增紀錄。之前停止的提醒不會自動恢復，需要時請重新建立；身分 QR 公開頁會重新開啟。',
       [
         { text: '取消', style: 'cancel' },
         {

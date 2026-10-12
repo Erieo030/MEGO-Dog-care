@@ -1,3 +1,4 @@
+import { ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import Constants from 'expo-constants';
 import React, { useCallback, useState } from 'react';
 import {
@@ -62,12 +63,12 @@ export function PetManagementScreen({
       </TouchableOpacity>
       <TouchableOpacity
         accessibilityRole="button"
-        accessibilityLabel="毛孩身份卡"
+        accessibilityLabel="毛孩身分卡"
         style={s.identityAction}
         onPress={() => navigation.navigate('LostPetSettings')}
       >
         <Ionicons name="qr-code-outline" size={19} color={palette.primary} />
-        <Text style={s.identityActionText}>設定毛孩身份 QR</Text>
+        <Text style={s.identityActionText}>設定毛孩身分 QR</Text>
       </TouchableOpacity>
     </Page>
   );
@@ -142,8 +143,12 @@ export function NotificationSettingsScreen() {
   };
   return (
     <Page>
-      <Text style={s.heading}>手機權限與提醒</Text>
-      <Text style={s.note}>在這裡查看 MEGO 使用通知、相簿、相機與定位的權限狀態。</Text>
+      <ScreenPageHeader>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={s.heading}>手機權限與提醒</Text>
+          <Text style={s.note}>在這裡查看 MEGO 使用通知、相簿、相機與定位的權限狀態。</Text>
+        </View>
+      </ScreenPageHeader>
       <Text style={s.subheading}>通知與照護提醒</Text>
       <Text style={s.sectionDescription}>讓 MEGO 在用藥、回診與日常照護時間提醒你。</Text>
       <View style={s.notificationCard}>
@@ -261,11 +266,13 @@ export function AboutScreen() {
 export function PrivacyPolicyScreen() {
   return (
     <Page>
-      <SettingsDocumentHero
-        title="MEGO 隱私政策"
-        subtitle="了解你提供的資料如何用於毛孩照護記錄與 App 功能。"
-        icon="shield-checkmark-outline"
-      />
+      <ScreenPageHeader>
+        <SettingsDocumentHero
+          title="MEGO 隱私政策"
+          subtitle="了解你提供的資料如何用於毛孩照護記錄與 App 功能。"
+          icon="shield-checkmark-outline"
+        />
+      </ScreenPageHeader>
       <SettingsDocumentSection title="資料與用途" index={1} icon="folder-open-outline">
         <SettingsDocumentParagraph label="處理的資料">
           MEGO
@@ -321,11 +328,13 @@ export function PrivacyPolicyScreen() {
 export function TermsOfUseScreen() {
   return (
     <Page>
-      <SettingsDocumentHero
-        title="使用條款"
-        subtitle="使用 MEGO 前，請了解照護資訊、AI 功能與服務使用原則。"
-        icon="document-text-outline"
-      />
+      <ScreenPageHeader>
+        <SettingsDocumentHero
+          title="使用條款"
+          subtitle="使用 MEGO 前，請了解照護資訊、AI 功能與服務使用原則。"
+          icon="document-text-outline"
+        />
+      </ScreenPageHeader>
       <SettingsDocumentSection title="帳號與 App 使用" index={1} icon="phone-portrait-outline">
         <SettingsDocumentParagraph>
           使用 MEGO 即表示你同意使用本 App

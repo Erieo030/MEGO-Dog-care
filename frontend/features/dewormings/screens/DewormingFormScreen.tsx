@@ -1,3 +1,4 @@
+import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
 import React, { useState } from 'react';
@@ -99,76 +100,78 @@ export function DewormingFormScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
-    >
-      <View style={styles.formIntro}>
-        <View style={styles.formIntroIcon}>
-          <Ionicons name="shield-checkmark-outline" size={22} color={Colors.successDecoration} />
+    <ScreenPageFrame>
+      <KeyboardAwareScrollView
+        contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+      >
+        <ScreenPageHeader style={styles.formIntro}>
+          <View style={styles.formIntroIcon}>
+            <Ionicons name="shield-checkmark-outline" size={22} color={Colors.successDecoration} />
+          </View>
+          <View style={styles.formIntroCopy}>
+            <Text style={styles.formEyebrow}>日常預防</Text>
+            <Text style={styles.title}>{existing ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}</Text>
+            <Text style={styles.formHint}>記下產品與使用日期，下一次安排更清楚。</Text>
+          </View>
+        </ScreenPageHeader>
+        <Text style={styles.section}>驅蟲類型</Text>
+        <View style={styles.options}>
+          {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (
+            <TouchableOpacity
+              key={type}
+              style={[styles.chip, draft.type === type && styles.selected]}
+              onPress={() => setField('type', type)}
+            >
+              <Text>{dewormingTypeLabels[type]}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
-        <View style={styles.formIntroCopy}>
-          <Text style={styles.formEyebrow}>日常預防</Text>
-          <Text style={styles.title}>{existing ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}</Text>
-          <Text style={styles.formHint}>記下產品與使用日期，下一次安排更清楚。</Text>
-        </View>
-      </View>
-      <Text style={styles.section}>驅蟲類型</Text>
-      <View style={styles.options}>
-        {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (
-          <TouchableOpacity
-            key={type}
-            style={[styles.chip, draft.type === type && styles.selected]}
-            onPress={() => setField('type', type)}
-          >
-            <Text>{dewormingTypeLabels[type]}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {fields
-        .filter(([key]) => key !== 'notes')
-        .map(([key, label]) => {
-          const isDate = key === 'administeredAt' || key === 'nextDueAt';
-          if (isDate)
+        {fields
+          .filter(([key]) => key !== 'notes')
+          .map(([key, label]) => {
+            const isDate = key === 'administeredAt' || key === 'nextDueAt';
+            if (isDate)
+              return (
+                <DatePickerField
+                  key={key}
+                  label={label}
+                  value={validDewormingDate(draft[key])}
+                  onChange={(date) => setField(key, toTaipeiDateValue(date))}
+                  minimumDate={
+                    key === 'nextDueAt'
+                      ? validDewormingDate(draft.administeredAt) || new Date()
+                      : undefined
+                  }
+                  maximumDate={key === 'administeredAt' ? new Date() : undefined}
+                />
+              );
             return (
-              <DatePickerField
-                key={key}
-                label={label}
-                value={validDewormingDate(draft[key])}
-                onChange={(date) => setField(key, toTaipeiDateValue(date))}
-                minimumDate={
-                  key === 'nextDueAt'
-                    ? validDewormingDate(draft.administeredAt) || new Date()
-                    : undefined
-                }
-                maximumDate={key === 'administeredAt' ? new Date() : undefined}
-              />
+              <View key={key}>
+                <Text style={styles.label}>{label}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`請輸入${label.replace('（必填）', '')}`}
+                  placeholderTextColor={Colors.subtext}
+                  value={typeof draft[key] === 'string' ? draft[key] : ''}
+                  onChangeText={(value) => setField(key, value)}
+                />
+              </View>
             );
-          return (
-            <View key={key}>
-              <Text style={styles.label}>{label}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={`請輸入${label.replace('（必填）', '')}`}
-                placeholderTextColor={Colors.subtext}
-                value={typeof draft[key] === 'string' ? draft[key] : ''}
-                onChangeText={(value) => setField(key, value)}
-              />
-            </View>
-          );
-        })}
-      <SupplementalNotesField
-        value={String(draft.notes ?? '')}
-        onChange={(value) => setField('notes', value)}
-      />
-      <AppButton
-        title={saving ? '儲存中…' : '儲存'}
-        variant="primary"
-        disabled={saving}
-        busy={saving}
-        style={styles.primary}
-        textStyle={styles.primaryText}
-        onPress={save}
-      />
-    </KeyboardAwareScrollView>
+          })}
+        <SupplementalNotesField
+          value={String(draft.notes ?? '')}
+          onChange={(value) => setField('notes', value)}
+        />
+        <AppButton
+          title={saving ? '儲存中…' : '儲存'}
+          variant="primary"
+          disabled={saving}
+          busy={saving}
+          style={styles.primary}
+          textStyle={styles.primaryText}
+          onPress={save}
+        />
+      </KeyboardAwareScrollView>
+    </ScreenPageFrame>
   );
 }

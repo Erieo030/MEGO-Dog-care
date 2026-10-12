@@ -8,7 +8,7 @@ export const MEMORIAL_EFFECTS = [
   '所有紀錄、照片和體重曲線都會保留，可以隨時回來看。',
   '不能再新增日常、健康、體重、疫苗、驅蟲、用藥、就醫紀錄和提醒。',
   '還沒完成的提醒會停止，手機也不會再跳出通知。',
-  '毛孩身份 QR 的公開頁面會關閉。',
+  '毛孩身分 QR 的公開頁面會關閉。',
 ] as const;
 
 const displayDate = (value?: string) => (value ? value.replace(/-/g, '/') : '');

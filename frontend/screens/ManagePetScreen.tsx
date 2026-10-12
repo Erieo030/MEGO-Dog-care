@@ -47,6 +47,7 @@ export function AddPetScreen({ navigation }: AddProps) {
   };
   return (
     <PetFormScreen
+      pageHeader
       title="新增毛孩"
       submitLabel="儲存毛孩資料"
       bottomContentPadding={bottomContentPadding}
@@ -88,6 +89,7 @@ export function EditPetScreen({ navigation }: EditProps) {
   };
   return (
     <PetFormScreen
+      pageHeader
       title="編輯毛孩資料"
       submitLabel="儲存變更"
       bottomContentPadding={bottomContentPadding}

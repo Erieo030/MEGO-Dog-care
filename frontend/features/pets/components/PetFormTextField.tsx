@@ -14,6 +14,8 @@ import {
   FORM_FIELD_RADIUS,
 } from '../../../constants/FormTokens';
 import type { PetFormTextField as PetFormTextFieldData } from '../petFormContent';
+import { Type } from '../../../constants/Typography';
+import { PET_NAME_MAX_LENGTH, petNameLength, limitPetName } from '../petFormContent';
 import { localDateKey } from '../../../utils/taipeiDate';
 
 type Props = {
@@ -51,10 +53,21 @@ export default function PetFormTextField({ field, value, onChange }: Props) {
           <TextInput
             style={styles.input}
             value={value}
-            onChangeText={onChange}
+            onChangeText={field.key === 'name' ? (text) => onChange(limitPetName(text)) : onChange}
+            accessibilityLabel={field.label}
+            // Native maxLength counts UTF-16 units; the change handler enforces 20 code points.
+            maxLength={field.key === 'name' ? PET_NAME_MAX_LENGTH * 2 : undefined}
             placeholder={field.placeholder}
             placeholderTextColor={Colors.subtext}
           />
+          {field.key === 'name' && (
+            <Text
+              style={[styles.counter, petNameLength(value) > PET_NAME_MAX_LENGTH && styles.error]}
+              accessibilityLiveRegion="polite"
+            >
+              {petNameLength(value)}/{PET_NAME_MAX_LENGTH}
+            </Text>
+          )}
         </>
       )}
     </View>
@@ -62,6 +75,8 @@ export default function PetFormTextField({ field, value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
+  counter: { color: Colors.subtext, fontSize: Type.caption, textAlign: 'right', marginTop: 4 },
+  error: { color: Colors.dangerText },
   fieldGroup: { marginBottom: FORM_FIELD_GAP },
   label: {
     color: Colors.text,

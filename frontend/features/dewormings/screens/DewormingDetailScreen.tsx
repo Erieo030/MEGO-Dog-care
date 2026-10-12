@@ -1,3 +1,8 @@
+import {
+  ScreenPageHeader,
+  ScreenPageFrame,
+  ScreenPageState,
+} from '../../../components/ScreenPageHeader';
 /** 用途：查看驅蟲紀錄，提供編輯、複製新增與刪除。 */
 import React, { useCallback, useState, useRef } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
@@ -79,14 +84,21 @@ export function DewormingDetailScreen() {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [recordId, retryKey, userId]),
   );
-  if (loading) return <ScreenState loading text="正在載入驅蟲紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="驅蟲紀錄">
+        <ScreenState loading text="正在載入驅蟲紀錄…" />
+      </ScreenPageState>
+    );
   if (error || !record)
     return (
-      <ScreenState
-        error
-        text={error || '找不到驅蟲紀錄'}
-        action={() => setRetryKey((key) => key + 1)}
-      />
+      <ScreenPageState title="驅蟲紀錄">
+        <ScreenState
+          error
+          text={error || '找不到驅蟲紀錄'}
+          action={() => setRetryKey((key) => key + 1)}
+        />
+      </ScreenPageState>
     );
   const deleteRecord = () =>
     Alert.alert('刪除驅蟲紀錄', '確定要刪除嗎？', [
@@ -111,59 +123,61 @@ export function DewormingDetailScreen() {
       },
     ]);
   return (
-    <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-      <View style={styles.detailHero}>
-        <View style={styles.detailHeroIcon}>
-          <Ionicons name="shield-checkmark-outline" size={24} color={Colors.successDecoration} />
-        </View>
-        <View style={styles.detailHeroCopy}>
-          <Text style={styles.formEyebrow}>{dewormingTypeLabels[record.type]}</Text>
-          <Text style={styles.title} numberOfLines={2}>
-            {record.productName}
-          </Text>
-          <Text style={styles.formHint}>
-            使用於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.detailGroup}>
-        <DetailRow
-          label="下次日期"
-          value={
-            record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
-          }
-        />
-        {record.dosageText ? <DetailRow label="使用劑量" value={record.dosageText} /> : null}
-        <DetailRow label="提醒" value={record.reminderId ? '已建立提醒' : '尚未建立提醒'} />
-        {record.notes ? <DetailRow label="補充備註" value={record.notes} multiline /> : null}
-      </View>
-      <View style={styles.actionRow}>
-        <RecordActionButton
-          kind="edit"
-          label="編輯紀錄"
-          disabled={deleting}
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('DewormingForm', { record })}
-        />
-        {!selectedPet?.memorial && (
-          <AppButton
-            title="複製新增"
-            disabled={deleting}
-            variant="secondary"
-            fullWidth={false}
-            style={[styles.secondary, styles.actionButton]}
-            onPress={() => navigation.navigate('DewormingForm', { record, duplicate: true })}
+    <ScreenPageFrame>
+      <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <ScreenPageHeader style={styles.detailHero}>
+          <View style={styles.detailHeroIcon}>
+            <Ionicons name="shield-checkmark-outline" size={24} color={Colors.successDecoration} />
+          </View>
+          <View style={styles.detailHeroCopy}>
+            <Text style={styles.formEyebrow}>{dewormingTypeLabels[record.type]}</Text>
+            <Text style={styles.title} numberOfLines={2}>
+              {record.productName}
+            </Text>
+            <Text style={styles.formHint}>
+              使用於 {new Date(record.administeredAt).toLocaleDateString('zh-TW')}
+            </Text>
+          </View>
+        </ScreenPageHeader>
+        <View style={styles.detailGroup}>
+          <DetailRow
+            label="下次日期"
+            value={
+              record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
+            }
           />
-        )}
-      </View>
-      <RecordActionButton
-        kind="delete"
-        label={deleting ? '刪除中…' : '刪除'}
-        style={styles.deleteButton}
-        onPress={deleteRecord}
-        disabled={deleting}
-        busy={deleting}
-      />
-    </ScrollView>
+          {record.dosageText ? <DetailRow label="使用劑量" value={record.dosageText} /> : null}
+          <DetailRow label="提醒" value={record.reminderId ? '已建立提醒' : '尚未建立提醒'} />
+          {record.notes ? <DetailRow label="補充備註" value={record.notes} multiline /> : null}
+        </View>
+        <View style={styles.actionRow}>
+          <RecordActionButton
+            kind="edit"
+            label="編輯紀錄"
+            disabled={deleting}
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('DewormingForm', { record })}
+          />
+          {!selectedPet?.memorial && (
+            <AppButton
+              title="複製新增"
+              disabled={deleting}
+              variant="secondary"
+              fullWidth={false}
+              style={[styles.secondary, styles.actionButton]}
+              onPress={() => navigation.navigate('DewormingForm', { record, duplicate: true })}
+            />
+          )}
+        </View>
+        <RecordActionButton
+          kind="delete"
+          label={deleting ? '刪除中…' : '刪除'}
+          style={styles.deleteButton}
+          onPress={deleteRecord}
+          disabled={deleting}
+          busy={deleting}
+        />
+      </ScrollView>
+    </ScreenPageFrame>
   );
 }

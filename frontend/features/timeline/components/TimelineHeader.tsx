@@ -54,36 +54,42 @@ export default function TimelineHeader({
   return (
     <View>
       <View style={styles.petHeader}>
-        {avatarAttachmentId && userId ? (
-          <AuthenticatedPetAvatar
-            attachmentId={avatarAttachmentId}
-            userId={userId}
-            style={styles.petAvatar}
-            fallback={
-              <View style={styles.petAvatarFallback}>
-                <Ionicons name="paw-outline" size={21} color={Colors.primaryDecoration} />
-              </View>
-            }
-          />
-        ) : (
-          <View style={styles.petAvatarFallback}>
-            <Ionicons name="paw-outline" size={21} color={Colors.primaryDecoration} />
+        <View style={styles.petHeaderRow}>
+          {avatarAttachmentId && userId ? (
+            <AuthenticatedPetAvatar
+              attachmentId={avatarAttachmentId}
+              userId={userId}
+              style={styles.petAvatar}
+              fallback={
+                <View style={styles.petAvatarFallback}>
+                  <Ionicons name="paw-outline" size={21} color={Colors.primaryDecoration} />
+                </View>
+              }
+            />
+          ) : (
+            <View style={styles.petAvatarFallback}>
+              <Ionicons name="paw-outline" size={21} color={Colors.primaryDecoration} />
+            </View>
+          )}
+          <View style={styles.flex}>
+            <Text style={styles.eyebrow}>照護紀錄</Text>
+            <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+              {petName ? `${petName} 的生活足跡` : '生活足跡'}
+            </Text>
           </View>
-        )}
-        <View style={styles.flex}>
-          <Text style={styles.eyebrow}>照護紀錄</Text>
-          <Text style={styles.title}>{petName ? `${petName} 的生活足跡` : '生活足跡'}</Text>
         </View>
         {onOpenPhotos ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="開啟照護相簿"
-            style={styles.photosButton}
-            onPress={onOpenPhotos}
-          >
-            <Ionicons name="images-outline" size={18} color={Colors.primaryDecoration} />
-            <Text style={styles.photosButtonText}>相簿</Text>
-          </TouchableOpacity>
+          <View style={styles.photosRow}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="開啟照護相簿"
+              style={styles.photosButton}
+              onPress={onOpenPhotos}
+            >
+              <Ionicons name="images-outline" size={18} color={Colors.primaryDecoration} />
+              <Text style={styles.photosButtonText}>相簿</Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </View>
 
@@ -228,11 +234,14 @@ export default function TimelineHeader({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  petHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  flex: { flex: 1, minWidth: 0 },
+  petHeader: { marginBottom: 16 },
+  petHeaderRow: { flexDirection: 'row', alignItems: 'center' },
+  photosRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
   photosButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth: '100%',
     gap: 5,
     minHeight: 44,
     paddingHorizontal: 13,
@@ -241,9 +250,15 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  photosButtonText: { color: Colors.primary, fontSize: Type.subhead, fontWeight: '800' },
-  petAvatar: { width: 48, height: 48, borderRadius: 16, marginRight: 12 },
+  photosButtonText: {
+    flexShrink: 1,
+    color: Colors.primary,
+    fontSize: Type.subhead,
+    fontWeight: '800',
+  },
+  petAvatar: { flexShrink: 0, width: 48, height: 48, borderRadius: 16, marginRight: 12 },
   petAvatarFallback: {
+    flexShrink: 0,
     width: 48,
     height: 48,
     borderRadius: 16,

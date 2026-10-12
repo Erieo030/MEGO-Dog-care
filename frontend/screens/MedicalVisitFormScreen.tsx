@@ -1,3 +1,4 @@
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：新增或編輯就醫紀錄，支援多筆藥物、附件與回診提醒同步。 */
 import React, { useEffect, useRef, useState } from 'react';
@@ -185,7 +186,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         ref={scrollRef}
         contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={s.formIntro}>
+        <ScreenPageHeader style={s.formIntro}>
           <View style={s.formIntroIcon}>
             <Ionicons name="medical-outline" size={23} color={Colors.primaryDecoration} />
           </View>
@@ -196,7 +197,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
             </Text>
             <Text style={s.notice}>保存這次看診重點，方便日後回看或和獸醫溝通。</Text>
           </View>
-        </View>
+        </ScreenPageHeader>
         <Text style={s.sectionHeading}>必填與看診資料</Text>
         <View onLayout={position('visitedAt')}>
           <DatePickerField

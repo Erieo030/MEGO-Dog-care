@@ -1,3 +1,4 @@
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: jest.fn() }) }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -12,6 +13,7 @@ jest.mock('react-native', () => ({
   Text: 'Text',
   TextInput: 'Input',
   TouchableOpacity: 'Button',
+  Pressable: 'Button',
   View: 'View',
   StyleSheet: { create: (styles: object) => styles },
 }));

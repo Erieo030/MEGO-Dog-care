@@ -1,4 +1,4 @@
-"""回憶模式：保留紀錄、停止提醒、關閉公開身份頁，並阻擋新增紀錄。"""
+"""回憶模式：保留紀錄、停止提醒、關閉公開身分頁，並阻擋新增紀錄。"""
 from types import SimpleNamespace
 
 import pytest

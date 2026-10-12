@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class PetFields(BaseModel):
     """建立與編輯毛孩時共用的健康及基本資料。"""
 
-    name: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=20)
     gender: Literal['male', 'female']
     breed: str = Field(min_length=1, max_length=50)
     breedType: Literal['purebred', 'mixed', 'unknown'] = 'unknown'

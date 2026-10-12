@@ -1,3 +1,4 @@
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 毛孩新增與編輯共用表單，集中處理欄位驗證與健康資料輸入。 */
 import React, { useState } from 'react';
@@ -30,6 +31,8 @@ import PetAvatarPicker from '../features/pets/components/PetAvatarPicker';
 import PetFormTextField from '../features/pets/components/PetFormTextField';
 import {
   PET_FORM_FIELDS,
+  PET_NAME_MAX_LENGTH,
+  petNameLength,
   PetFormTextField as PetFormTextFieldData,
 } from '../features/pets/petFormContent';
 import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
@@ -45,6 +48,7 @@ interface PetFormScreenProps {
   bottomContentPadding?: number;
   /** 表單最下方的額外區塊，例如編輯毛孩時的回憶入口。 */
   footer?: React.ReactNode;
+  pageHeader?: boolean;
 }
 
 export default function PetFormScreen({
@@ -56,8 +60,10 @@ export default function PetFormScreen({
   onCancel,
   bottomContentPadding,
   footer,
+  pageHeader = false,
 }: PetFormScreenProps) {
   const { session } = useAuth();
+  const Intro = pageHeader ? ScreenPageHeader : View;
   const [form, setForm] = useState<PetData>({ ...emptyPetData, ...initialData });
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(form, setForm);
@@ -68,6 +74,10 @@ export default function PetFormScreen({
     if (saving) return;
     if (!form.name.trim() || !form.gender || !form.breed.trim() || !form.arrivalDate.trim()) {
       Alert.alert('提示', '請填寫姓名、性別、品種與到家日期');
+      return;
+    }
+    if (petNameLength(form.name.trim()) > PET_NAME_MAX_LENGTH) {
+      Alert.alert('姓名太長', `毛孩姓名最多 ${PET_NAME_MAX_LENGTH} 個字元，請縮短後再儲存。`);
       return;
     }
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
@@ -115,7 +125,7 @@ export default function PetFormScreen({
             bottomContentPadding !== undefined && { paddingBottom: bottomContentPadding },
           ]}
         >
-          <View style={styles.formIntro}>
+          <Intro style={styles.formIntro}>
             <View style={styles.formIntroIcon}>
               <Ionicons name="paw" size={23} color={Colors.primaryDecoration} />
             </View>
@@ -124,7 +134,7 @@ export default function PetFormScreen({
               <Text style={styles.title}>{title}</Text>
               <Text style={styles.formHint}>先完成基本資料，日後照護紀錄會更貼近牠。</Text>
             </View>
-          </View>
+          </Intro>
 
           <PetAvatarPicker
             avatarUri={form.avatarUri}
@@ -187,8 +197,8 @@ export default function PetFormScreen({
           <Text style={styles.sectionHint}>有過敏或慢性病時，AI 整理與就醫前摘要會一併參考。</Text>
           {renderFields(PET_FORM_FIELDS.slice(4, 6))}
 
-          <Text style={styles.sectionHeading}>身份資訊</Text>
-          <Text style={styles.sectionHint}>選填。可用於毛孩身份卡與 QR 身份頁。</Text>
+          <Text style={styles.sectionHeading}>身分資訊</Text>
+          <Text style={styles.sectionHint}>選填。可用於毛孩身分卡與 QR 身分頁。</Text>
           {renderFields(PET_FORM_FIELDS.slice(6))}
           <View style={styles.switchRow}>
             <View>
