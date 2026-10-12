@@ -130,7 +130,7 @@ export function PetIdentityCarousel({
                   <View style={styles.brandIcon}>
                     <Ionicons name="paw" size={14} color={Colors.primaryDecoration} />
                   </View>
-                  <Text style={styles.idCardBrand}>MEGO 毛孩身份卡</Text>
+                  <Text style={styles.idCardBrand}>MEGO 毛孩身分卡</Text>
                 </View>
                 {memorial ? (
                   <View style={[styles.currentBadge, styles.memorialBadge]}>

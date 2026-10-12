@@ -193,7 +193,7 @@ def main() -> None:
         return
     for ordinal, user in enumerate(users, start=1):
         user_id = str(user["_id"])
-        # 每帳號建立 5 隻測試毛孩，以涵蓋多寵物切換與各自的身份 QR 資料。
+        # 每帳號建立 5 隻測試毛孩，以涵蓋多寵物切換與各自的身分 QR 資料。
         pet_ids = [seed_pet(user_id, ordinal * 10 + pet_number) for pet_number in range(1, 6)]
         # 其餘照護紀錄集中在第一隻測試毛孩，讓各功能都有完整可檢視的歷史。
         seed_records(user_id, pet_ids[0])

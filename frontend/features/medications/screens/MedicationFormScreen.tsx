@@ -1,3 +1,4 @@
+import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /**
  * 用途：新增、編輯與複製用藥療程。
@@ -127,127 +128,129 @@ export function MedicationFormScreen() {
   };
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
-    >
-      <View style={styles.formIntro}>
-        <View style={styles.formIntroIcon}>
-          <Ionicons name="medical-outline" size={22} color={Colors.successDecoration} />
-        </View>
-        <View style={styles.formIntroCopy}>
-          <Text style={styles.formEyebrow}>用藥照護</Text>
-          <Text style={styles.title}>{existing ? '編輯用藥' : '新增用藥療程'}</Text>
-          <Text style={styles.formHint}>依獸醫指示記下療程與提醒，避免漏服或重複記錄。</Text>
-        </View>
-      </View>
+    <ScreenPageFrame>
+      <KeyboardAwareScrollView
+        contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+      >
+        <ScreenPageHeader style={styles.formIntro}>
+          <View style={styles.formIntroIcon}>
+            <Ionicons name="medical-outline" size={22} color={Colors.successDecoration} />
+          </View>
+          <View style={styles.formIntroCopy}>
+            <Text style={styles.formEyebrow}>用藥照護</Text>
+            <Text style={styles.title}>{existing ? '編輯用藥' : '新增用藥療程'}</Text>
+            <Text style={styles.formHint}>依獸醫指示記下療程與提醒，避免漏服或重複記錄。</Text>
+          </View>
+        </ScreenPageHeader>
 
-      {fields
-        .filter(([key]) => key !== 'notes')
-        .map(([key, label]) => {
-          const isDate = key === 'startDate' || key === 'endDate';
-          if (isDate) {
-            const value = draft[key];
+        {fields
+          .filter(([key]) => key !== 'notes')
+          .map(([key, label]) => {
+            const isDate = key === 'startDate' || key === 'endDate';
+            if (isDate) {
+              const value = draft[key];
+              return (
+                <DatePickerField
+                  key={key}
+                  label={label}
+                  value={value ? new Date(`${value}T12:00:00`) : undefined}
+                  onChange={(date) => setField(key, localDateKey(date))}
+                  minimumDate={
+                    key === 'endDate' && draft.startDate
+                      ? new Date(`${draft.startDate}T12:00:00`)
+                      : undefined
+                  }
+                  maximumDate={key === 'startDate' ? new Date() : undefined}
+                />
+              );
+            }
             return (
-              <DatePickerField
-                key={key}
-                label={label}
-                value={value ? new Date(`${value}T12:00:00`) : undefined}
-                onChange={(date) => setField(key, localDateKey(date))}
-                minimumDate={
-                  key === 'endDate' && draft.startDate
-                    ? new Date(`${draft.startDate}T12:00:00`)
-                    : undefined
-                }
-                maximumDate={key === 'startDate' ? new Date() : undefined}
-              />
+              <View key={key}>
+                <Text style={styles.label}>{label}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={`請輸入${label.replace('（必填）', '')}`}
+                  placeholderTextColor={Colors.subtext}
+                  value={String(draft[key] ?? '')}
+                  keyboardType={key === 'timesPerDay' ? 'numeric' : 'default'}
+                  onChangeText={(value) =>
+                    setField(key, key === 'timesPerDay' ? Number(value) : value)
+                  }
+                />
+              </View>
             );
-          }
-          return (
-            <View key={key}>
-              <Text style={styles.label}>{label}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={`請輸入${label.replace('（必填）', '')}`}
-                placeholderTextColor={Colors.subtext}
-                value={String(draft[key] ?? '')}
-                keyboardType={key === 'timesPerDay' ? 'numeric' : 'default'}
-                onChangeText={(value) =>
-                  setField(key, key === 'timesPerDay' ? Number(value) : value)
-                }
-              />
-            </View>
-          );
-        })}
-      <SupplementalNotesField
-        value={String(draft.notes ?? '')}
-        onChange={(value) => setField('notes', value)}
-      />
+          })}
+        <SupplementalNotesField
+          value={String(draft.notes ?? '')}
+          onChange={(value) => setField('notes', value)}
+        />
 
-      <Text style={styles.section}>服用方式</Text>
-      <View style={styles.options}>
-        {(Object.keys(mealTimingLabels) as MedicationMealTiming[]).map((key) => (
-          <TouchableOpacity
-            key={key}
-            style={[styles.chip, draft.mealTiming === key && styles.selected]}
-            onPress={() => setField('mealTiming', key)}
-          >
-            <Text>{mealTimingLabels[key]}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <Text style={styles.section}>服用方式</Text>
+        <View style={styles.options}>
+          {(Object.keys(mealTimingLabels) as MedicationMealTiming[]).map((key) => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.chip, draft.mealTiming === key && styles.selected]}
+              onPress={() => setField('mealTiming', key)}
+            >
+              <Text>{mealTimingLabels[key]}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <DatePickerField
-        label="每天提醒時間（選填）"
-        mode="time"
-        value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
-        onChange={(date) => {
-          const next = date.toTimeString().slice(0, 5);
-          setField('reminderTimeDraft', next);
-          if (editingReminderTime) {
-            setField(
-              'reminderTimes',
-              draft.reminderTimes.map((item) => (item === editingReminderTime ? next : item)),
-            );
-            setEditingReminderTime(null);
-          }
-        }}
-      />
-      {draft.reminderTimes.map((time) => (
-        <View key={time} style={styles.reminderRow}>
-          <Text style={styles.reminderHint}>每天 {time}</Text>
-          <RecordActionButton
-            kind="edit"
-            label="編輯"
-            style={styles.reminderAction}
-            onPress={() => {
-              setEditingReminderTime(time);
-              setField('reminderTimeDraft', time);
-            }}
-          />
-          <RecordActionButton
-            kind="delete"
-            label="刪除"
-            style={styles.reminderAction}
-            onPress={() =>
+        <DatePickerField
+          label="每天提醒時間（選填）"
+          mode="time"
+          value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
+          onChange={(date) => {
+            const next = date.toTimeString().slice(0, 5);
+            setField('reminderTimeDraft', next);
+            if (editingReminderTime) {
               setField(
                 'reminderTimes',
-                draft.reminderTimes.filter((item) => item !== time),
-              )
+                draft.reminderTimes.map((item) => (item === editingReminderTime ? next : item)),
+              );
+              setEditingReminderTime(null);
             }
-          />
-        </View>
-      ))}
+          }}
+        />
+        {draft.reminderTimes.map((time) => (
+          <View key={time} style={styles.reminderRow}>
+            <Text style={styles.reminderHint}>每天 {time}</Text>
+            <RecordActionButton
+              kind="edit"
+              label="編輯"
+              style={styles.reminderAction}
+              onPress={() => {
+                setEditingReminderTime(time);
+                setField('reminderTimeDraft', time);
+              }}
+            />
+            <RecordActionButton
+              kind="delete"
+              label="刪除"
+              style={styles.reminderAction}
+              onPress={() =>
+                setField(
+                  'reminderTimes',
+                  draft.reminderTimes.filter((item) => item !== time),
+                )
+              }
+            />
+          </View>
+        ))}
 
-      <AppButton
-        title={saving ? '儲存中…' : '儲存'}
-        variant="primary"
-        disabled={saving}
-        busy={saving}
-        style={styles.primary}
-        textStyle={styles.primaryText}
-        onPress={save}
-      />
-      <Text style={styles.notice}>MEGO 僅協助記錄用藥資訊與提醒，請依獸醫指示使用。</Text>
-    </KeyboardAwareScrollView>
+        <AppButton
+          title={saving ? '儲存中…' : '儲存'}
+          variant="primary"
+          disabled={saving}
+          busy={saving}
+          style={styles.primary}
+          textStyle={styles.primaryText}
+          onPress={save}
+        />
+        <Text style={styles.notice}>MEGO 僅協助記錄用藥資訊與提醒，請依獸醫指示使用。</Text>
+      </KeyboardAwareScrollView>
+    </ScreenPageFrame>
   );
 }

@@ -136,7 +136,7 @@ const cases = [
   ['體重', WeightFormScreen, {}],
   ['提醒', CreateReminderScreen, {}],
   ['紀念文字', PetMemorialScreen, {}],
-  ['身份 QR 公開設定', LostPetSettingsScreen, {}],
+  ['身分 QR 公開設定', LostPetSettingsScreen, {}],
 ] as const;
 function choose(text: string) {
   const calls = (Alert.alert as jest.Mock).mock.calls;
@@ -270,3 +270,26 @@ test.each([true, false])(
     if (blocked) await act(async () => choose('繼續編輯'));
   },
 );
+
+test('existing overlong pet name cannot be submitted until shortened', async () => {
+  const onSubmit = jest.fn();
+  await act(async () => {
+    screen = create(
+      <PetFormScreen
+        title="編輯"
+        submitLabel="儲存"
+        initialData={{
+          ...emptyPetData,
+          name: '犬'.repeat(21),
+          gender: 'male',
+          breed: '米克斯',
+          arrivalDate: '2026-10-12',
+        }}
+        onSubmit={onSubmit}
+      />,
+    );
+  });
+  await act(async () => screen.root.findByType('AppButton' as never).props.onPress());
+  expect(onSubmit).not.toHaveBeenCalled();
+  expect(Alert.alert).toHaveBeenCalledWith('姓名太長', expect.stringContaining('20'));
+});

@@ -1,3 +1,4 @@
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示目前毛孩依日期排序的就醫紀錄列表與完整畫面狀態。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -74,7 +75,12 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
       };
     }, [load]),
   );
-  if (loading) return <ScreenState loading text="正在載入就醫紀錄…" />;
+  if (loading)
+    return (
+      <ScreenPageState title="就醫紀錄">
+        <ScreenState loading text="正在載入就醫紀錄…" />
+      </ScreenPageState>
+    );
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.container}>
       <FlatList
@@ -96,7 +102,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
         }
         ListHeaderComponent={
           <>
-            <View style={s.listHeader}>
+            <ScreenPageHeader style={s.listHeader}>
               <View style={s.listHeaderIcon}>
                 <Ionicons name="business-outline" size={23} color={Colors.successDecoration} />
               </View>
@@ -106,7 +112,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
                   保存 {selectedPet?.name || '毛孩'} 每次看診的重要內容
                 </Text>
               </View>
-            </View>
+            </ScreenPageHeader>
             {selectedPet?.memorial ? (
               <MemorialReadOnlyNotice petName={selectedPet.name} />
             ) : (

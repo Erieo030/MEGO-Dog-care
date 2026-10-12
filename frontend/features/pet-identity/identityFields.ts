@@ -1,4 +1,4 @@
-/** 用途：毛孩身份 QR 的預設公開範圍與欄位文案。 */
+/** 用途：毛孩身分 QR 的預設公開範圍與欄位文案。 */
 import type { LostProfile } from '../../services/lostPetService';
 
 export const DEFAULT_PROFILE: Omit<LostProfile, 'publicToken'> = {

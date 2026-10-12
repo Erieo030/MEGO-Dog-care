@@ -1,4 +1,4 @@
-/** 用途：毛孩身份設定與 QR 頁共用的標頭、資訊提示及視覺樣式。 */
+/** 用途：毛孩身分設定與 QR 頁共用的標頭、資訊提示及視覺樣式。 */
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../../../constants/Colors';
@@ -59,7 +59,14 @@ export const identityStyles = StyleSheet.create({
     paddingBottom: 40,
     backgroundColor: Colors.background,
   },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
+  headerRow: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 4,
+  },
   iconBadge: {
     width: 50,
     height: 50,

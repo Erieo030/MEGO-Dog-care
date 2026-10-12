@@ -230,3 +230,15 @@ test('registration locks immediate duplicate submissions and permits retry after
   expect(register).toHaveBeenCalledTimes(2);
   expect(register).toHaveBeenLastCalledWith('owner@example.com', 'password8');
 });
+
+test('today tasks and observations precede add shortcuts in home reading order', async () => {
+  await act(async () => {
+    screen = create(<HomeScreen />);
+  });
+  const labels = screen.root
+    .findAllByType('Text' as never)
+    .map((node) => [node.props.children].flat().join(''));
+  expect(labels.indexOf('今天待做')).toBeGreaterThanOrEqual(0);
+  expect(labels.indexOf('今天待做')).toBeLessThan(labels.indexOf('今天想做什麼？'));
+  expect(labels.indexOf('今天想做什麼？')).toBeLessThan(labels.indexOf('健康管理'));
+});

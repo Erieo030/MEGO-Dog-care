@@ -32,3 +32,8 @@ export const PET_FORM_FIELDS: PetFormTextField[] = [
     multiline: true,
   },
 ];
+
+export const PET_NAME_MAX_LENGTH = 20;
+export const petNameLength = (name: string) => Array.from(name).length;
+export const limitPetName = (name: string) =>
+  Array.from(name).slice(0, PET_NAME_MAX_LENGTH).join('');

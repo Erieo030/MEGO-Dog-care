@@ -58,7 +58,7 @@ export function renderSharedHealthScreens(Screen: HomeStackNavigator) {
       <Screen.Screen
         name="HealthEventEdit"
         component={HealthEventEditScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="VomitingHealthEvent"
@@ -83,45 +83,57 @@ export function renderSharedHealthScreens(Screen: HomeStackNavigator) {
       <Screen.Screen
         name="VaccinationList"
         component={VaccinationListScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="VaccinationForm"
         component={VaccinationFormScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="VaccinationDetail"
         component={VaccinationDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
-      <Screen.Screen name="DewormingList" component={DewormingListScreen} options={{ title: '' }} />
-      <Screen.Screen name="DewormingForm" component={DewormingFormScreen} options={{ title: '' }} />
+      <Screen.Screen
+        name="DewormingList"
+        component={DewormingListScreen}
+        options={{ headerShown: false }}
+      />
+      <Screen.Screen
+        name="DewormingForm"
+        component={DewormingFormScreen}
+        options={{ headerShown: false }}
+      />
       <Screen.Screen
         name="DewormingDetail"
         component={DewormingDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="MedicationList"
         component={MedicationListScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="MedicationForm"
         component={MedicationFormScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="MedicationDetail"
         component={MedicationDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
-      <Screen.Screen name="WeightForm" component={WeightFormScreen} options={{ title: '' }} />
+      <Screen.Screen
+        name="WeightForm"
+        component={WeightFormScreen}
+        options={{ headerShown: false }}
+      />
       <Screen.Screen
         name="MedicalVisitList"
         component={MedicalVisitListScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="VetMap"
@@ -131,12 +143,12 @@ export function renderSharedHealthScreens(Screen: HomeStackNavigator) {
       <Screen.Screen
         name="MedicalVisitForm"
         component={MedicalVisitFormScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="MedicalVisitDetail"
         component={MedicalVisitDetailScreen}
-        options={{ title: '' }}
+        options={{ headerShown: false }}
       />
     </>
   );

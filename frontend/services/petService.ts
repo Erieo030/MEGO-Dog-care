@@ -9,7 +9,7 @@ const normalizePet = (pet: Record<string, unknown>): Pet => ({
   species: 'dog',
   gender: pet.gender === 'female' ? 'female' : 'male',
   breed: String(pet.breed ?? ''),
-  breedType: (pet.breedType === 'purebred' || pet.breedType === 'mixed' ? pet.breedType : 'unknown'),
+  breedType: pet.breedType === 'purebred' || pet.breedType === 'mixed' ? pet.breedType : 'unknown',
   birthDate: String(pet.birthday ?? ''),
   adoptionDate: String(pet.arrivalDate ?? ''),
   avatarAttachmentId: pet.avatarAttachmentId ? String(pet.avatarAttachmentId) : undefined,
@@ -71,7 +71,7 @@ export const deletePet = (userId: string, petId: string) =>
     method: 'DELETE',
   });
 
-/** 把毛孩移到回憶；後端會停止未完成的提醒並關閉身份 QR 公開頁。 */
+/** 把毛孩移到回憶；後端會停止未完成的提醒並關閉身分 QR 公開頁。 */
 export const setPetMemorial = async (userId: string, petId: string, data: PetMemorialData) => {
   const result = await apiData<{ petData: Record<string, unknown>; stoppedReminderCount: number }>(
     `/api/pets/${petId}/memorial?userId=${encodeURIComponent(userId)}`,
