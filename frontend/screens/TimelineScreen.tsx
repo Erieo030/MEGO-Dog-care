@@ -1,14 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：以月曆瀏覽每日照護紀錄，並可進入各筆來源明細。 */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors } from '../constants/Colors';
@@ -37,7 +30,9 @@ export default function TimelineScreen({ navigation }: Props) {
   const { session } = useAuth();
   const { selectedPet } = usePet();
   const [items, setItems] = useState<TimelineItem[]>([]);
-  const [calendarDays, setCalendarDays] = useState<Array<{ date: string; types: TimelineType[] }>>([]);
+  const [calendarDays, setCalendarDays] = useState<Array<{ date: string; types: TimelineType[] }>>(
+    [],
+  );
   const [month, setMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -218,6 +213,7 @@ export default function TimelineScreen({ navigation }: Props) {
               onSelectDate={selectDate}
               onSelectMonth={selectMonth}
               onGoToday={goToday}
+              onOpenPhotos={() => navigation.navigate('PhotosOverview')}
             />
             {!!error && (
               <View style={styles.errorBox}>
@@ -236,11 +232,22 @@ export default function TimelineScreen({ navigation }: Props) {
           </>
         }
         ListEmptyComponent={
-          !detailsError
-            ? detailsLoading
-              ? <Text style={styles.loadingDetails}>正在載入當日紀錄…</Text>
-              : <TimelineEmptyState />
-            : null
+          !detailsError ? (
+            detailsLoading ? (
+              <Text style={styles.loadingDetails}>正在載入當日紀錄…</Text>
+            ) : (
+              <TimelineEmptyState
+                onCreate={
+                  selectedPet && !selectedPet.memorial
+                    ? () =>
+                        navigation.navigate('DailyLog', {
+                          recordDate: getLocalDateKey(selectedDate),
+                        })
+                    : undefined
+                }
+              />
+            )
+          ) : null
         }
         renderItem={({ item }) => (
           <TimelineCard

@@ -109,9 +109,9 @@ test('selecting a hospital returns to the existing visit form and merges its par
   expect(navigate).not.toHaveBeenCalled();
 });
 
-test('the map tab browses hospitals without a back arrow or select-for-visit action', async () => {
-  await mount({ entry: 'tab' });
-  expect(byLabel('返回就醫紀錄')).toBeUndefined();
+test('browsing the map from home offers a back button but no select-for-visit action', async () => {
+  await mount({});
+  expect(byLabel('返回上一頁')).toBeDefined();
   await act(async () => byLabel('查看仁愛犬醫院位置').props.onPress());
   expect(byLabel('將仁愛犬醫院帶入就醫紀錄')).toBeUndefined();
   expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();

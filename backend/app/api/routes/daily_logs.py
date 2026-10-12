@@ -1,5 +1,6 @@
 from app.timezone import now_taipei
-from fastapi import APIRouter,Query,Response,status
+from fastapi import APIRouter,Query,Response,status,Depends
+from app.api.dependencies import require_active_pet
 from app.schemas.daily_log import DailyLogCreateRequest,DailyLogUpdateRequest
 from app.services import daily_log_service
 router=APIRouter(tags=["daily-logs"])
@@ -9,7 +10,7 @@ def ls(pet_id:str,user_id:str=Query(alias="userId"),limit:int=Query(50,ge=1,le=1
 def today(pet_id:str,user_id:str=Query(alias="userId"),local_date:str|None=Query(default=None,alias="localDate")):return {"success":True,"message":"取得今日紀錄成功","data":daily_log_service.get_today(pet_id,user_id,local_date or now_taipei().date().isoformat())}
 @router.get("/daily-logs/{record_id}")
 def get_one(record_id:str,user_id:str=Query(alias="userId")):return {"success":True,"message":"取得日常紀錄成功","data":{"record":daily_log_service.get_record(record_id,user_id)}}
-@router.post("/pets/{pet_id}/daily-logs",status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/daily-logs",status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create(pet_id:str,data:DailyLogCreateRequest,user_id:str=Query(alias="userId")):return {"success":True,"message":"日常紀錄已建立","data":{"record":daily_log_service.create(pet_id,user_id,data)}}
 @router.patch("/daily-logs/{record_id}")
 def update(record_id:str,data:DailyLogUpdateRequest,user_id:str=Query(alias="userId")):return {"success":True,"message":"日常紀錄已更新","data":{"record":daily_log_service.update(record_id,user_id,data)}}

@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePet } from '../../contexts/PetContext';
+import FilterChip from '../../components/FilterChip';
 import { Colors } from '../../constants/Colors';
 import { useTabContentBottomPadding } from '../../components/navigation/useTabContentBottomPadding';
 import type { HomeStackParamList } from '../../navigation/types';
@@ -81,10 +82,18 @@ export default function CarePhotosScreen({ navigation }: Props) {
         refreshing={data.loading}
         ListHeaderComponent={
           <View style={styles.header}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="返回紀錄"
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={22} color={Colors.text} />
+            </TouchableOpacity>
             <Text style={styles.title}>照護相簿</Text>
             <Text style={styles.subtitle}>把照護留下的照片，依日期收在一起。</Text>
             <View style={styles.petRow}>
-              <Ionicons name="paw-outline" size={22} color={Colors.primary} />
+              <Ionicons name="paw-outline" size={22} color={Colors.primaryDecoration} />
               <Text numberOfLines={2} style={styles.petName}>
                 {selectedPet?.name || '請先選擇毛孩'}
               </Text>
@@ -98,18 +107,15 @@ export default function CarePhotosScreen({ navigation }: Props) {
                 contentContainerStyle={{ gap: 8, paddingBottom: 14 }}
               >
                 {pets.map((pet) => (
-                  <TouchableOpacity
+                  <FilterChip
                     key={pet.id}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: pet.id === selectedPet?.id }}
-                    style={[styles.filter, pet.id === selectedPet?.id && styles.filterActive]}
+                    label={pet.name}
+                    selected={pet.id === selectedPet?.id}
                     onPress={() => {
                       setViewing(null);
                       selectPet(pet.id);
                     }}
-                  >
-                    <Text style={styles.filterText}>{pet.name}</Text>
-                  </TouchableOpacity>
+                  />
                 ))}
               </ScrollView>
             )}
@@ -149,15 +155,12 @@ export default function CarePhotosScreen({ navigation }: Props) {
               contentContainerStyle={styles.filters}
             >
               {CARE_PHOTO_FILTERS.map((filter) => (
-                <TouchableOpacity
+                <FilterChip
                   key={filter.key}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: category === filter.key }}
-                  style={[styles.filter, category === filter.key && styles.filterActive]}
+                  label={filter.label}
+                  selected={category === filter.key}
                   onPress={() => setCategory(filter.key)}
-                >
-                  <Text style={styles.filterText}>{filter.label}</Text>
-                </TouchableOpacity>
+                />
               ))}
             </ScrollView>
             <View style={styles.switchRow}>
@@ -182,7 +185,7 @@ export default function CarePhotosScreen({ navigation }: Props) {
         }
         renderSectionHeader={({ section }) => (
           <View style={styles.week}>
-            <Ionicons name="calendar-outline" size={17} color={Colors.primary} />
+            <Ionicons name="calendar-outline" size={17} color={Colors.primaryDecoration} />
             <Text style={styles.weekTitle}>
               {section.title.replaceAll('-', '/')} -{' '}
               {addDateKeyDays(section.title, 6).replaceAll('-', '/')}
@@ -229,7 +232,7 @@ export default function CarePhotosScreen({ navigation }: Props) {
             </View>
           ) : !data.error ? (
             <View style={styles.empty}>
-              <Ionicons name="images-outline" size={42} color={Colors.primary} />
+              <Ionicons name="images-outline" size={42} color={Colors.primaryDecoration} />
               <Text style={styles.emptyTitle}>
                 {selectedPet ? '這個月份還沒有照護照片' : '先建立或選擇毛孩'}
               </Text>

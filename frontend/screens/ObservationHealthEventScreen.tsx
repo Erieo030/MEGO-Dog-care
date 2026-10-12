@@ -51,6 +51,8 @@ import {
   HealthEventErrorState,
   HealthEventLoadingState,
 } from '../features/health-events/components/HealthEventScreenState';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 const severities = Object.entries(SEVERITY_LABELS) as Array<[Severity, string]>;
 type Props = NativeStackScreenProps<HomeStackParamList, 'ObservationHealthEvent'>;
@@ -72,39 +74,61 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const requestId = useRef(0);
+  const formValues = { values, occurredAt, severity, notes, images };
+  const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setValues(value.values);
+      setOccurredAt(value.occurredAt);
+      setSeverity(value.severity);
+      setNotes(value.notes);
+      setImages(value.images);
+    },
+    !loading && !error,
+  );
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    if (!eventId) return;
-    const currentRequest = ++requestId.current;
-    if (!session?.userId || !selectedPet) {
-      setError('找不到目前選取的毛孩');
-      setLoading(false);
-      return;
-    }
-    try {
-      setError('');
-      const result = await service.getHealthEvent(session.userId, eventId, signal);
-      if (currentRequest !== requestId.current) return;
-      if (result.petId !== selectedPet.id || result.type !== type) {
-        setError(`找不到目前毛孩的${config.title}紀錄`);
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!eventId || dirtyRef.current) return;
+      const currentRequest = ++requestId.current;
+      if (!session?.userId || !selectedPet) {
+        setError('找不到目前選取的毛孩');
+        setLoading(false);
         return;
       }
-      setValues(normalizeObservationDetails(type, result.details ?? {}));
-      setOccurredAt(new Date(result.occurredAt));
-      setSeverity(result.severity);
-      setNotes(result.notes ?? '');
-      setImages(result.attachments ?? []);
-    } catch (requestError) {
-      if (currentRequest === requestId.current)
-        setError((requestError as Error).message || `無法載入${config.title}紀錄`);
-    } finally {
-      if (currentRequest === requestId.current) setLoading(false);
-    }
-  }, [config.title, eventId, selectedPet, session?.userId, type]);
+      try {
+        setError('');
+        const result = await service.getHealthEvent(session.userId, eventId, signal);
+        if (currentRequest !== requestId.current) return;
+        if (result.petId !== selectedPet.id || result.type !== type) {
+          setError(`找不到目前毛孩的${config.title}紀錄`);
+          return;
+        }
+        setValues(normalizeObservationDetails(type, result.details ?? {}));
+        setOccurredAt(new Date(result.occurredAt));
+        setSeverity(result.severity);
+        setNotes(result.notes ?? '');
+        setImages(result.attachments ?? []);
+        markSaved({
+          values: normalizeObservationDetails(type, result.details ?? {}),
+          occurredAt: new Date(result.occurredAt),
+          severity: result.severity,
+          notes: result.notes ?? '',
+          images: result.attachments ?? [],
+        });
+      } catch (requestError) {
+        if (currentRequest === requestId.current)
+          setError((requestError as Error).message || `無法載入${config.title}紀錄`);
+      } finally {
+        if (currentRequest === requestId.current) setLoading(false);
+      }
+    },
+    [config.title, eventId, selectedPet, session?.userId, type, dirtyRef, markSaved],
+  );
   useFocusEffect(
     useCallback(() => {
       const controller = new AbortController();
-      if (eventId) {
+      if (eventId && !dirtyRef.current) {
         setLoading(true);
         void load(controller.signal);
       }
@@ -112,7 +136,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
         controller.abort();
         requestId.current += 1;
       };
-    }, [eventId, load]),
+    }, [eventId, load, dirtyRef]),
   );
 
   const submit = async () => {
@@ -133,6 +157,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
       };
       if (eventId) await service.updateObservationHealthEvent(session.userId, eventId, input);
       else await service.createObservationHealthEvent(session.userId, selectedPet.id, input);
+      markSaved(formValues);
       const safety = shouldShowObservationSafety(type, values, severity);
       const successMessage = safety
         ? `${config.title}紀錄已儲存。\n\n安全提醒：${OBSERVATION_SAFETY_MESSAGE}`
@@ -175,7 +200,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
       >
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="eye-outline" size={22} color={Colors.primary} />
+            <Ionicons name="eye-outline" size={22} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.title}>
@@ -273,8 +298,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: 22, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: 12 },
+  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
+  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -304,7 +329,12 @@ const styles = StyleSheet.create({
   outlineText: { color: Colors.text, fontWeight: '700' },
   images: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
   image: { width: 76, height: 76, borderRadius: 12 },
-  removeImage: { color: '#C34D4D', fontSize: 12, textAlign: 'center', marginTop: 3 },
+  removeImage: {
+    color: Colors.dangerText,
+    fontSize: Type.caption,
+    textAlign: 'center',
+    marginTop: 3,
+  },
   submit: {
     backgroundColor: Colors.primary,
     borderRadius: FORM_BUTTON_RADIUS,
@@ -313,6 +343,6 @@ const styles = StyleSheet.create({
     marginTop: 24,
     minHeight: FORM_BUTTON_HEIGHT,
   },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.5 },
 });

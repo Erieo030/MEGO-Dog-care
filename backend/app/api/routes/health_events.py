@@ -1,5 +1,6 @@
 """用途：提供具毛孩所有權檢查的健康異常與專屬快速紀錄 API。"""
-from fastapi import APIRouter, Query, Response, status
+from fastapi import APIRouter, Query, Response, status, Depends
+from app.api.dependencies import require_active_pet
 
 from app.schemas.health_event import (
     HealthEventCreateRequest,
@@ -13,7 +14,7 @@ from app.services import health_event_service
 router = APIRouter(tags=["health-events"])
 
 
-@router.post("/pets/{pet_id}/observation-events", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/observation-events", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_observation_event(
     pet_id: str, data: ObservationHealthEventRequest,
     user_id: str = Query(alias="userId"),
@@ -29,7 +30,7 @@ def update_observation_event(
     return {"success": True, "message": "健康紀錄已更新", "data": {"event": health_event_service.update_observation_event(event_id, user_id, data)}}
 
 
-@router.post("/pets/{pet_id}/vomiting-events", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/vomiting-events", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_vomiting_event(
     pet_id: str,
     data: VomitingHealthEventRequest,
@@ -50,7 +51,7 @@ def update_vomiting_event(
     return {"success": True, "message": "健康紀錄已更新", "data": {"event": health_event_service.update_vomiting_event(event_id, user_id, data)}}
 
 
-@router.post("/pets/{pet_id}/stool-events", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/stool-events", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_stool_event(
     pet_id: str,
     data: StoolHealthEventRequest,
@@ -76,7 +77,7 @@ def list_health_events(pet_id: str, user_id: str = Query(alias="userId")):
     return {"success": True, "message": "取得健康紀錄成功", "data": {"events": health_event_service.list_events(pet_id, user_id)}}
 
 
-@router.post("/pets/{pet_id}/health-events", status_code=status.HTTP_201_CREATED)
+@router.post("/pets/{pet_id}/health-events", status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_active_pet)])
 def create_health_event(
     pet_id: str,
     data: HealthEventCreateRequest,

@@ -30,6 +30,7 @@ export default function PetSetupStack() {
       });
     } catch (error) {
       Alert.alert('新增失敗', (error as Error).message);
+      return false;
     }
   };
 

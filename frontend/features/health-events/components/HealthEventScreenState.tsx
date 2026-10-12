@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   stateText: { color: Colors.subtext, marginTop: 10 },
-  error: { color: '#C55B5B', textAlign: 'center' },
+  error: { color: Colors.dangerText, textAlign: 'center' },
   retry: {
     marginTop: 14,
     borderWidth: 1,

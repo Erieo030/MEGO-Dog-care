@@ -6,7 +6,9 @@ import { Colors } from '../../../constants/Colors';
 import type { HomeTheme } from '../../../constants/HomeThemes';
 import type { Pet } from '../../../types';
 import { calculatePetAge } from '../homeContent';
+import { memorialPeriodText } from '../../pets/memorialContent';
 import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   selectedPet: Pet;
@@ -17,15 +19,29 @@ type Props = {
   onOpenPetSelector: () => void;
 };
 
-export function HomePetHeader({ selectedPet, pets, theme, compact, onEdit, onOpenPetSelector }: Props) {
+export function HomePetHeader({
+  selectedPet,
+  pets,
+  theme,
+  compact,
+  onEdit,
+  onOpenPetSelector,
+}: Props) {
+  const memorial = selectedPet.memorial === true;
   return (
     <SoftEntrance
       key={selectedPet.id}
       style={[styles.headerSurface, compact && styles.headerCompact]}
     >
-      <Text style={[styles.pageTitle, compact && styles.pageTitleCompact]}>今天也一起好好生活</Text>
+      <Text style={[styles.pageTitle, compact && styles.pageTitleCompact]}>
+        {memorial ? '謝謝你的陪伴' : '今天也一起好好生活'}
+      </Text>
       <View accessible={false} style={[styles.titleAccent, { backgroundColor: theme.accent }]} />
-      <Text style={styles.titleCaption}>把每天的照顧，變成安心的陪伴。</Text>
+      <Text style={styles.titleCaption}>
+        {memorial
+          ? `${selectedPet.name}的每一天，都好好收在這裡。`
+          : '把每天的照顧，變成安心的陪伴。'}
+      </Text>
       <SoftButton
         accessibilityRole="button"
         accessibilityLabel="編輯目前毛孩"
@@ -37,15 +53,15 @@ export function HomePetHeader({ selectedPet, pets, theme, compact, onEdit, onOpe
             attachmentId={selectedPet.avatarAttachmentId}
             userId={selectedPet.userId}
             style={[styles.avatarSmall, compact && styles.avatarCompact]}
-            fallback={(
+            fallback={
               <View style={[styles.avatarFallbackSmall, compact && styles.avatarCompact]}>
-                <Ionicons name="paw" size={21} color={Colors.primary} />
+                <Ionicons name="paw" size={21} color={Colors.primaryDecoration} />
               </View>
-            )}
+            }
           />
         ) : (
           <View style={[styles.avatarFallbackSmall, compact && styles.avatarCompact]}>
-            <Ionicons name="paw" size={21} color={Colors.primary} />
+            <Ionicons name="paw" size={21} color={Colors.primaryDecoration} />
           </View>
         )}
         <View style={styles.flex}>
@@ -53,7 +69,10 @@ export function HomePetHeader({ selectedPet, pets, theme, compact, onEdit, onOpe
             {selectedPet.name}
           </Text>
           <Text style={styles.mutedSmall} numberOfLines={1}>
-            {selectedPet.breed || '品種未設定'} · {calculatePetAge(selectedPet.birthDate)}
+            {selectedPet.breed || '品種未設定'} ·{' '}
+            {memorial
+              ? memorialPeriodText(selectedPet) || '在回憶中'
+              : calculatePetAge(selectedPet.birthDate)}
           </Text>
         </View>
         <View style={[styles.editIcon, { backgroundColor: theme.iconSurface }]}>
@@ -68,7 +87,7 @@ export function HomePetHeader({ selectedPet, pets, theme, compact, onEdit, onOpe
           onPress={onOpenPetSelector}
         >
           <Ionicons name="swap-horizontal-outline" size={18} color={theme.iconColor} />
-          <Text style={[styles.switchButtonText, { color: theme.iconColor }]}>切換毛孩</Text>
+          <Text style={[styles.switchButtonText, { color: Colors.text }]}>切換毛孩</Text>
           <Ionicons name="chevron-down" size={15} color={theme.iconColor} />
         </SoftButton>
       )}
@@ -87,7 +106,7 @@ const styles = StyleSheet.create({
   headerCompact: { marginBottom: 10 },
   pageTitle: {
     color: Colors.text,
-    fontSize: 22,
+    fontSize: Type.title2,
     lineHeight: 30,
     fontWeight: '800',
     marginTop: 3,
@@ -96,7 +115,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  pageTitleCompact: { fontSize: 20, lineHeight: 27, marginTop: 0 },
+  pageTitleCompact: { fontSize: Type.title3, lineHeight: 27, marginTop: 0 },
   titleAccent: {
     width: 68,
     height: 3,
@@ -108,7 +127,7 @@ const styles = StyleSheet.create({
   },
   titleCaption: {
     color: Colors.subtext,
-    fontSize: 12,
+    fontSize: Type.caption,
     lineHeight: 17,
     marginBottom: 8,
     textAlign: 'center',
@@ -138,8 +157,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  petNameSmall: { fontSize: 17, fontWeight: '800', color: Colors.text },
-  mutedSmall: { color: Colors.subtext, fontSize: 13, marginTop: 2 },
+  petNameSmall: { fontSize: Type.headline, fontWeight: '800', color: Colors.text },
+  mutedSmall: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
   editIcon: {
     width: 44,
     height: 44,
@@ -162,5 +181,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.7)',
   },
-  switchButtonText: { fontSize: 13, lineHeight: 18, fontWeight: '800' },
+  switchButtonText: { fontSize: Type.footnote, lineHeight: 18, fontWeight: '800' },
 });

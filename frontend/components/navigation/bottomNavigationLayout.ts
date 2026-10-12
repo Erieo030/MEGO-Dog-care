@@ -1,4 +1,4 @@
-/** 膠囊、點擊區與選取泡泡共用尺寸，避免六項導覽時左右偏移。 */
+/** 膠囊、點擊區與選取泡泡共用尺寸，避免導覽項目左右偏移。 */
 export const DOCK_HORIZONTAL_PADDING = 12;
 export const TAB_ITEM_MARGIN = 2;
 export const DOCK_EDGE = 10;

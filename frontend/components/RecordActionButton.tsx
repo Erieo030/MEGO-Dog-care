@@ -3,6 +3,8 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
 import { Colors } from '../constants/Colors';
+import { usePressFeedback } from '../hooks/usePressFeedback';
+import { Type } from '../constants/Typography';
 
 export type RecordActionKind = 'edit' | 'delete';
 
@@ -32,6 +34,7 @@ export function RecordActionButton({
   iconOnly = false,
   style,
 }: Props) {
+  const feedback = usePressFeedback();
   const action = ACTIONS[kind];
   const unavailable = disabled || busy;
   return (
@@ -45,7 +48,7 @@ export function RecordActionButton({
         styles.button,
         kind === 'edit' ? styles.edit : styles.delete,
         iconOnly && styles.iconOnly,
-        pressed && !unavailable && styles.pressed,
+        feedback(pressed, unavailable),
         unavailable && styles.disabled,
         style,
       ]}
@@ -69,9 +72,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   edit: { backgroundColor: Colors.primarySoft, borderColor: Colors.border },
-  delete: { backgroundColor: '#FFF8F6', borderColor: Colors.border },
+  delete: { backgroundColor: Colors.dangerSoft, borderColor: Colors.border },
   iconOnly: { width: 44, paddingHorizontal: 0 },
-  label: { fontSize: 14, fontWeight: '700' },
-  pressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
+  label: { fontSize: Type.subhead, fontWeight: '700' },
   disabled: { opacity: 0.5 },
 });

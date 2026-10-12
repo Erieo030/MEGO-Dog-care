@@ -13,11 +13,12 @@ import {
   FORM_FIELD_RADIUS,
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../../constants/FormTokens';
+import { Type } from '../../constants/Typography';
 
 export const medicationStyles = StyleSheet.create({
   emptyBox: { alignItems: 'center', paddingVertical: 28 },
   emptyArtwork: { width: 82, height: 76, marginBottom: 10 },
-  emptyHint: { color: '#887A6D', fontSize: 13, marginTop: 6, textAlign: 'center' },
+  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   page: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
@@ -31,8 +32,8 @@ export const medicationStyles = StyleSheet.create({
     marginRight: 12,
   },
   listHeaderBody: { flex: 1 },
-  listSubtitle: { color: Colors.subtext, fontSize: 13, marginTop: 3 },
-  title: { fontSize: 24, fontWeight: '800', color: Colors.text },
+  listSubtitle: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 3 },
+  title: { fontSize: Type.title1, fontWeight: '800', color: Colors.text },
   formIntro: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   formIntroIcon: {
     width: 48,
@@ -44,9 +45,20 @@ export const medicationStyles = StyleSheet.create({
     marginRight: 12,
   },
   formIntroCopy: { flex: 1 },
-  formEyebrow: { color: Colors.success, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  formHint: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 3 },
-  section: { fontSize: 16, fontWeight: '800', color: '#3F8064', marginTop: 14, marginBottom: 8 },
+  formEyebrow: {
+    color: Colors.success,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  formHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 3 },
+  section: {
+    fontSize: Type.callout,
+    fontWeight: '800',
+    color: Colors.successStrong,
+    marginTop: 14,
+    marginBottom: 8,
+  },
   card: {
     padding: 16,
     borderWidth: 1,
@@ -66,9 +78,9 @@ export const medicationStyles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 9,
   },
-  name: { flex: 1, color: Colors.text, fontSize: 18, fontWeight: '700' },
+  name: { flex: 1, color: Colors.text, fontSize: Type.headline, fontWeight: '700' },
   cardText: { color: Colors.text, lineHeight: 20 },
-  cardHint: { color: Colors.subtext, fontSize: 12 },
+  cardHint: { color: Colors.subtext, fontSize: Type.caption },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -108,9 +120,9 @@ export const medicationStyles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
   },
-  primaryText: { color: '#fff', fontWeight: '700' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
-  error: { color: '#b42318' },
+  error: { color: Colors.dangerText },
   action: { color: Colors.success, textAlign: 'center' },
   secondaryAction: {
     minHeight: 44,
@@ -142,7 +154,7 @@ export const medicationStyles = StyleSheet.create({
     marginVertical: 4,
   },
   secondaryText: { color: Colors.success, fontWeight: '700' },
-  delete: { color: '#b42318', textAlign: 'center' },
+  delete: { color: Colors.dangerText, textAlign: 'center' },
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -155,8 +167,8 @@ export const medicationStyles = StyleSheet.create({
   reminderAction: {
     minWidth: 76,
   },
-  reminderHint: { color: '#6A5A50', flex: 1 },
-  notice: { color: '#666', marginTop: 14 },
+  reminderHint: { color: Colors.subtext, flex: 1 },
+  notice: { color: Colors.subtext, marginTop: 14 },
   detailHero: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   detailHeroIcon: {
     width: 56,
@@ -186,8 +198,19 @@ export const medicationStyles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   detailRowMultiline: { alignItems: 'flex-start' },
-  detailLabel: { color: Colors.subtext, fontSize: 14, fontWeight: '700', paddingRight: 14 },
-  detailValue: { color: Colors.text, fontSize: 15, fontWeight: '600', flex: 1, textAlign: 'right' },
+  detailLabel: {
+    color: Colors.subtext,
+    fontSize: Type.subhead,
+    fontWeight: '700',
+    paddingRight: 14,
+  },
+  detailValue: {
+    color: Colors.text,
+    fontSize: Type.body,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'right',
+  },
   detailValueMultiline: { lineHeight: 21 },
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
   actionButton: {

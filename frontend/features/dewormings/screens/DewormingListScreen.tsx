@@ -18,6 +18,7 @@ import { getDewormings } from '../../../services/dewormingService';
 import type { Deworming } from '../../../types';
 import { dewormingStyles as styles } from '../dewormingStyles';
 import { dewormingTypeLabels } from '../types';
+import { MemorialReadOnlyNotice } from '../../../components/MemorialReadOnlyNotice';
 
 export function DewormingListScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
@@ -29,23 +30,25 @@ export function DewormingListScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestId = useRef(0);
-  const load = useCallback(async (signal?: AbortSignal) => {
-    const current = ++requestId.current;
-    if (!session?.userId || !selectedPet) return;
-    setLoading(true);
-    try {
-      const result = await getDewormings(session.userId, selectedPet.id, signal);
-      if (current === requestId.current) {
-        setRecords(result.records);
-        setError('');
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const current = ++requestId.current;
+      if (!session?.userId || !selectedPet) return;
+      setLoading(true);
+      try {
+        const result = await getDewormings(session.userId, selectedPet.id, signal);
+        if (current === requestId.current) {
+          setRecords(result.records);
+          setError('');
+        }
+      } catch (caught) {
+        if (current === requestId.current && !signal?.aborted) setError((caught as Error).message);
+      } finally {
+        if (current === requestId.current) setLoading(false);
       }
-    } catch (caught) {
-      if (current === requestId.current && !signal?.aborted)
-        setError((caught as Error).message);
-    } finally {
-      if (current === requestId.current) setLoading(false);
-    }
-  }, [selectedPet, session?.userId]);
+    },
+    [selectedPet, session?.userId],
+  );
   useFocusEffect(
     useCallback(() => {
       const controller = new AbortController();
@@ -70,7 +73,11 @@ export function DewormingListScreen() {
         <>
           <View style={styles.listHeader}>
             <View style={styles.listHeaderIcon}>
-              <Ionicons name="shield-checkmark-outline" size={23} color={Colors.success} />
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={23}
+                color={Colors.successDecoration}
+              />
             </View>
             <View style={styles.listHeaderBody}>
               <Text style={styles.title}>驅蟲紀錄</Text>
@@ -82,15 +89,19 @@ export function DewormingListScreen() {
               <Text style={styles.error}>{error}（重試）</Text>
             </TouchableOpacity>
           ) : null}
-          <AppButton
-            variant="primary"
-            style={styles.primary}
-            onPress={() => navigation.navigate('DewormingForm')}
-            accessibilityLabel="新增驅蟲紀錄"
-          >
-            <Ionicons name="add" size={20} color="#FFF" />
-            <Text style={styles.primaryText}>新增驅蟲紀錄</Text>
-          </AppButton>
+          {selectedPet?.memorial ? (
+            <MemorialReadOnlyNotice petName={selectedPet.name} />
+          ) : (
+            <AppButton
+              variant="primary"
+              style={styles.primary}
+              onPress={() => navigation.navigate('DewormingForm')}
+              accessibilityLabel="新增驅蟲紀錄"
+            >
+              <Ionicons name="add" size={20} color={Colors.onPrimary} />
+              <Text style={styles.primaryText}>新增驅蟲紀錄</Text>
+            </AppButton>
+          )}
           {!records.length ? (
             <View style={styles.emptyBox}>
               <SoftEntrance>
@@ -116,7 +127,11 @@ export function DewormingListScreen() {
         >
           <View style={styles.cardTitleRow}>
             <View style={styles.cardIcon}>
-              <Ionicons name="shield-checkmark-outline" size={18} color={Colors.success} />
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={18}
+                color={Colors.successDecoration}
+              />
             </View>
             <Text style={styles.name}>{dewormingTypeLabels[record.type]}</Text>
             <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />

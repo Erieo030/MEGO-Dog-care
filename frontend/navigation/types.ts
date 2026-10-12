@@ -35,6 +35,7 @@ export type HomeStackParamList = {
   PhotosOverview: undefined;
   AddPet: undefined;
   EditPet: undefined;
+  PetMemorial: undefined;
   ReminderList:
     | { focusReminderId?: string; upcomingDays?: number; scheduledDate?: string }
     | undefined;
@@ -72,6 +73,7 @@ export type ProfileStackParamList = {
   AIDataUseInfo: undefined;
   PetManagement: undefined;
   EditPet: undefined;
+  PetMemorial: undefined;
   NotificationSettings: undefined;
   ExportCenter: undefined;
   LostPetSettings: undefined;
@@ -83,8 +85,6 @@ export type ProfileStackParamList = {
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
   Timeline: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Photos: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Map: NavigatorScreenParams<HomeStackParamList> | undefined;
   Health: NavigatorScreenParams<HomeStackParamList> | undefined;
   Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };

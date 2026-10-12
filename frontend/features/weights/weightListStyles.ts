@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { Colors } from '../../constants/Colors';
+import { Type } from '../../constants/Typography';
 
 export const weightListStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
@@ -13,7 +14,7 @@ export const weightListStyles = StyleSheet.create({
     backgroundColor: Colors.background,
     padding: 28,
   },
-  stateTitle: { color: Colors.text, fontSize: 21, fontWeight: '800' },
+  stateTitle: { color: Colors.text, fontSize: Type.title3, fontWeight: '800' },
   stateText: { color: Colors.subtext, textAlign: 'center', marginTop: 8 },
   retry: {
     backgroundColor: Colors.primary,
@@ -22,7 +23,7 @@ export const weightListStyles = StyleSheet.create({
     paddingVertical: 11,
     marginTop: 18,
   },
-  retryText: { color: '#FFF', fontWeight: '800' },
+  retryText: { color: Colors.onPrimary, fontWeight: '800' },
   listContext: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -38,8 +39,8 @@ export const weightListStyles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.successSoft,
   },
-  contextTitle: { color: Colors.text, fontSize: 15, fontWeight: '800' },
-  contextHint: { color: Colors.subtext, fontSize: 12, marginTop: 2 },
+  contextTitle: { color: Colors.text, fontSize: Type.body, fontWeight: '800' },
+  contextHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2 },
   summary: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -49,12 +50,18 @@ export const weightListStyles = StyleSheet.create({
     marginTop: 14,
   },
   caption: { color: Colors.subtext },
-  current: { color: Colors.text, fontSize: 30, fontWeight: '800', marginTop: 4 },
+  current: { color: Colors.text, fontSize: Type.display2, fontWeight: '800', marginTop: 4 },
   measuredAt: { color: Colors.subtext, marginTop: 6 },
   diff: { color: Colors.text, fontWeight: '700', marginTop: 9 },
-  increased: { color: '#B56A3B' },
-  decreased: { color: '#4F8A6D' },
-  heading: { color: Colors.text, fontSize: 20, fontWeight: '800', marginTop: 22, marginBottom: 12 },
+  increased: { color: Colors.warningTitle },
+  decreased: { color: Colors.successStrong },
+  heading: {
+    color: Colors.text,
+    fontSize: Type.title3,
+    fontWeight: '800',
+    marginTop: 22,
+    marginBottom: 12,
+  },
   historyToggle: {
     alignSelf: 'flex-start',
     minHeight: 44,
@@ -78,8 +85,8 @@ export const weightListStyles = StyleSheet.create({
     minHeight: 44,
   },
   filterActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  filterText: { color: Colors.text, fontSize: 12, fontWeight: '600' },
-  filterTextActive: { color: '#FFF' },
+  filterText: { color: Colors.text, fontSize: Type.caption, fontWeight: '600' },
+  filterTextActive: { color: Colors.onPrimary },
   chartCard: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -88,7 +95,13 @@ export const weightListStyles = StyleSheet.create({
     padding: 12,
   },
   chartCanvas: { height: 165, position: 'relative' },
-  axisLabel: { position: 'absolute', left: 0, width: 42, color: Colors.subtext, fontSize: 10 },
+  axisLabel: {
+    position: 'absolute',
+    left: 0,
+    width: 42,
+    color: Colors.subtext,
+    fontSize: Type.caption2,
+  },
   axisLine: { position: 'absolute', width: 1, backgroundColor: Colors.border },
   horizontalAxis: { position: 'absolute', height: 1, backgroundColor: Colors.border },
   chartLine: { position: 'absolute', height: 2, borderRadius: 1, backgroundColor: Colors.primary },
@@ -100,10 +113,10 @@ export const weightListStyles = StyleSheet.create({
     backgroundColor: Colors.text,
   },
   xLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 42, marginTop: 3 },
-  xLabel: { color: Colors.subtext, fontSize: 10, maxWidth: '48%' },
+  xLabel: { color: Colors.subtext, fontSize: Type.caption2, maxWidth: '48%' },
   xLabelRight: { textAlign: 'right' },
   emptyBox: { alignItems: 'center', paddingVertical: 28 },
-  emptyHint: { color: '#887A6D', fontSize: 13, marginTop: 6, textAlign: 'center' },
+  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   empty: {
     color: Colors.subtext,
     textAlign: 'center',
@@ -121,9 +134,9 @@ export const weightListStyles = StyleSheet.create({
     flexDirection: 'column',
   },
   focusCard: { borderColor: Colors.primary, borderWidth: 2 },
-  sourceMissing: { color: '#C55B5B', textAlign: 'center', marginVertical: 10 },
+  sourceMissing: { color: Colors.dangerText, textAlign: 'center', marginVertical: 10 },
   recordContent: { minWidth: 0 },
-  weight: { color: Colors.text, fontSize: 19, fontWeight: '800' },
+  weight: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
   date: { color: Colors.subtext, marginTop: 3 },
   notes: { color: Colors.text, marginTop: 7 },
   actions: {

@@ -1,3 +1,4 @@
+import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製疫苗紀錄。 */
 import React, { useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
@@ -41,6 +42,7 @@ export function VaccinationFormScreen() {
     ...(existing || {}),
   });
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
   const save = async () => {
@@ -67,6 +69,7 @@ export function VaccinationFormScreen() {
         existing && !duplicate
           ? await updateVaccination(session.userId, existing.id, payload)
           : await createVaccination(session.userId, selectedPet.id, payload);
+      markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
           message: '疫苗紀錄已儲存，完整內容可到「紀錄」查看。',
@@ -75,7 +78,9 @@ export function VaccinationFormScreen() {
         });
       } else {
         Alert.alert('已儲存', '疫苗紀錄已更新');
-        navigation.replace('VaccinationDetail', { recordId: response.record.id });
+        markSaved(draft, () =>
+          navigation.replace('VaccinationDetail', { recordId: response.record.id }),
+        );
       }
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
@@ -89,7 +94,7 @@ export function VaccinationFormScreen() {
     >
       <View style={styles.formIntro}>
         <View style={styles.formIntroIcon}>
-          <Ionicons name="medkit-outline" size={22} color={Colors.success} />
+          <Ionicons name="medkit-outline" size={22} color={Colors.successDecoration} />
         </View>
         <View style={styles.formIntroCopy}>
           <Text style={styles.formEyebrow}>接種照護</Text>

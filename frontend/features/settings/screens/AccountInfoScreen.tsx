@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Colors } from '../../../constants/Colors';
 import { useAuth } from '../../../contexts/AuthContext';
+import { Type } from '../../../constants/Typography';
 
 export function AccountInfoScreen() {
   const { session, deleteAccount } = useAuth();
@@ -64,7 +65,7 @@ export function AccountInfoScreen() {
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
         <View style={s.accountIntro}>
           <View style={s.accountIntroIcon}>
-            <Ionicons name="person-outline" size={24} color={Colors.primary} />
+            <Ionicons name="person-outline" size={24} color={Colors.primaryDecoration} />
           </View>
           <View style={s.accountIntroCopy}>
             <Text style={s.usageEyebrow}>帳號資料</Text>
@@ -78,7 +79,7 @@ export function AccountInfoScreen() {
             <Ionicons
               name="mail-outline"
               size={19}
-              color={Colors.success}
+              color={Colors.successDecoration}
               style={s.accountRowIcon}
             />
             <Text style={s.title}>Email</Text>
@@ -95,13 +96,13 @@ export function AccountInfoScreen() {
             onPress={requestDeleteAccount}
           >
             <View style={s.deleteIcon}>
-              <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+              <Ionicons name="trash-outline" size={20} color={Colors.dangerDecoration} />
             </View>
             <View style={s.deleteCopy}>
               <Text style={s.deleteTitle}>刪除帳號</Text>
               <Text style={s.deleteHint}>永久刪除帳號與所有相關資料</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={Colors.danger} />
+            <Ionicons name="chevron-forward" size={18} color={Colors.dangerDecoration} />
           </Pressable>
         </View>
       </ScrollView>
@@ -118,11 +119,13 @@ export function AccountInfoScreen() {
         >
           <View style={s.confirmPanel}>
             <View style={s.confirmIcon}>
-              <Ionicons name="warning-outline" size={26} color={Colors.danger} />
+              <Ionicons name="warning-outline" size={26} color={Colors.dangerDecoration} />
             </View>
             <Text style={s.confirmTitle}>最後確認</Text>
             <Text style={s.confirmDescription}>
-              請輸入目前密碼，並輸入「刪除帳號」確認。伺服器上的帳號、毛孩、照護紀錄、AI 用量與照片會永久移除，所有登入 session 會撤銷。目前裝置的 AI 對話快取會清除；其他裝置上的本機副本不會被遠端抹除。
+              請輸入目前密碼，並輸入「刪除帳號」確認。伺服器上的帳號、毛孩、照護紀錄、AI
+              用量與照片會永久移除，所有登入 session 會撤銷。目前裝置的 AI
+              對話快取會清除；其他裝置上的本機副本不會被遠端抹除。
             </Text>
             <TextInput
               accessibilityLabel="目前密碼"
@@ -160,7 +163,8 @@ export function AccountInfoScreen() {
                 accessibilityRole="button"
                 style={[
                   s.confirmDeleteButton,
-                  (!password || confirmationText.trim() !== '刪除帳號' || deleting) && s.disabledButton,
+                  (!password || confirmationText.trim() !== '刪除帳號' || deleting) &&
+                    s.disabledButton,
                 ]}
                 onPress={submitDeleteAccount}
                 disabled={!password || confirmationText.trim() !== '刪除帳號' || deleting}
@@ -189,11 +193,16 @@ const s = StyleSheet.create({
     marginRight: 12,
   },
   accountIntroCopy: { flex: 1 },
-  usageEyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  accountHeading: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  accountHint: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 3 },
+  usageEyebrow: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  accountHeading: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  accountHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 3 },
   section: {
-    fontSize: 13,
+    fontSize: Type.footnote,
     fontWeight: '800',
     color: Colors.subtext,
     marginTop: 20,
@@ -217,9 +226,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   accountRowIcon: { marginRight: 10 },
-  title: { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.text },
-  value: { flexShrink: 1, fontSize: 13, color: Colors.subtext, textAlign: 'right' },
-  note: { fontSize: 13, lineHeight: 19, color: Colors.subtext, marginTop: 14 },
+  title: { flex: 1, fontSize: Type.body, fontWeight: '700', color: Colors.text },
+  value: { flexShrink: 1, fontSize: Type.footnote, color: Colors.subtext, textAlign: 'right' },
+  note: { fontSize: Type.footnote, lineHeight: 19, color: Colors.subtext, marginTop: 14 },
   dangerGroup: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
@@ -227,22 +236,85 @@ const s = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
-  deleteRow: { minHeight: 72, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center' },
-  deleteIcon: { width: 38, height: 38, borderRadius: 13, backgroundColor: '#FBE9E5', alignItems: 'center', justifyContent: 'center', marginRight: 11 },
+  deleteRow: {
+    minHeight: 72,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    backgroundColor: Colors.dangerSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 11,
+  },
   deleteCopy: { flex: 1 },
-  deleteTitle: { color: Colors.danger, fontSize: 15, fontWeight: '800' },
-  deleteHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 3 },
-  modalBackdrop: { flex: 1, padding: 22, justifyContent: 'center', backgroundColor: 'rgba(45, 35, 29, 0.42)' },
-  confirmPanel: { backgroundColor: Colors.surface, borderRadius: 24, padding: 22, borderWidth: 1, borderColor: Colors.border },
-  confirmIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#FBE9E5', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  confirmTitle: { color: Colors.text, fontSize: 22, fontWeight: '900' },
-  confirmDescription: { color: Colors.subtext, fontSize: 14, lineHeight: 21, marginTop: 8, marginBottom: 16 },
-  confirmInput: { minHeight: 50, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.background, paddingHorizontal: 14, color: Colors.text, fontSize: 15, marginBottom: 10 },
-  deleteError: { color: Colors.danger, fontSize: 13, lineHeight: 19, marginBottom: 8 },
+  deleteTitle: { color: Colors.danger, fontSize: Type.body, fontWeight: '800' },
+  deleteHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 3 },
+  modalBackdrop: {
+    flex: 1,
+    padding: 22,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(45, 35, 29, 0.42)',
+  },
+  confirmPanel: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  confirmIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: Colors.dangerSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  confirmTitle: { color: Colors.text, fontSize: Type.title2, fontWeight: '900' },
+  confirmDescription: {
+    color: Colors.subtext,
+    fontSize: Type.subhead,
+    lineHeight: 21,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  confirmInput: {
+    minHeight: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 14,
+    color: Colors.text,
+    fontSize: Type.body,
+    marginBottom: 10,
+  },
+  deleteError: { color: Colors.danger, fontSize: Type.footnote, lineHeight: 19, marginBottom: 8 },
   confirmActions: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  cancelButton: { flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center' },
-  cancelLabel: { color: Colors.text, fontSize: 15, fontWeight: '700' },
-  confirmDeleteButton: { flex: 1, minHeight: 48, borderRadius: 15, backgroundColor: Colors.danger, alignItems: 'center', justifyContent: 'center' },
-  confirmDeleteLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  cancelButton: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 15,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelLabel: { color: Colors.text, fontSize: Type.body, fontWeight: '700' },
+  confirmDeleteButton: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 15,
+    backgroundColor: Colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmDeleteLabel: { color: Colors.onPrimary, fontSize: Type.body, fontWeight: '800' },
   disabledButton: { opacity: 0.45 },
 });

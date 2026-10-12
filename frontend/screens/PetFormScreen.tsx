@@ -32,14 +32,19 @@ import {
   PET_FORM_FIELDS,
   PetFormTextField as PetFormTextFieldData,
 } from '../features/pets/petFormContent';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 interface PetFormScreenProps {
   title: string;
   submitLabel: string;
   initialData?: PetData;
-  onSubmit: (data: PetData) => Promise<void> | void;
+  onSubmit: (data: PetData) => Promise<void | boolean> | void | boolean;
+  onSaved?: () => void;
   onCancel?: () => void;
   bottomContentPadding?: number;
+  /** 表單最下方的額外區塊，例如編輯毛孩時的回憶入口。 */
+  footer?: React.ReactNode;
 }
 
 export default function PetFormScreen({
@@ -47,12 +52,15 @@ export default function PetFormScreen({
   submitLabel,
   initialData,
   onSubmit,
+  onSaved,
   onCancel,
   bottomContentPadding,
+  footer,
 }: PetFormScreenProps) {
   const { session } = useAuth();
   const [form, setForm] = useState<PetData>({ ...emptyPetData, ...initialData });
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useFormUnsavedChangesGuard(form, setForm);
   const update = <K extends keyof PetData>(key: K, value: PetData[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
@@ -73,12 +81,13 @@ export default function PetFormScreen({
     }
     setSaving(true);
     try {
-      await onSubmit({
+      const result = await onSubmit({
         ...form,
         name: form.name.trim(),
         gender: form.gender,
         breed: form.breed.trim(),
       });
+      if (result !== false) markSaved(form, onSaved);
     } finally {
       setSaving(false);
     }
@@ -108,7 +117,7 @@ export default function PetFormScreen({
         >
           <View style={styles.formIntro}>
             <View style={styles.formIntroIcon}>
-              <Ionicons name="paw" size={23} color={Colors.primary} />
+              <Ionicons name="paw" size={23} color={Colors.primaryDecoration} />
             </View>
             <View style={styles.formIntroCopy}>
               <Text style={styles.formEyebrow}>毛孩資料</Text>
@@ -211,6 +220,7 @@ export default function PetFormScreen({
               onPress={onCancel}
             />
           )}
+          {footer}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -232,21 +242,26 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   formIntroCopy: { flex: 1 },
-  formEyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  formHint: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 3 },
+  formEyebrow: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  formHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 3 },
   title: {
     color: Colors.text,
-    fontSize: 24,
+    fontSize: Type.title1,
     fontWeight: '800',
   },
   sectionHeading: {
     color: Colors.text,
-    fontSize: 18,
+    fontSize: Type.headline,
     fontWeight: '800',
     marginTop: 20,
     marginBottom: 3,
   },
-  sectionHint: { color: Colors.subtext, fontSize: 12, lineHeight: 18, marginBottom: 2 },
+  sectionHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18, marginBottom: 2 },
   label: {
     color: Colors.text,
     fontWeight: FORM_FIELD_LABEL_FONT_WEIGHT,
@@ -258,7 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: FORM_BUTTON_HEIGHT,
     borderWidth: 1,
-    borderColor: '#E8DDD4',
+    borderColor: Colors.border,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -266,8 +281,8 @@ const styles = StyleSheet.create({
   },
   optionSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   optionText: { color: Colors.text, fontWeight: '700' },
-  optionTextSelected: { color: '#FFF' },
-  hint: { color: Colors.subtext, fontSize: 12 },
+  optionTextSelected: { color: Colors.onPrimary },
+  hint: { color: Colors.subtext, fontSize: Type.caption },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -281,7 +296,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  submitText: { color: '#FFF', fontSize: 17, fontWeight: '700' },
+  submitText: { color: Colors.onPrimary, fontSize: Type.headline, fontWeight: '700' },
   cancelButton: { alignItems: 'center', padding: 18 },
   cancelText: { color: Colors.subtext, fontWeight: '600' },
 });

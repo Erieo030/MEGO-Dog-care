@@ -1,6 +1,6 @@
 /** 用途：封裝毛孩查詢、新增、編輯與刪除 API。 */
 import { apiData } from './api';
-import { Pet, PetFormData } from '../types';
+import { Pet, PetFormData, PetMemorialData } from '../types';
 
 const normalizePet = (pet: Record<string, unknown>): Pet => ({
   id: String(pet._id ?? pet.id ?? ''),
@@ -21,6 +21,9 @@ const normalizePet = (pet: Record<string, unknown>): Pet => ({
   distinctiveFeatures: String(pet.distinctiveFeatures ?? ''),
   latestWeightKg: pet.latestWeightKg == null ? undefined : Number(pet.latestWeightKg),
   latestWeightAt: pet.latestWeightAt ? String(pet.latestWeightAt) : undefined,
+  memorial: pet.memorial === true,
+  passedAwayDate: pet.passedAwayDate ? String(pet.passedAwayDate) : undefined,
+  memorialNote: pet.memorialNote ? String(pet.memorialNote) : undefined,
 });
 
 const toPayload = (data: PetFormData) => ({
@@ -67,3 +70,21 @@ export const deletePet = (userId: string, petId: string) =>
   apiData(`/api/pets/${petId}?userId=${encodeURIComponent(userId)}`, {
     method: 'DELETE',
   });
+
+/** 把毛孩移到回憶；後端會停止未完成的提醒並關閉身份 QR 公開頁。 */
+export const setPetMemorial = async (userId: string, petId: string, data: PetMemorialData) => {
+  const result = await apiData<{ petData: Record<string, unknown>; stoppedReminderCount: number }>(
+    `/api/pets/${petId}/memorial?userId=${encodeURIComponent(userId)}`,
+    { method: 'PUT', body: JSON.stringify(data) },
+  );
+  return { pet: normalizePet(result.petData), stoppedReminderCount: result.stoppedReminderCount };
+};
+
+/** 誤設回憶時還原；已停止的提醒不會自動恢復。 */
+export const clearPetMemorial = async (userId: string, petId: string) => {
+  const result = await apiData<{ petData: Record<string, unknown> }>(
+    `/api/pets/${petId}/memorial?userId=${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+  );
+  return normalizePet(result.petData);
+};

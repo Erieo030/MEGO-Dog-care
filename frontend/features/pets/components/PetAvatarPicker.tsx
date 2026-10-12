@@ -5,7 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { RecordActionButton } from '../../../components/RecordActionButton';
 import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
 import { Colors } from '../../../constants/Colors';
-import { getMediaPermissionCopy, requestMediaPermission } from '../../../services/mediaPermissionService';
+import {
+  getMediaPermissionCopy,
+  requestMediaPermission,
+} from '../../../services/mediaPermissionService';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   avatarUri: string;
@@ -77,15 +81,15 @@ export default function PetAvatarPicker({
           attachmentId={avatarAttachmentId}
           userId={userId}
           style={styles.avatar}
-          fallback={(
+          fallback={
             <View style={[styles.avatar, styles.avatarFallback]}>
-              <Ionicons name="paw" size={42} color={Colors.primary} />
+              <Ionicons name="paw" size={42} color={Colors.primaryDecoration} />
             </View>
-          )}
+          }
         />
       ) : (
         <View style={styles.avatarFallback}>
-          <Ionicons name="paw" size={42} color={Colors.primary} />
+          <Ionicons name="paw" size={42} color={Colors.primaryDecoration} />
         </View>
       )}
       <View style={styles.avatarActions}>
@@ -144,8 +148,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   avatarActions: { flex: 1, marginLeft: 13 },
-  avatarTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  avatarHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  avatarTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  avatarHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
   imageActions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   imageButton: {
     minHeight: 44,
@@ -158,7 +162,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  imageButtonText: { color: Colors.primary, fontSize: 12, fontWeight: '700' },
+  imageButtonText: { color: Colors.primary, fontSize: Type.caption, fontWeight: '700' },
   removeButton: {
     alignSelf: 'flex-start',
     marginTop: 4,

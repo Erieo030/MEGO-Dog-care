@@ -31,3 +31,10 @@ class PetCreateRequest(PetFields):
 
 class PetUpdateRequest(PetFields):
     """編輯毛孩資料的完整更新內容。"""
+
+
+class PetMemorialRequest(BaseModel):
+    """把毛孩移到回憶時填寫的離開日期與紀念文字。"""
+
+    passedAwayDate: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    memorialNote: str = Field(default="", max_length=300)

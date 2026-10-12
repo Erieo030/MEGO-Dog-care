@@ -25,6 +25,7 @@ import {
   buildMedicalVisitDetailRows,
   formatMedicalVisitDate,
 } from '../features/medical-visits/medicalVisitDetailContent';
+import { Type } from '../constants/Typography';
 type Props = NativeStackScreenProps<HomeStackParamList, 'MedicalVisitDetail'>;
 export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -34,6 +35,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const mutationLock = useRef(false);
   const [sharePreparing, setSharePreparing] = useState(false);
   const requestId = useRef(0);
   const load = useCallback(
@@ -74,7 +76,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
     }, [load]),
   );
   const remove = () => {
-    if (!item || !session?.userId || deleting) return;
+    if (!item || !session?.userId || deleting || sharePreparing || mutationLock.current) return;
     const reminderText = item.followUpReminderId ? '，並一併刪除對應的回診提醒' : '';
     Alert.alert(
       '刪除就醫紀錄',
@@ -85,6 +87,8 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
           text: '刪除紀錄',
           style: 'destructive',
           onPress: async () => {
+            if (mutationLock.current || sharePreparing) return;
+            mutationLock.current = true;
             setDeleting(true);
             try {
               await service.deleteMedicalVisit(session.userId, item.id);
@@ -92,6 +96,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
             } catch (e) {
               Alert.alert('刪除失敗', (e as Error).message || '請稍後再試');
             } finally {
+              mutationLock.current = false;
               setDeleting(false);
             }
           },
@@ -130,7 +135,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
       <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}>
         <View style={s.detailHero}>
           <View style={s.detailHeroIcon}>
-            <Ionicons name="medical-outline" size={25} color={Colors.primary} />
+            <Ionicons name="medical-outline" size={25} color={Colors.primaryDecoration} />
           </View>
           <View style={s.detailHeroCopy}>
             <Text style={s.detailEyebrow}>就醫紀錄</Text>
@@ -193,9 +198,14 @@ const s = StyleSheet.create({
     marginRight: 13,
   },
   detailHeroCopy: { flex: 1 },
-  detailEyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  detailTitle: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  detailHint: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 4 },
+  detailEyebrow: {
+    color: Colors.primary,
+    fontSize: Type.footnote,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  detailTitle: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  detailHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 4 },
   actions: { flexDirection: 'row', gap: 10, marginBottom: 4 },
   actionButton: {
     flex: 1,
@@ -214,5 +224,11 @@ const s = StyleSheet.create({
   },
   shareText: { color: Colors.primary, fontWeight: '800' },
   deleteAction: { alignSelf: 'flex-start', marginBottom: 12 },
-  heading: { color: Colors.text, fontSize: 18, fontWeight: '800', marginTop: 24, marginBottom: 10 },
+  heading: {
+    color: Colors.text,
+    fontSize: Type.headline,
+    fontWeight: '800',
+    marginTop: 24,
+    marginBottom: 10,
+  },
 });

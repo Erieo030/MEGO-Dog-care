@@ -37,6 +37,8 @@ import {
   CreateHealthEventQuestions,
 } from '../features/health-events/components/CreateHealthEventChoices';
 import { CREATE_EVENT_SEVERITY_OPTIONS } from '../features/health-events/createHealthEventContent';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CreateHealthEvent'>;
 export default function CreateHealthEventScreen({ route, navigation }: Props) {
@@ -53,6 +55,15 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const formValues = { occurredAt, severity, details, notes, images };
+  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
+    setOccurredAt(value.occurredAt);
+    setSeverity(value.severity);
+    setDetails(value.details);
+    setNotes(value.notes);
+    setImages(value.images);
+  });
+
   const submit = async () => {
     if (!selectedPet || !session?.userId || submitting) return;
     setSubmitting(true);
@@ -66,6 +77,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
         notes: notes.trim(),
         attachmentIds: images.map((item) => item.id),
       });
+      markSaved(formValues);
       const showSafetyNotice = () => {
         if (severity === 'severe')
           Alert.alert(
@@ -107,7 +119,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
       >
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="pulse-outline" size={22} color={Colors.primary} />
+            <Ionicons name="pulse-outline" size={22} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.title}>{label}</Text>
@@ -175,8 +187,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: 22, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: 12 },
+  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
+  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -215,6 +227,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 25,
   },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.55 },
 });

@@ -1,6 +1,7 @@
 /** 用途：將既有毛孩表單接入 React Navigation，支援新增與編輯。 */
 import React from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { usePet } from '../contexts/PetContext';
@@ -8,9 +9,12 @@ import { HomeStackParamList } from '../navigation/types';
 import PetFormScreen from './PetFormScreen';
 import { PetData } from '../types';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
+import { Colors } from '../constants/Colors';
+import { Radius, Spacing } from '../constants/Layout';
+import { Type } from '../constants/Typography';
 
 type AddProps = NativeStackScreenProps<HomeStackParamList, 'AddPet'>;
-type EditProps = { navigation: { goBack: () => void } };
+type EditProps = { navigation: { goBack: () => void; navigate: (route: 'PetMemorial') => void } };
 
 const toFormData = (data: PetData) => ({
   name: data.name,
@@ -24,6 +28,9 @@ const toFormData = (data: PetData) => ({
   neutered: data.neutered,
   allergies: data.allergies,
   chronicDiseases: data.chronicDiseases,
+  microchipNumber: data.microchipNumber,
+  coatColor: data.coatColor,
+  distinctiveFeatures: data.distinctiveFeatures,
 });
 
 export function AddPetScreen({ navigation }: AddProps) {
@@ -32,9 +39,10 @@ export function AddPetScreen({ navigation }: AddProps) {
   const submit = async (data: PetData) => {
     try {
       await createPet(toFormData(data));
-      navigation.goBack();
+      return true;
     } catch (error) {
       Alert.alert('新增失敗', (error as Error).message);
+      return false;
     }
   };
   return (
@@ -43,6 +51,7 @@ export function AddPetScreen({ navigation }: AddProps) {
       submitLabel="儲存毛孩資料"
       bottomContentPadding={bottomContentPadding}
       onSubmit={submit}
+      onSaved={() => navigation.goBack()}
       onCancel={() => navigation.goBack()}
     />
   );
@@ -71,9 +80,10 @@ export function EditPetScreen({ navigation }: EditProps) {
   const submit = async (data: PetData) => {
     try {
       await updateSelectedPet(toFormData(data));
-      navigation.goBack();
+      return true;
     } catch (error) {
       Alert.alert('更新失敗', (error as Error).message);
+      return false;
     }
   };
   return (
@@ -83,7 +93,44 @@ export function EditPetScreen({ navigation }: EditProps) {
       bottomContentPadding={bottomContentPadding}
       initialData={initialData}
       onSubmit={submit}
+      onSaved={() => navigation.goBack()}
       onCancel={() => navigation.goBack()}
+      footer={
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={selectedPet.memorial ? '查看回憶' : `把${selectedPet.name}移到回憶`}
+          style={styles.memorialEntry}
+          onPress={() => navigation.navigate('PetMemorial')}
+        >
+          <Ionicons name="flower-outline" size={20} color={Colors.memorial} />
+          <View style={styles.memorialCopy}>
+            <Text style={styles.memorialTitle}>
+              {selectedPet.memorial ? '在回憶中' : '移到回憶'}
+            </Text>
+            <Text style={styles.memorialHint}>
+              {selectedPet.memorial
+                ? '查看紀念頁，或在誤設時還原'
+                : '毛孩離開後，紀錄會保留供回顧，不再新增'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={Colors.muted} />
+        </TouchableOpacity>
+      }
     />
   );
 }
+
+const styles = StyleSheet.create({
+  memorialEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.xxl,
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.memorialSoft,
+  },
+  memorialCopy: { flex: 1 },
+  memorialTitle: { color: Colors.text, fontSize: Type.body, fontWeight: '800' },
+  memorialHint: { marginTop: 2, color: Colors.subtext, fontSize: Type.footnote, lineHeight: 18 },
+});

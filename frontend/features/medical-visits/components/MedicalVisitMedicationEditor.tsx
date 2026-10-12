@@ -19,6 +19,7 @@ import { formatLocalDate, parseLocalDate } from '../medicalVisitContent';
 import MedicalVisitTextField from './MedicalVisitTextField';
 
 type Props = {
+  errors?: Partial<Record<'name' | 'timesPerDay' | 'endDate', string>>;
   medication: Medication;
   index: number;
   onUpdate: (key: keyof Medication, value: string | number) => void;
@@ -27,6 +28,7 @@ type Props = {
 
 export default function MedicalVisitMedicationEditor({
   medication,
+  errors,
   index,
   onUpdate,
   onRemove,
@@ -43,6 +45,7 @@ export default function MedicalVisitMedicationEditor({
         />
       </View>
       <MedicalVisitTextField
+        error={errors?.name}
         label="藥袋／藥品名稱（新增用藥時必填）"
         value={medication.name}
         onChangeText={(value) => onUpdate('name', value)}
@@ -56,11 +59,17 @@ export default function MedicalVisitMedicationEditor({
       />
       <Text style={styles.label}>每日次數（選填）</Text>
       <TextInput
-        style={styles.input}
+        accessibilityLabel={`藥物 ${index + 1} 每日次數`}
+        style={[styles.input, errors?.timesPerDay && { borderColor: Colors.dangerText }]}
         keyboardType="number-pad"
         value={String(medication.timesPerDay)}
         onChangeText={(value) => onUpdate('timesPerDay', Number(value))}
       />
+      {errors?.timesPerDay ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {errors.timesPerDay}
+        </Text>
+      ) : null}
       <DatePickerField
         label="開始日期"
         value={medication.startDate ? parseLocalDate(medication.startDate) : undefined}
@@ -72,6 +81,11 @@ export default function MedicalVisitMedicationEditor({
         minimumDate={medication.startDate ? parseLocalDate(medication.startDate) : undefined}
         onChange={(date) => onUpdate('endDate', formatLocalDate(date))}
       />
+      {errors?.endDate ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {errors.endDate}
+        </Text>
+      ) : null}
       <Text style={styles.label}>飯前／飯後（選填）</Text>
       <View style={styles.mealRow}>
         {(
@@ -101,6 +115,7 @@ export default function MedicalVisitMedicationEditor({
 }
 
 const styles = StyleSheet.create({
+  error: { color: Colors.dangerText, marginTop: 6 },
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 18,

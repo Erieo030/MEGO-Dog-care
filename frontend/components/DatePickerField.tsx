@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   FORM_FIELD_HEIGHT,
@@ -11,6 +11,8 @@ import {
   FORM_FIELD_RADIUS,
 } from '../constants/FormTokens';
 import { Colors } from '../constants/Colors';
+import { adjustTimePart, clampDate, dateInRange } from '../utils/datePicker';
+import { Type } from '../constants/Typography';
 
 interface Props {
   value?: Date;
@@ -50,24 +52,28 @@ function CalendarModal({
   const [yearStart, setYearStart] = useState(Math.floor(value.getFullYear() / 12) * 12);
   useEffect(() => {
     if (open) {
-      setSelected(value);
+      setSelected(clampDate(value, minimumDate, maximumDate, true));
       setMonth(new Date(value.getFullYear(), value.getMonth(), 1));
       setYearPicker(false);
       setYearStart(Math.floor(value.getFullYear() / 12) * 12);
     }
-  }, [open, value]);
+  }, [open, value, minimumDate, maximumDate]);
   const first = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const cells = Array.from({ length: first + days }, (_, i) => (i < first ? null : i - first + 1));
   const selectable = (day: number) => {
     const date = new Date(month.getFullYear(), month.getMonth(), day, 12);
-    return (!minimumDate || date >= minimumDate) && (!maximumDate || date <= maximumDate);
+    return dateInRange(date, minimumDate, maximumDate, true);
   };
   const years = Array.from({ length: 12 }, (_, index) => yearStart + index);
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.modalBackdrop}>
-        <View style={styles.calendarModal}>
+        <ScrollView
+          style={styles.calendarModal}
+          contentContainerStyle={styles.modalContent}
+          bounces={false}
+        >
           <View style={styles.monthRow}>
             <TouchableOpacity
               accessibilityRole="button"
@@ -143,6 +149,15 @@ function CalendarModal({
                   ) : (
                     <TouchableOpacity
                       key={i}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${month.getFullYear()} 年 ${month.getMonth() + 1} 月 ${day} 日`}
+                      accessibilityState={{
+                        disabled: !selectable(day),
+                        selected:
+                          selected.getFullYear() === month.getFullYear() &&
+                          selected.getMonth() === month.getMonth() &&
+                          selected.getDate() === day,
+                      }}
                       disabled={!selectable(day)}
                       style={styles.dayCell}
                       onPress={() =>
@@ -173,6 +188,10 @@ function CalendarModal({
               accessibilityLabel="確認日期"
               style={styles.done}
               onPress={() => {
+                if (!dateInRange(selected, minimumDate, maximumDate, true)) {
+                  Alert.alert('日期超出範圍', '請選擇允許範圍內的日期。');
+                  return;
+                }
                 onConfirm(selected);
               }}
             >
@@ -187,7 +206,7 @@ function CalendarModal({
               <Text style={styles.cancelText}>取消</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -213,21 +232,25 @@ function TimeModal({
     }
   }, [open, value]);
   const adjust = (kind: 'hour' | 'minute', amount: number) => {
-    if (kind === 'hour') setHour((v) => (v + amount + 24) % 24);
-    else setMinute((v) => (v + amount + 60) % 60);
+    if (kind === 'hour') setHour((v) => adjustTimePart(v, amount, 24));
+    else setMinute((v) => adjustTimePart(v, amount, 60));
   };
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.modalBackdrop}>
-        <View style={styles.calendarModal}>
+        <ScrollView
+          style={styles.calendarModal}
+          contentContainerStyle={styles.modalContent}
+          bounces={false}
+        >
           <Text style={styles.timeTitle}>選擇時間</Text>
           <View style={styles.timePickerRow}>
             {(['hour', 'minute'] as const).map((kind) => (
               <View key={kind} style={styles.timeColumn}>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  accessibilityLabel={`增加${kind === 'hour' ? '小時' : '分鐘'}`}
-                  onPress={() => adjust(kind, 1)}
+                  accessibilityLabel={kind === 'hour' ? '增加一小時' : '增加五分鐘'}
+                  onPress={() => adjust(kind, kind === 'minute' ? 5 : 1)}
                 >
                   <Text style={styles.timeArrow}>＋</Text>
                 </TouchableOpacity>
@@ -236,8 +259,8 @@ function TimeModal({
                 </Text>
                 <TouchableOpacity
                   accessibilityRole="button"
-                  accessibilityLabel={`減少${kind === 'hour' ? '小時' : '分鐘'}`}
-                  onPress={() => adjust(kind, -1)}
+                  accessibilityLabel={kind === 'hour' ? '減少一小時' : '減少五分鐘'}
+                  onPress={() => adjust(kind, kind === 'minute' ? -5 : -1)}
                 >
                   <Text style={styles.timeArrow}>−</Text>
                 </TouchableOpacity>
@@ -245,8 +268,24 @@ function TimeModal({
               </View>
             ))}
           </View>
+          <View style={styles.quickMinutes}>
+            {[0, 15, 30, 45].map((value) => (
+              <TouchableOpacity
+                key={value}
+                accessibilityRole="button"
+                accessibilityLabel={`設為 ${value} 分鐘`}
+                accessibilityState={{ selected: minute === value }}
+                style={styles.quickMinute}
+                onPress={() => setMinute(value)}
+              >
+                <Text style={styles.dayText}>{String(value).padStart(2, '0')}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <View style={styles.actions}>
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="確認時間"
               style={styles.done}
               onPress={() => {
                 const next = new Date(value);
@@ -265,7 +304,7 @@ function TimeModal({
               <Text style={styles.cancelText}>取消</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -318,7 +357,7 @@ export default function DatePickerField({
         disabled={disabled}
         style={styles.field}
         onPress={() => {
-          setDraft(validValue ?? today());
+          setDraft(clampDate(validValue ?? today(), minimumDate, maximumDate, mode === 'date'));
           setPhase(mode === 'datetime' ? 'date' : mode);
           // 讓 draft 先完成更新，再開啟原生 spinner，避免沿用 1970 epoch。
           setTimeout(() => setOpen(true), 0);
@@ -327,7 +366,7 @@ export default function DatePickerField({
         <Ionicons
           name={mode === 'time' ? 'time-outline' : 'calendar-outline'}
           size={19}
-          color="#B7653B"
+          color={Colors.primaryDecoration}
           style={styles.calendarIcon}
         />
         <Text style={value ? styles.value : styles.placeholder}>{shown}</Text>
@@ -337,6 +376,10 @@ export default function DatePickerField({
           open={open}
           value={draft}
           onConfirm={(date) => {
+            if (!dateInRange(date, minimumDate, maximumDate)) {
+              Alert.alert('時間超出範圍', '請選擇允許範圍內的日期與時間。');
+              return;
+            }
             setDraft(date);
             onChange(date);
             setOpen(false);
@@ -350,7 +393,11 @@ export default function DatePickerField({
           minimumDate={minimumDate}
           maximumDate={maximumDate}
           onConfirm={(date) => {
-            setDraft(date);
+            if (!dateInRange(date, minimumDate, maximumDate, true)) {
+              Alert.alert('日期超出範圍', '請選擇允許範圍內的日期。');
+              return;
+            }
+            setDraft(mode === 'datetime' ? clampDate(date, minimumDate, maximumDate) : date);
             if (mode === 'datetime') {
               setPhase('time');
             } else {
@@ -400,7 +447,22 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: 'rgba(0,0,0,0.25)',
   },
-  calendarModal: { backgroundColor: '#FFF', borderRadius: 20, padding: 16 },
+  calendarModal: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    maxHeight: '90%',
+    flexGrow: 0,
+  },
+  modalContent: { padding: 16 },
+  quickMinutes: { flexDirection: 'row', gap: 8, marginVertical: 12 },
+  quickMinute: {
+    flex: 1,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primarySoft,
+    borderRadius: 10,
+  },
   monthRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -408,37 +470,47 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   timeTitle: {
-    fontSize: 20,
+    fontSize: Type.title3,
     fontWeight: '800',
-    color: '#40362F',
+    color: Colors.text,
     textAlign: 'center',
     marginBottom: 18,
   },
   timePickerRow: { flexDirection: 'row', justifyContent: 'center', gap: 34 },
   timeColumn: { alignItems: 'center', minWidth: 80 },
-  timeArrow: { fontSize: 28, color: '#B7653B', paddingVertical: 4 },
-  timeValue: { fontSize: 38, fontWeight: '800', color: '#40362F' },
-  timeUnit: { color: '#8A817B', marginTop: 4 },
-  monthTitle: { fontSize: 17, fontWeight: '800', color: '#40362F' },
-  monthArrow: { fontSize: 30, color: '#B7653B', paddingHorizontal: 10 },
+  timeArrow: { fontSize: Type.display, color: Colors.primary, paddingVertical: 4 },
+  timeValue: { fontSize: Type.hero, fontWeight: '800', color: Colors.text },
+  timeUnit: { color: Colors.muted, marginTop: 4 },
+  monthTitle: { fontSize: Type.headline, fontWeight: '800', color: Colors.text },
+  monthArrow: { fontSize: Type.display2, color: Colors.primary, paddingHorizontal: 10 },
   weekRow: { flexDirection: 'row' },
-  week: { flex: 1, textAlign: 'center', color: '#8A817B', fontWeight: '700', marginBottom: 8 },
+  week: { flex: 1, textAlign: 'center', color: Colors.muted, fontWeight: '700', marginBottom: 8 },
   dayGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   yearGrid: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: 8 },
   yearCell: { width: '25%', height: 48, alignItems: 'center', justifyContent: 'center' },
-  yearText: { fontSize: 17, color: '#40362F', paddingHorizontal: 10, paddingVertical: 7 },
-  selectedYear: { backgroundColor: '#B7653B', color: '#FFF', borderRadius: 16, overflow: 'hidden' },
-  dayCell: { width: '14.285%', height: 42, alignItems: 'center', justifyContent: 'center' },
-  dayText: { fontSize: 16, color: '#40362F' },
+  yearText: {
+    fontSize: Type.headline,
+    color: Colors.text,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  selectedYear: {
+    backgroundColor: Colors.primary,
+    color: Colors.onPrimary,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  dayCell: { width: '14.285%', minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  dayText: { fontSize: Type.callout, color: Colors.text },
   selectedDay: {
-    backgroundColor: '#B7653B',
-    color: '#FFF',
+    backgroundColor: Colors.primary,
+    color: Colors.onPrimary,
     borderRadius: 18,
     paddingHorizontal: 9,
     paddingVertical: 5,
     overflow: 'hidden',
   },
-  disabledDay: { color: '#D5CEC6' },
+  disabledDay: { color: Colors.borderStrong },
   actions: { flexDirection: 'row', gap: 8, marginTop: 8, alignItems: 'stretch' },
   done: {
     flex: 1,
@@ -447,9 +519,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
     borderRadius: 10,
-    backgroundColor: '#8B684D',
+    backgroundColor: Colors.shadow,
   },
-  doneText: { color: '#FFF', fontWeight: '800' },
+  doneText: { color: Colors.onPrimary, fontWeight: '800' },
   cancel: {
     flex: 1,
     minHeight: 44,
@@ -457,7 +529,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
     borderRadius: 10,
-    backgroundColor: '#F1ECE5',
+    backgroundColor: Colors.background,
   },
-  cancelText: { color: '#8B684D', fontWeight: '700' },
+  cancelText: { color: Colors.primary, fontWeight: '700' },
 });

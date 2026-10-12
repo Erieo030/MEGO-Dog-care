@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, View, StyleSheet } from 'react-native';
 import { Colors } from '../../../../constants/Colors';
 import type { VetNarrative } from '../../../../services/aiService';
+import { Type } from '../../../../constants/Typography';
 
 interface Props {
   narrative: VetNarrative;
@@ -16,7 +17,7 @@ export function PreVetNarrativeCard({ narrative, periodDays, generatedByAI }: Pr
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.iconWrap}>
-          <Ionicons name="chatbox-ellipses-outline" size={20} color={Colors.primary} />
+          <Ionicons name="chatbox-ellipses-outline" size={20} color={Colors.primaryDecoration} />
         </View>
         <View style={styles.headerText}>
           <Text style={styles.title}>看診溝通重點</Text>
@@ -64,7 +65,7 @@ function NarrativeList({
   return (
     <View style={styles.listSection}>
       <View style={styles.sectionHeading}>
-        <Ionicons name={icon} size={16} color={Colors.success} />
+        <Ionicons name={icon} size={16} color={Colors.successDecoration} />
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
       {items.map((item, index) => (
@@ -96,21 +97,21 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.peachSoft,
   },
   headerText: { flex: 1 },
-  title: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  meta: { color: Colors.subtext, fontSize: 12, marginTop: 3 },
-  overview: { color: Colors.text, fontSize: 15, lineHeight: 23 },
+  title: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  meta: { color: Colors.subtext, fontSize: Type.caption, marginTop: 3 },
+  overview: { color: Colors.text, fontSize: Type.body, lineHeight: 23 },
   listSection: { gap: 8 },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  sectionTitle: { color: Colors.success, fontSize: 13, fontWeight: '800' },
+  sectionTitle: { color: Colors.success, fontSize: Type.footnote, fontWeight: '800' },
   listItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, paddingLeft: 2 },
   bullet: { width: 5, height: 5, borderRadius: 3, backgroundColor: Colors.primary, marginTop: 8 },
-  listText: { flex: 1, color: Colors.text, fontSize: 14, lineHeight: 21 },
+  listText: { flex: 1, color: Colors.text, fontSize: Type.subhead, lineHeight: 21 },
   gapNotice: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: Colors.border,
     paddingTop: 11,
     gap: 4,
   },
-  gapTitle: { color: Colors.subtext, fontSize: 12, fontWeight: '800', marginBottom: 2 },
-  gapText: { color: Colors.subtext, fontSize: 13, lineHeight: 19 },
+  gapTitle: { color: Colors.subtext, fontSize: Type.caption, fontWeight: '800', marginBottom: 2 },
+  gapText: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19 },
 });

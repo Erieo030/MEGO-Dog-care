@@ -11,6 +11,7 @@ import {
   RECORD_CATEGORY_SURFACES,
 } from '../../../constants/RecordCategoryColors';
 import { Colors } from '../../../constants/Colors';
+import { Type } from '../../../constants/Typography';
 
 type Props = {
   icon: HomeIcon;
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: 'rgba(255, 249, 242, 0.94)',
     color: Colors.text,
-    fontSize: 13,
+    fontSize: Type.footnote,
     lineHeight: 18,
     fontWeight: '700',
     textAlign: 'center',

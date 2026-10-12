@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     minHeight: FORM_FIELD_HEIGHT,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E8DDD4',
+    borderColor: Colors.border,
     backgroundColor: Colors.surface,
     borderRadius: FORM_FIELD_RADIUS,
     paddingHorizontal: FORM_FIELD_PADDING_HORIZONTAL,

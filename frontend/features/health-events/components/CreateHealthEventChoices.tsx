@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { color: Colors.text, fontWeight: '700' },
-  chipTextActive: { color: '#FFF', fontWeight: '700' },
+  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   advancedButton: { paddingVertical: 12 },
   advancedText: { color: Colors.primary, fontWeight: '700' },
 });

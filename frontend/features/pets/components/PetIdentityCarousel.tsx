@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LayoutChangeEvent,
   ScrollView,
@@ -13,6 +13,8 @@ import { RecordActionButton } from '../../../components/RecordActionButton';
 import { Colors } from '../../../constants/Colors';
 import type { Pet } from '../../../types';
 import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
+import { Type } from '../../../constants/Typography';
+import { memorialPeriodText, splitPetsByMemorial } from '../memorialContent';
 
 type Props = {
   pets: Pet[];
@@ -46,7 +48,7 @@ function genderText(gender?: string) {
 }
 
 export function PetIdentityCarousel({
-  pets,
+  pets: inputPets,
   selectedPet,
   onSelect,
   onEdit,
@@ -59,6 +61,11 @@ export function PetIdentityCarousel({
   const cardWidth = Math.min(350, Math.max(260, availableWidth - 28));
   const interval = cardWidth + CARD_GAP;
   const scrollRef = useRef<ScrollView>(null);
+  // 回憶中的毛孩排在照顧中的毛孩後面。
+  const pets = useMemo(() => {
+    const { active, memorial } = splitPetsByMemorial(inputPets);
+    return [...active, ...memorial];
+  }, [inputPets]);
 
   const onCarouselLayout = (event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width;
@@ -77,7 +84,7 @@ export function PetIdentityCarousel({
     <>
       {showSelectionHint ? (
         <View style={styles.selectionHintBox}>
-          <Ionicons name="sync-outline" size={18} color={Colors.primary} />
+          <Ionicons name="sync-outline" size={18} color={Colors.primaryDecoration} />
           <Text style={styles.selectionHintText}>選取毛孩後，首頁與照護紀錄會同步更新。</Text>
         </View>
       ) : null}
@@ -99,24 +106,42 @@ export function PetIdentityCarousel({
       >
         {pets.map((pet) => {
           const selected = selectedPet?.id === pet.id;
+          const memorial = pet.memorial === true;
           const identifier = pet.id.slice(-6).toUpperCase();
           return (
             <View
               key={pet.id}
-              style={[styles.pet, { width: cardWidth }, selected && styles.petSelected]}
+              style={[
+                styles.pet,
+                { width: cardWidth },
+                selected && styles.petSelected,
+                memorial && styles.petMemorial,
+              ]}
             >
               <View style={styles.idAccent} />
-              <Ionicons name="paw" size={42} color={Colors.primary} style={styles.idWatermark} />
+              <Ionicons
+                name="paw"
+                size={42}
+                color={Colors.primaryDecoration}
+                style={styles.idWatermark}
+              />
               <View style={styles.idCardTop}>
                 <View style={styles.brandLockup}>
                   <View style={styles.brandIcon}>
-                    <Ionicons name="paw" size={14} color={Colors.primary} />
+                    <Ionicons name="paw" size={14} color={Colors.primaryDecoration} />
                   </View>
                   <Text style={styles.idCardBrand}>MEGO 毛孩身份卡</Text>
                 </View>
-                {selected ? (
+                {memorial ? (
+                  <View style={[styles.currentBadge, styles.memorialBadge]}>
+                    <Ionicons name="flower-outline" size={14} color={Colors.memorial} />
+                    <Text style={[styles.currentBadgeText, styles.memorialBadgeText]}>
+                      {selected ? '回憶中・查看中' : '在回憶中'}
+                    </Text>
+                  </View>
+                ) : selected ? (
                   <View style={styles.currentBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color={Colors.success} />
+                    <Ionicons name="checkmark-circle" size={14} color={Colors.successDecoration} />
                     <Text style={styles.currentBadgeText}>目前照護</Text>
                   </View>
                 ) : null}
@@ -133,12 +158,17 @@ export function PetIdentityCarousel({
                     attachmentId={pet.avatarAttachmentId}
                     userId={pet.userId}
                     style={styles.avatar}
-                    fallback={(
+                    fallback={
                       <View style={[styles.avatar, styles.avatarFallback]}>
                         <Text style={styles.avatarText}>{pet.name.slice(0, 1)}</Text>
-                        <Ionicons name="paw" size={14} color={Colors.primary} style={styles.avatarPaw} />
+                        <Ionicons
+                          name="paw"
+                          size={14}
+                          color={Colors.primaryDecoration}
+                          style={styles.avatarPaw}
+                        />
                       </View>
-                    )}
+                    }
                   />
                 ) : (
                   <View style={[styles.avatar, styles.avatarFallback]}>
@@ -146,7 +176,7 @@ export function PetIdentityCarousel({
                     <Ionicons
                       name="paw"
                       size={14}
-                      color={Colors.primary}
+                      color={Colors.primaryDecoration}
                       style={styles.avatarPaw}
                     />
                   </View>
@@ -158,7 +188,11 @@ export function PetIdentityCarousel({
                   <View style={styles.petTraits}>
                     <Trait label={pet.breed || '品種未設定'} />
                     <Trait label={genderText(pet.gender)} />
-                    <Trait label={ageText(pet.birthDate)} />
+                    <Trait
+                      label={
+                        memorial ? memorialPeriodText(pet) || '在回憶中' : ageText(pet.birthDate)
+                      }
+                    />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -213,7 +247,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     marginBottom: 10,
   },
-  selectionHintText: { flex: 1, color: Colors.subtext, fontSize: 12, lineHeight: 18 },
+  selectionHintText: { flex: 1, color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
   petCards: { gap: CARD_GAP, paddingVertical: 4 },
   cardSwipeHint: {
     flexDirection: 'row',
@@ -222,7 +256,7 @@ const styles = StyleSheet.create({
     gap: 5,
     marginTop: 2,
   },
-  cardSwipeHintText: { color: Colors.subtext, fontSize: 12 },
+  cardSwipeHintText: { color: Colors.subtext, fontSize: Type.caption },
   cardDots: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -249,6 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceSoft,
   },
   petSelected: { borderColor: Colors.primary, backgroundColor: '#FFFCF7' },
+  petMemorial: { backgroundColor: Colors.memorialSoft },
   idWatermark: { position: 'absolute', right: 10, bottom: 43, opacity: 0.06 },
   idAccent: {
     position: 'absolute',
@@ -273,7 +308,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.peachSoft,
   },
-  idCardBrand: { color: Colors.primary, fontSize: 12, fontWeight: '900', letterSpacing: 0.3 },
+  idCardBrand: {
+    color: Colors.primary,
+    fontSize: Type.caption,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
   idCardBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 0 },
   avatar: {
     width: 70,
@@ -284,10 +324,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.peachSoft,
   },
   avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: Colors.primary, fontSize: 27, fontWeight: '900' },
+  avatarText: { color: Colors.primary, fontSize: Type.display, fontWeight: '900' },
   avatarPaw: { position: 'absolute', right: 7, bottom: 6, opacity: 0.75 },
   petInfo: { flex: 1, minWidth: 0, justifyContent: 'center', gap: 8 },
-  idPetName: { color: Colors.text, fontSize: 22, lineHeight: 27, fontWeight: '900' },
+  idPetName: { color: Colors.text, fontSize: Type.title2, lineHeight: 27, fontWeight: '900' },
   petTraits: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 5 },
   trait: {
     maxWidth: '100%',
@@ -296,7 +336,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
-  traitText: { color: Colors.subtext, fontSize: 10, lineHeight: 14, fontWeight: '700' },
+  traitText: { color: Colors.subtext, fontSize: Type.caption2, lineHeight: 14, fontWeight: '700' },
   currentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -306,7 +346,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.successSoft,
   },
-  currentBadgeText: { color: Colors.success, fontSize: 10, fontWeight: '800' },
+  currentBadgeText: { color: Colors.success, fontSize: Type.caption2, fontWeight: '800' },
+  memorialBadge: { backgroundColor: Colors.surface },
+  memorialBadgeText: { color: Colors.memorial },
   idCardFooter: {
     minHeight: 44,
     flexDirection: 'row',
@@ -317,10 +359,10 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   idCodeGroup: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0 },
-  idCodeLabel: { color: Colors.subtext, fontSize: 10 },
-  idCode: { color: Colors.text, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 },
+  idCodeLabel: { color: Colors.subtext, fontSize: Type.caption2 },
+  idCode: { color: Colors.text, fontSize: Type.caption2, fontWeight: '800', letterSpacing: 0.6 },
   editButton: {
-    minHeight: 36,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,

@@ -42,6 +42,7 @@ import {
   ReminderListLoadingState,
   default as ReminderListState,
 } from '../features/reminders/components/ReminderListState';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'ReminderList'>;
 
@@ -219,7 +220,9 @@ export default function ReminderListScreen({ navigation, route }: Props) {
                 route.params?.focusReminderId &&
                   !items.some((item) => item.id === route.params?.focusReminderId),
               )}
-              onCreate={() => navigation.navigate('CreateReminder')}
+              onCreate={
+                selectedPet?.memorial ? undefined : () => navigation.navigate('CreateReminder')
+              }
             />
           </>
         }
@@ -313,7 +316,7 @@ const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 34 },
   sectionHeading: {
     color: Colors.text,
-    fontSize: 16,
+    fontSize: Type.callout,
     fontWeight: '800',
     marginTop: 12,
     marginBottom: 8,
@@ -342,7 +345,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     marginBottom: 3,
   },
-  moreTitle: { color: Colors.text, fontSize: 18, fontWeight: '800' },
+  moreTitle: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
   moreSubtitle: { color: Colors.subtext, marginTop: -5, marginBottom: 2 },
   moreAction: { width: '100%' },
   moreCancel: { width: '100%', minHeight: 44 },

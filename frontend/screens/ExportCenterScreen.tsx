@@ -11,6 +11,7 @@ import { usePet } from '../contexts/PetContext';
 import * as exportService from '../services/exportService';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { ExportJob, ExportPeriod, ExportScope } from '../types';
+import { Type } from '../constants/Typography';
 const periods: [ExportPeriod, string][] = [
   ['30_days', '最近 30 天'],
   ['90_days', '最近 90 天'],
@@ -102,7 +103,7 @@ export default function ExportCenterScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="document-text-outline" size={24} color={Colors.primary} />
+            <Ionicons name="document-text-outline" size={24} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.eyebrow}>照護資料</Text>
@@ -113,7 +114,7 @@ export default function ExportCenterScreen() {
         <View style={styles.infoCard}>
           <View style={styles.infoHeading}>
             <View style={styles.infoIcon}>
-              <Ionicons name="document-text-outline" size={20} color={Colors.primary} />
+              <Ionicons name="document-text-outline" size={20} color={Colors.primaryDecoration} />
             </View>
             <Text style={styles.infoTitle}>PDF 健康照護報告</Text>
           </View>
@@ -149,7 +150,7 @@ export default function ExportCenterScreen() {
           <Ionicons
             name={busy ? 'hourglass-outline' : 'arrow-down-circle-outline'}
             size={19}
-            color="#FFF"
+            color={Colors.onPrimary}
           />
           <Text style={styles.primaryText}>{busy ? '匯出中…' : '建立 PDF 報告'}</Text>
         </AppButton>
@@ -168,7 +169,9 @@ export default function ExportCenterScreen() {
                           : 'hourglass-outline'
                   }
                   size={18}
-                  color={job.status === 'failed' ? Colors.danger : Colors.primary}
+                  color={
+                    job.status === 'failed' ? Colors.dangerDecoration : Colors.primaryDecoration
+                  }
                 />
               </View>
               <Text style={styles.statusTitle}>
@@ -214,7 +217,11 @@ export default function ExportCenterScreen() {
         )}
         <View style={styles.notice}>
           <View style={styles.noticeHeading}>
-            <Ionicons name="information-circle-outline" size={18} color={Colors.success} />
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color={Colors.successDecoration}
+            />
             <Text style={styles.noticeTitle}>報告內容</Text>
           </View>
           <Text style={styles.noticeText}>
@@ -239,11 +246,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   introCopy: { flex: 1 },
-  eyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  lead: { fontSize: 13, color: Colors.subtext, lineHeight: 19, marginTop: 3 },
-  label: { fontSize: 16, fontWeight: '800', color: Colors.text, marginTop: 22, marginBottom: 9 },
-  labelInline: { fontSize: 16, fontWeight: '800', color: Colors.text },
+  eyebrow: { color: Colors.primary, fontSize: Type.footnote, fontWeight: '800', marginBottom: 2 },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  lead: { fontSize: Type.footnote, color: Colors.subtext, lineHeight: 19, marginTop: 3 },
+  label: {
+    fontSize: Type.callout,
+    fontWeight: '800',
+    color: Colors.text,
+    marginTop: 22,
+    marginBottom: 9,
+  },
+  labelInline: { fontSize: Type.callout, fontWeight: '800', color: Colors.text },
   infoCard: {
     padding: 16,
     borderRadius: 18,
@@ -261,7 +274,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 9,
   },
-  infoTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: Colors.text },
+  infoTitle: { flex: 1, fontSize: Type.headline, fontWeight: '800', color: Colors.text },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   choice: {
     paddingVertical: 11,
@@ -273,7 +286,7 @@ const styles = StyleSheet.create({
   },
   choiceActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   choiceText: { color: Colors.text, fontWeight: '600' },
-  choiceTextActive: { color: '#fff' },
+  choiceTextActive: { color: Colors.onPrimary },
   dateRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -290,7 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 16,
   },
-  muted: { color: Colors.subtext, fontSize: 12, lineHeight: 18 },
+  muted: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
   primary: {
     backgroundColor: Colors.primary,
     borderRadius: 18,
@@ -303,7 +316,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   disabled: { opacity: 0.55 },
-  primaryText: { color: '#fff', fontWeight: '800' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '800' },
   status: {
     marginTop: 18,
     padding: 16,
@@ -322,7 +335,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 9,
   },
-  statusTitle: { fontSize: 17, fontWeight: '800', color: Colors.text },
+  statusTitle: { fontSize: Type.headline, fontWeight: '800', color: Colors.text },
   track: { height: 8, backgroundColor: Colors.border, borderRadius: 5, overflow: 'hidden' },
   fill: { height: 8, backgroundColor: Colors.primary },
   danger: { color: Colors.danger, fontWeight: '700', marginTop: 12 },
@@ -345,6 +358,6 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   noticeHeading: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  noticeTitle: { color: Colors.text, fontSize: 13, fontWeight: '800' },
-  noticeText: { color: Colors.subtext, fontSize: 12, lineHeight: 18 },
+  noticeTitle: { color: Colors.text, fontSize: Type.footnote, fontWeight: '800' },
+  noticeText: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
 });

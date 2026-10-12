@@ -9,6 +9,7 @@ import { Colors } from '../constants/Colors';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { HomeStackParamList } from '../navigation/types';
 import { HealthEventType, ObservationHealthEventType } from '../types';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'AbnormalType'>;
 const TYPES: Array<[HealthEventType, string, keyof typeof Ionicons.glyphMap]> = [
@@ -32,7 +33,7 @@ export default function AbnormalRecordTypeScreen({ navigation, route }: Props) {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="heart-outline" size={22} color={Colors.primary} />
+            <Ionicons name="heart-outline" size={22} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.title}>發生什麼狀況？</Text>
@@ -42,6 +43,8 @@ export default function AbnormalRecordTypeScreen({ navigation, route }: Props) {
         {TYPES.map(([type, label, icon]) => (
           <TouchableOpacity
             key={type}
+            accessibilityRole="button"
+            accessibilityLabel={`新增${label}紀錄`}
             style={styles.item}
             onPress={() =>
               type === 'vomiting'
@@ -57,7 +60,7 @@ export default function AbnormalRecordTypeScreen({ navigation, route }: Props) {
             }
           >
             <View style={styles.icon}>
-              <Ionicons name={icon} size={24} color={Colors.primary} />
+              <Ionicons name={icon} size={24} color={Colors.primaryDecoration} />
             </View>
             <Text style={styles.label}>{label}</Text>
             <Text style={styles.arrow}>›</Text>
@@ -80,8 +83,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: 24, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 19, marginTop: 3, fontSize: 13 },
+  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  subtitle: { color: Colors.subtext, lineHeight: 19, marginTop: 3, fontSize: Type.footnote },
   item: {
     minHeight: 66,
     flexDirection: 'row',
@@ -102,6 +105,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 11,
   },
-  label: { flex: 1, color: Colors.text, fontWeight: '700', fontSize: 16 },
-  arrow: { color: Colors.subtext, fontSize: 28 },
+  label: { flex: 1, color: Colors.text, fontWeight: '700', fontSize: Type.callout },
+  arrow: { color: Colors.subtext, fontSize: Type.display },
 });

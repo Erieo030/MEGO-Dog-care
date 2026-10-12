@@ -60,5 +60,5 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { color: Colors.text },
-  chipTextActive: { color: '#FFF', fontWeight: '700' },
+  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
 });

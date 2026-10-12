@@ -1,3 +1,4 @@
+import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
 import React, { useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -48,6 +49,7 @@ export function DewormingFormScreen() {
     ...(existing || {}),
   });
   const [saving, setSaving] = useState(false);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const setField = <Key extends keyof DewormingDraft>(key: Key, value: DewormingDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
@@ -76,6 +78,7 @@ export function DewormingFormScreen() {
         existing && !duplicate
           ? await updateDeworming(session.userId, existing.id, payload)
           : await createDeworming(session.userId, selectedPet.id, payload);
+      markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
           message: '驅蟲紀錄已儲存，完整內容可到「紀錄」查看。',
@@ -84,7 +87,9 @@ export function DewormingFormScreen() {
         });
       } else {
         Alert.alert('已儲存', '驅蟲紀錄已更新');
-        navigation.replace('DewormingDetail', { recordId: response.record.id });
+        markSaved(draft, () =>
+          navigation.replace('DewormingDetail', { recordId: response.record.id }),
+        );
       }
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
@@ -99,7 +104,7 @@ export function DewormingFormScreen() {
     >
       <View style={styles.formIntro}>
         <View style={styles.formIntroIcon}>
-          <Ionicons name="shield-checkmark-outline" size={22} color={Colors.success} />
+          <Ionicons name="shield-checkmark-outline" size={22} color={Colors.successDecoration} />
         </View>
         <View style={styles.formIntroCopy}>
           <Text style={styles.formEyebrow}>日常預防</Text>

@@ -5,7 +5,7 @@ import PetFormScreen from './PetFormScreen';
 import { PetData } from '../types';
 
 interface CreatePetScreenProps {
-  onSubmit: (data: PetData) => void;
+  onSubmit: (data: PetData) => Promise<void | boolean> | void | boolean;
   onCancel?: () => void;
 }
 

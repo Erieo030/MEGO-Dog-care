@@ -31,6 +31,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/weightService';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'WeightForm'>;
 
@@ -46,6 +48,14 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const [notes, setNotes] = useState(record?.notes || '');
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState(record?.attachments ?? []);
+
+  const formValues = { weight, date, notes, attachments };
+  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
+    setWeight(value.weight);
+    setDate(value.date);
+    setNotes(value.notes);
+    setAttachments(value.attachments);
+  });
 
   const submit = async () => {
     if (submitting) return;
@@ -82,6 +92,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       } else if (selectedPet) {
         await service.createWeight(session.userId, selectedPet.id, data);
       }
+      markSaved(formValues);
       await refreshPets();
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -90,7 +101,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
           onAddAnother: () => navigation.replace('WeightForm', { quickEntry: true }),
         });
       } else {
-        navigation.goBack();
+        markSaved(formValues, () => navigation.goBack());
       }
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
@@ -106,7 +117,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       >
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="scale-outline" size={20} color={Colors.success} />
+            <Ionicons name="scale-outline" size={20} color={Colors.successDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.introTitle}>{record ? '更新這次測量' : '記下今天的體重'}</Text>
@@ -181,8 +192,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  introHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  introHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -210,5 +221,5 @@ const styles = StyleSheet.create({
     minHeight: FORM_BUTTON_HEIGHT,
   },
   disabled: { opacity: 0.55 },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
 });

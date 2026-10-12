@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Colors } from '../../../constants/Colors';
 import { MEAL_TIMING_LABELS } from '../../../constants/MedicalVisits';
 import { Medication } from '../../../types';
+import { Type } from '../../../constants/Typography';
 
 export function MedicalVisitDetailRows({ rows }: { rows: [string, string][] }) {
   return (
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 13,
   },
-  label: { color: Colors.subtext, fontSize: 13, fontWeight: '700' },
+  label: { color: Colors.subtext, fontSize: Type.footnote, fontWeight: '700' },
   value: { color: Colors.text, marginTop: 5, lineHeight: 21 },
   card: {
     backgroundColor: Colors.surface,

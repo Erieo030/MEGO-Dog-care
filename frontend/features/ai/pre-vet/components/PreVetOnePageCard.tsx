@@ -11,6 +11,7 @@ import {
 import { buildPreVetOnePageRows } from '../preVetOnePage';
 import type { VetBriefSection, VetVisitBrief } from '../../../../services/aiService';
 import { preVetStyles as styles } from '../preVetStyles';
+import { Colors } from '../../../../constants/Colors';
 
 interface Props {
   brief: VetVisitBrief;
@@ -27,7 +28,7 @@ export function PreVetOnePageCard({ brief, sections, visitConcern, onChangeVisit
     <View style={styles.onePageCard}>
       <View style={styles.onePageHeader}>
         <View style={styles.onePageIcon}>
-          <Ionicons name="document-text-outline" size={20} color="#FFF" />
+          <Ionicons name="document-text-outline" size={20} color={Colors.onPrimary} />
         </View>
         <View style={styles.onePageHeaderCopy}>
           <Text style={styles.onePageTitle}>看診快速摘要</Text>
@@ -65,7 +66,7 @@ export function PreVetOnePageCard({ brief, sections, visitConcern, onChangeVisit
           value={visitConcern}
           onChangeText={onChangeVisitConcern}
           placeholder="例如：最近食慾變差，想確認是否需要檢查"
-          placeholderTextColor="#91877F"
+          placeholderTextColor={Colors.muted}
           maxLength={150}
           multiline
           textAlignVertical="top"

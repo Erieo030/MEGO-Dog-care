@@ -28,6 +28,7 @@ import {
   HealthTrendAlert,
   HealthTrendResult,
 } from '../utils/healthTrendEngine';
+import { Type } from '../constants/Typography';
 
 const CATEGORY_ICONS: Record<HealthTrendAlert['category'], keyof typeof Ionicons.glyphMap> = {
   water: 'water-outline',
@@ -53,29 +54,32 @@ export default function HealthObservationScreen() {
   const [showCriteria, setShowCriteria] = useState(false);
   const requestRef = useRef(0);
 
-  const load = useCallback(async (signal?: AbortSignal) => {
-    const requestId = ++requestRef.current;
-    if (!session?.userId || !selectedPet?.id) {
-      setResult(null);
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-    try {
-      setError('');
-      const dashboard = await getHealthDashboard(session.userId, selectedPet.id, 30, signal);
-      if (requestId !== requestRef.current) return;
-      setResult(analyzeHealthTrend(dashboard.dailyRecords || []));
-    } catch (requestError) {
-      if (requestId !== requestRef.current) return;
-      setError((requestError as Error).message || '暫時無法載入健康觀察');
-    } finally {
-      if (requestId === requestRef.current) {
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      const requestId = ++requestRef.current;
+      if (!session?.userId || !selectedPet?.id) {
+        setResult(null);
         setLoading(false);
         setRefreshing(false);
+        return;
       }
-    }
-  }, [selectedPet?.id, session?.userId]);
+      try {
+        setError('');
+        const dashboard = await getHealthDashboard(session.userId, selectedPet.id, 30, signal);
+        if (requestId !== requestRef.current) return;
+        setResult(analyzeHealthTrend(dashboard.dailyRecords || []));
+      } catch (requestError) {
+        if (requestId !== requestRef.current) return;
+        setError((requestError as Error).message || '暫時無法載入健康觀察');
+      } finally {
+        if (requestId === requestRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
+    },
+    [selectedPet?.id, session?.userId],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -107,7 +111,7 @@ export default function HealthObservationScreen() {
       >
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="heart-outline" size={24} color={Colors.success} />
+            <Ionicons name="heart-outline" size={24} color={Colors.successDecoration} />
           </View>
           <View style={styles.flex}>
             <Text style={styles.heading}>
@@ -124,7 +128,11 @@ export default function HealthObservationScreen() {
             onPress={() => setShowCriteria((visible) => !visible)}
             style={styles.criteriaToggle}
           >
-            <Ionicons name="information-circle-outline" size={18} color={Colors.success} />
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color={Colors.successDecoration}
+            />
             <Text style={styles.criteriaToggleText}>判斷方式</Text>
             <Ionicons
               name={showCriteria ? 'chevron-up' : 'chevron-down'}
@@ -134,21 +142,10 @@ export default function HealthObservationScreen() {
           </Pressable>
           {showCriteria && (
             <View style={styles.criteriaDetails}>
-              <CriteriaRow
-                label="一般狀況"
-                text="連續 2 天開始提醒，連續 3 天列為持續留意"
-              />
-              <CriteriaRow
-                label="水狀便"
-                text="出現 1 天提醒，連續 2 天列為持續留意"
-              />
-              <CriteriaRow
-                label="食量偏多"
-                text="連續 3 天提醒，不升級為持續留意"
-              />
-              <Text style={styles.criteriaFootnote}>
-                恢復正常或中斷一天，連續天數會重新計算。
-              </Text>
+              <CriteriaRow label="一般狀況" text="連續 2 天開始提醒，連續 3 天列為持續留意" />
+              <CriteriaRow label="水狀便" text="出現 1 天提醒，連續 2 天列為持續留意" />
+              <CriteriaRow label="食量偏多" text="連續 3 天提醒，不升級為持續留意" />
+              <Text style={styles.criteriaFootnote}>恢復正常或中斷一天，連續天數會重新計算。</Text>
             </View>
           )}
         </View>
@@ -175,7 +172,7 @@ export default function HealthObservationScreen() {
                 style={styles.stableArtwork}
               />
             </SoftEntrance>
-            <Ionicons name="leaf-outline" size={30} color={Colors.success} />
+            <Ionicons name="leaf-outline" size={30} color={Colors.successDecoration} />
             <Text style={styles.stableTitle}>今天狀況穩定</Text>
             <Text style={styles.muted}>目前沒有持續出現、需要特別留意的日常變化。</Text>
           </View>
@@ -184,9 +181,7 @@ export default function HealthObservationScreen() {
             {continuedAlerts.length > 0 && (
               <ObservationSection level="continued" alerts={continuedAlerts} />
             )}
-            {watchAlerts.length > 0 && (
-              <ObservationSection level="watch" alerts={watchAlerts} />
-            )}
+            {watchAlerts.length > 0 && <ObservationSection level="watch" alerts={watchAlerts} />}
           </>
         )}
 
@@ -224,7 +219,7 @@ function ObservationSection({
           <Ionicons
             name={isContinued ? 'time-outline' : 'eye-outline'}
             size={18}
-            color={isContinued ? Colors.primary : Colors.success}
+            color={isContinued ? Colors.primaryDecoration : Colors.successDecoration}
           />
         </View>
         <View>
@@ -235,7 +230,11 @@ function ObservationSection({
       {alerts.map((alert) => (
         <View key={`${alert.category}-${alert.status}`} style={styles.card}>
           <View style={[styles.cardIcon, alert.level === 'continued' && styles.cardIconContinued]}>
-            <Ionicons name={CATEGORY_ICONS[alert.category]} size={23} color={Colors.success} />
+            <Ionicons
+              name={CATEGORY_ICONS[alert.category]}
+              size={23}
+              color={Colors.successDecoration}
+            />
           </View>
           <View style={styles.flex}>
             <View style={styles.cardTitleRow}>
@@ -274,18 +273,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primarySoft,
   },
-  heading: { color: Colors.text, fontSize: 19, fontWeight: '800' },
-  subheading: { color: Colors.subtext, fontSize: 13, lineHeight: 19, marginTop: 4 },
+  heading: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
+  subheading: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 4 },
   criteriaWrap: { marginTop: 10 },
   criteriaToggle: {
-    minHeight: 40,
+    minHeight: 44,
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 8,
   },
-  criteriaToggleText: { color: Colors.success, fontSize: 13, fontWeight: '700' },
+  criteriaToggleText: { color: Colors.success, fontSize: Type.footnote, fontWeight: '700' },
   criteriaDetails: {
     marginTop: 2,
     paddingHorizontal: 13,
@@ -301,9 +300,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(82,109,96,0.18)',
   },
-  criteriaLabel: { width: 72, color: '#526D60', fontSize: 12, fontWeight: '800' },
-  criteriaValue: { flex: 1, color: '#526D60', fontSize: 13, lineHeight: 19 },
-  criteriaFootnote: { color: '#526D60', fontSize: 12, lineHeight: 18, paddingVertical: 8 },
+  criteriaLabel: {
+    width: 72,
+    color: Colors.successText,
+    fontSize: Type.caption,
+    fontWeight: '800',
+  },
+  criteriaValue: { flex: 1, color: Colors.successText, fontSize: Type.footnote, lineHeight: 19 },
+  criteriaFootnote: {
+    color: Colors.successText,
+    fontSize: Type.caption,
+    lineHeight: 18,
+    paddingVertical: 8,
+  },
   loadingBox: { alignItems: 'center', paddingVertical: 52, gap: 12 },
   stableBox: {
     alignItems: 'center',
@@ -313,9 +322,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(231,242,234,0.62)',
   },
-  stableTitle: { color: Colors.text, fontSize: 18, fontWeight: '800', marginTop: 10 },
+  stableTitle: { color: Colors.text, fontSize: Type.headline, fontWeight: '800', marginTop: 10 },
   stableArtwork: { width: 72, height: 72, marginBottom: 2 },
-  muted: { color: Colors.subtext, fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  muted: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 20, textAlign: 'center' },
   section: { marginTop: 24 },
   sectionHeading: {
     flexDirection: 'row',
@@ -332,8 +341,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.successSoft,
   },
   sectionIconContinued: { backgroundColor: Colors.primarySoft },
-  sectionTitle: { color: Colors.text, fontSize: 17, lineHeight: 21, fontWeight: '800' },
-  sectionSubtitle: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 1 },
+  sectionTitle: { color: Colors.text, fontSize: Type.headline, lineHeight: 21, fontWeight: '800' },
+  sectionSubtitle: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 1 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -355,13 +364,13 @@ const styles = StyleSheet.create({
   },
   cardIconContinued: { backgroundColor: 'rgba(242,225,210,0.92)' },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardTitle: { color: Colors.text, fontSize: 17, fontWeight: '800', flex: 1 },
-  days: { color: Colors.success, fontSize: 12, fontWeight: '700' },
+  cardTitle: { color: Colors.text, fontSize: Type.headline, fontWeight: '800', flex: 1 },
+  days: { color: Colors.success, fontSize: Type.caption, fontWeight: '700' },
   daysContinued: { color: Colors.primary },
-  message: { color: Colors.subtext, fontSize: 14, lineHeight: 21, marginTop: 6 },
+  message: { color: Colors.subtext, fontSize: Type.subhead, lineHeight: 21, marginTop: 6 },
   disclaimer: {
     color: Colors.subtext,
-    fontSize: 12,
+    fontSize: Type.caption,
     lineHeight: 19,
     marginTop: 28,
     textAlign: 'center',

@@ -20,3 +20,9 @@ def test_due_and_medication_rules():
     now=datetime.now(timezone.utc)
     c=ctx(medications={"active":[{"name":"藥物A","endDate":(now+timedelta(days=1)).date().isoformat()}]},vaccinations={"latest":{"vaccineName":"疫苗","nextDueAt":now+timedelta(days=3)}},dewormings={"latest":None})
     types={x.type for x in monitor(c).alerts}; assert "medication_ending_soon" in types and "vaccination_due" in types
+
+def test_memorial_pet_has_no_forward_looking_care_alerts():
+    now=datetime.now(timezone.utc)
+    c=ctx(pet={"memorial":True},medical={"recentVisits":[{"id":"v1","followUpAt":now-timedelta(days=2)}]},medications={"active":[{"name":"藥物A","endDate":(now+timedelta(days=1)).date().isoformat()}]},vaccinations={"latest":{"vaccineName":"疫苗","nextDueAt":now+timedelta(days=3)}})
+    types={x.type for x in monitor(c).alerts}
+    assert not types & {"follow_up_overdue","medication_ending_soon","vaccination_due"}

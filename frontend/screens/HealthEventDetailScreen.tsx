@@ -31,6 +31,7 @@ import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/healthEventService';
 import { HealthEvent } from '../types';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthEventDetail'>;
 
@@ -42,6 +43,7 @@ export default function HealthEventDetailScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const mutationLock = useRef(false);
   const requestId = useRef(0);
 
   const load = useCallback(
@@ -94,6 +96,8 @@ export default function HealthEventDetailScreen({ route, navigation }: Props) {
         text: '刪除',
         style: 'destructive',
         onPress: async () => {
+          if (mutationLock.current) return;
+          mutationLock.current = true;
           setSubmitting(true);
           try {
             await service.deleteHealthEvent(session.userId, item.id);
@@ -101,6 +105,7 @@ export default function HealthEventDetailScreen({ route, navigation }: Props) {
           } catch (requestError) {
             Alert.alert('刪除失敗', (requestError as Error).message);
           } finally {
+            mutationLock.current = false;
             setSubmitting(false);
           }
         },
@@ -148,7 +153,7 @@ export default function HealthEventDetailScreen({ route, navigation }: Props) {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="heart-outline" size={23} color={Colors.primary} />
+            <Ionicons name="heart-outline" size={23} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.heroCopy}>
             <Text style={styles.heroType}>{HEALTH_EVENT_LABELS[item.type]}</Text>
@@ -258,25 +263,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primarySoft,
   },
   heroCopy: { flex: 1, minWidth: 0 },
-  heroType: { color: Colors.primary, fontSize: 12, fontWeight: '800' },
+  heroType: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
   heroSummary: {
     color: Colors.text,
-    fontSize: 17,
+    fontSize: Type.headline,
     fontWeight: '800',
     lineHeight: 23,
     marginTop: 2,
   },
-  heroDate: { color: Colors.subtext, fontSize: 12, marginTop: 5 },
+  heroDate: { color: Colors.subtext, fontSize: Type.caption, marginTop: 5 },
   severity: {
     color: Colors.primary,
     backgroundColor: Colors.primarySoft,
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    fontSize: 12,
+    fontSize: Type.caption,
     fontWeight: '800',
   },
-  severitySevere: { color: Colors.danger, backgroundColor: '#F9E5E2' },
+  severitySevere: { color: Colors.danger, backgroundColor: Colors.dangerSoft },
   actions: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 12 },
   actionButton: { flex: 1 },
   edit: {
@@ -288,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
   },
-  editText: { color: '#FFF', fontWeight: '800' },
+  editText: { color: Colors.onPrimary, fontWeight: '800' },
   delete: {
     alignSelf: 'center',
     minHeight: 44,
@@ -299,7 +304,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 10,
   },
-  deleteText: { color: '#C34D4D', fontWeight: '800' },
+  deleteText: { color: Colors.dangerText, fontWeight: '800' },
   detailGroup: {
     backgroundColor: Colors.surface,
     borderRadius: 18,
@@ -312,12 +317,18 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
     padding: 15,
   },
-  label: { color: Colors.subtext, fontSize: 12 },
+  label: { color: Colors.subtext, fontSize: Type.caption },
   value: { color: Colors.text, marginTop: 5, lineHeight: 21 },
-  heading: { color: Colors.text, fontSize: 17, fontWeight: '800', marginTop: 21, marginBottom: 9 },
+  heading: {
+    color: Colors.text,
+    fontSize: Type.headline,
+    fontWeight: '800',
+    marginTop: 21,
+    marginBottom: 9,
+  },
   images: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   image: { width: 100, height: 100, borderRadius: 12 },
-  error: { color: '#C55B5B', textAlign: 'center' },
+  error: { color: Colors.dangerText, textAlign: 'center' },
   retry: {
     marginTop: 14,
     borderWidth: 1,

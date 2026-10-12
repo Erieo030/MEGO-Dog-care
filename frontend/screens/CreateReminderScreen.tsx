@@ -1,14 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：建立或編輯提醒；後端成功後同步裝置 Local Notification。 */
 import React, { useState } from 'react';
-import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
@@ -43,6 +36,8 @@ import {
 } from '../services/notificationService';
 import { createReminder, updateReminder } from '../services/reminderService';
 import { RecurrenceRule, ReminderType } from '../types';
+import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CreateReminder'>;
 
@@ -73,6 +68,15 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
     () => `reminder-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
   );
 
+  const formValues = { type, title, scheduledAt, rule, notes };
+  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
+    setType(value.type);
+    setTitle(value.title);
+    setScheduledAt(value.scheduledAt);
+    setRule(value.rule);
+    setNotes(value.notes);
+  });
+
   const chooseType = (item: (typeof REMINDER_TYPES)[number]) => {
     setType(item[0]);
     setTitle(item[1]);
@@ -102,6 +106,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
       const saved = existing
         ? await updateReminder(session.userId, existing.id, { ...input, status: existing.status })
         : await createReminder(session.userId, selectedPet.id, input);
+      markSaved(formValues);
       try {
         const result = existing
           ? await replaceReminderNotification(session.userId, saved, selectedPet.name)
@@ -149,7 +154,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
       >
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <Ionicons name="notifications-outline" size={20} color={Colors.primary} />
+            <Ionicons name="notifications-outline" size={20} color={Colors.primaryDecoration} />
           </View>
           <View style={styles.introCopy}>
             <Text style={styles.introTitle}>
@@ -191,7 +196,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
           ))}
         </View>
         <View style={styles.notice}>
-          <Ionicons name="information-circle-outline" size={17} color={Colors.success} />
+          <Ionicons name="information-circle-outline" size={17} color={Colors.successDecoration} />
           <View style={styles.noticeCopy}>
             <Text style={styles.noticeTitle}>頻率參考</Text>
             <Text style={styles.noticeText}>實際頻率請依獸醫建議與產品說明為準。</Text>
@@ -244,8 +249,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   introCopy: { flex: 1, minWidth: 0 },
-  introTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  introHint: { color: Colors.subtext, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  introTitle: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  introHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText: { color: Colors.text },
-  chipTextActive: { color: '#FFF', fontWeight: '700' },
+  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   input: {
     fontSize: FORM_FIELD_FONT_SIZE,
     minHeight: FORM_FIELD_HEIGHT,
@@ -289,8 +294,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.successSoft,
   },
   noticeCopy: { flex: 1, gap: 2 },
-  noticeTitle: { color: Colors.text, fontSize: 12, fontWeight: '800' },
-  noticeText: { color: Colors.subtext, fontSize: 12, lineHeight: 17 },
+  noticeTitle: { color: Colors.text, fontSize: Type.caption, fontWeight: '800' },
+  noticeText: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17 },
   submit: {
     backgroundColor: Colors.primary,
     borderRadius: FORM_BUTTON_RADIUS,
@@ -299,6 +304,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 25,
   },
-  submitText: { color: '#FFF', fontWeight: '800' },
+  submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.55 },
 });

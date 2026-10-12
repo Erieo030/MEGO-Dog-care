@@ -11,6 +11,7 @@ import {
   FORM_FIELD_RADIUS,
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../../../constants/FormTokens';
+import { Type } from '../../../constants/Typography';
 
 export function IdentityHeader({
   eyebrow,
@@ -24,7 +25,7 @@ export function IdentityHeader({
   return (
     <View style={identityStyles.headerRow}>
       <View style={identityStyles.iconBadge}>
-        <Ionicons name="qr-code-outline" size={24} color={Colors.primary} />
+        <Ionicons name="qr-code-outline" size={24} color={Colors.primaryDecoration} />
       </View>
       <View style={identityStyles.headerCopy}>
         <Text style={identityStyles.eyebrow}>{eyebrow}</Text>
@@ -44,7 +45,7 @@ export function IdentityInfoBox({
 }) {
   return (
     <View style={identityStyles.infoBox}>
-      <Ionicons name={icon} size={20} color={Colors.success} />
+      <Ionicons name={icon} size={20} color={Colors.successDecoration} />
       <Text style={identityStyles.infoText}>{text}</Text>
     </View>
   );
@@ -68,9 +69,9 @@ export const identityStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerCopy: { flex: 1 },
-  eyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  title: { fontSize: 24, fontWeight: '800', color: Colors.text },
-  subtitle: { color: Colors.subtext, fontSize: 13, lineHeight: 18, marginTop: 3 },
+  eyebrow: { color: Colors.primary, fontSize: Type.footnote, fontWeight: '800', marginBottom: 2 },
+  title: { fontSize: Type.title1, fontWeight: '800', color: Colors.text },
+  subtitle: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 18, marginTop: 3 },
   petCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -90,7 +91,7 @@ export const identityStyles = StyleSheet.create({
   },
   petAvatarImage: { width: '100%', height: '100%', borderRadius: 29 },
   petInfo: { flex: 1, minWidth: 0, marginLeft: 14 },
-  petName: { fontSize: 21, fontWeight: '800', color: Colors.text },
+  petName: { fontSize: Type.title3, fontWeight: '800', color: Colors.text },
   petMeta: { color: Colors.subtext, marginTop: 3 },
   infoBox: {
     flexDirection: 'row',
@@ -100,7 +101,7 @@ export const identityStyles = StyleSheet.create({
     borderRadius: 16,
     padding: 13,
   },
-  infoText: { flex: 1, color: '#526D60', fontSize: 13, lineHeight: 20 },
+  infoText: { flex: 1, color: Colors.successText, fontSize: Type.footnote, lineHeight: 20 },
   qrCard: {
     alignItems: 'center',
     backgroundColor: Colors.surface,
@@ -109,8 +110,8 @@ export const identityStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  qrFrame: { backgroundColor: '#FFF', borderRadius: 18, padding: 13 },
-  qrCaption: { marginTop: 14, color: Colors.subtext, fontSize: 13 },
+  qrFrame: { backgroundColor: Colors.surface, borderRadius: 18, padding: 13 },
+  qrCaption: { marginTop: 14, color: Colors.subtext, fontSize: Type.footnote },
   primary: {
     backgroundColor: Colors.primary,
     padding: 14,
@@ -121,7 +122,7 @@ export const identityStyles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  primaryText: { color: '#fff', fontWeight: '700' },
+  primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   secondary: {
     minHeight: 52,
     borderRadius: 16,
@@ -141,7 +142,7 @@ export const identityStyles = StyleSheet.create({
     padding: 24,
     backgroundColor: Colors.background,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '800', marginTop: 12, color: Colors.text },
+  sectionTitle: { fontSize: Type.headline, fontWeight: '800', marginTop: 12, color: Colors.text },
   fieldSurface: {
     gap: 14,
     backgroundColor: Colors.surface,
@@ -165,8 +166,8 @@ export const identityStyles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
-  previewHeading: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  previewSubheading: { color: Colors.subtext, fontSize: 12, lineHeight: 18 },
+  previewHeading: { color: Colors.text, fontSize: Type.callout, fontWeight: '800' },
+  previewSubheading: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
   previewPetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   previewAvatar: {
     width: 54,
@@ -177,10 +178,20 @@ export const identityStyles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  previewAvatarLabel: { color: Colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
-  previewPetName: { color: Colors.text, fontSize: 20, fontWeight: '800' },
-  previewSectionTitle: { color: Colors.success, fontSize: 14, fontWeight: '800', marginTop: 2 },
-  previewDetail: { color: Colors.subtext, fontSize: 14, lineHeight: 21 },
+  previewAvatarLabel: {
+    color: Colors.primary,
+    fontSize: Type.caption2,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  previewPetName: { color: Colors.text, fontSize: Type.title3, fontWeight: '800' },
+  previewSectionTitle: {
+    color: Colors.success,
+    fontSize: Type.subhead,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  previewDetail: { color: Colors.subtext, fontSize: Type.subhead, lineHeight: 21 },
   previewContact: {
     backgroundColor: Colors.surface,
     borderRadius: 14,
@@ -190,8 +201,8 @@ export const identityStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  previewContactText: { color: Colors.text, fontSize: 14, fontWeight: '700', flex: 1 },
-  previewEmpty: { color: Colors.subtext, fontSize: 13, lineHeight: 19 },
+  previewContactText: { color: Colors.text, fontSize: Type.subhead, fontWeight: '700', flex: 1 },
+  previewEmpty: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19 },
   optionRow: {
     minHeight: 56,
     flexDirection: 'row',
@@ -210,9 +221,15 @@ export const identityStyles = StyleSheet.create({
     flexShrink: 0,
   },
   optionCopy: { flex: 1 },
-  optionLabel: { fontSize: 15, fontWeight: '700', color: Colors.text },
-  optionState: { fontSize: 12, color: Colors.subtext, marginTop: 3 },
-  note: { color: Colors.subtext, lineHeight: 20, fontSize: 13, marginTop: 2, marginBottom: 10 },
+  optionLabel: { fontSize: Type.body, fontWeight: '700', color: Colors.text },
+  optionState: { fontSize: Type.caption, color: Colors.subtext, marginTop: 3 },
+  note: {
+    color: Colors.subtext,
+    lineHeight: 20,
+    fontSize: Type.footnote,
+    marginTop: 2,
+    marginBottom: 10,
+  },
   noteLead: { color: Colors.text, fontWeight: '800' },
   fieldGroup: { gap: 4 },
   fieldLabel: {
@@ -220,7 +237,7 @@ export const identityStyles = StyleSheet.create({
     fontWeight: FORM_FIELD_LABEL_FONT_WEIGHT,
     color: Colors.text,
   },
-  fieldHint: { fontSize: 12, color: Colors.subtext, marginBottom: 3 },
+  fieldHint: { fontSize: Type.caption, color: Colors.subtext, marginBottom: 3 },
   input: {
     fontSize: FORM_FIELD_FONT_SIZE,
     borderWidth: 1,
