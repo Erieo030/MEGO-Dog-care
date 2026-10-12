@@ -15,7 +15,7 @@ import {
   FORM_FIELD_RADIUS,
 } from '../../../constants/FormTokens';
 import { Medication } from '../../../types';
-import { formatLocalDate, parseLocalDate } from '../medicalVisitContent';
+import { taipeiDateKey, taipeiDateFromKey } from '../../../utils/taipeiDate';
 import MedicalVisitTextField from './MedicalVisitTextField';
 
 type Props = {
@@ -72,14 +72,14 @@ export default function MedicalVisitMedicationEditor({
       ) : null}
       <DatePickerField
         label="開始日期"
-        value={medication.startDate ? parseLocalDate(medication.startDate) : undefined}
-        onChange={(date) => onUpdate('startDate', formatLocalDate(date))}
+        value={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
+        onChange={(date) => onUpdate('startDate', taipeiDateKey(date))}
       />
       <DatePickerField
         label="結束日期"
-        value={medication.endDate ? parseLocalDate(medication.endDate) : undefined}
-        minimumDate={medication.startDate ? parseLocalDate(medication.startDate) : undefined}
-        onChange={(date) => onUpdate('endDate', formatLocalDate(date))}
+        value={medication.endDate ? taipeiDateFromKey(medication.endDate) : undefined}
+        minimumDate={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
+        onChange={(date) => onUpdate('endDate', taipeiDateKey(date))}
       />
       {errors?.endDate ? (
         <Text accessibilityRole="alert" style={styles.error}>

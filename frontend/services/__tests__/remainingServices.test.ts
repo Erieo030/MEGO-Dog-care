@@ -3,6 +3,7 @@ import { getTodayDailyLog, createDailyLog } from '../dailyLogService';
 import { createExport, cancelExport } from '../exportService';
 import { getLostProfile, rotateLostToken, saveLostProfile } from '../lostPetService';
 import { loadSettings, timeOnDate, DEFAULT_SETTINGS } from '../settingsService';
+import { formatTaipeiTime, taipeiDateKey } from '../../utils/taipeiDate';
 import { sendAIChat, getVetVisitBrief } from '../aiService';
 
 jest.mock('../api', () => ({ apiData: jest.fn() }));
@@ -70,12 +71,12 @@ test('lost pet service supports profile save and token rotation', async () => {
   expect(request.mock.calls[2][1]).toMatchObject({ method: 'POST' });
 });
 
-test('settings validates defaults and local time conversion', async () => {
+test('settings validates defaults and Taiwan time conversion', async () => {
   const settings = await loadSettings();
   expect(settings).toEqual(DEFAULT_SETTINGS);
-  const date = timeOnDate('20:30', new Date('2026-08-08T00:00:00'));
-  expect(date.getHours()).toBe(20);
-  expect(date.getMinutes()).toBe(30);
+  const date = timeOnDate('20:30', new Date('2026-08-07T16:00:00Z'));
+  expect(formatTaipeiTime(date)).toBe('20:30');
+  expect(taipeiDateKey(date)).toBe('2026-08-08');
 });
 
 test('AI chat sends only the latest ten turns for the active conversation', async () => {

@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -136,12 +137,18 @@ export function VaccinationListScreen() {
               <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
             </View>
             <Text style={styles.cardText}>
-              接種日期：{new Date(record.administeredAt).toLocaleDateString('zh-TW')}
+              接種日期：
+              {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
+                timeZone: TAIPEI_TIME_ZONE,
+              })}
             </Text>
             <Text style={styles.cardText}>醫院：{record.hospitalName || '未填寫醫院'}</Text>
             {record.nextDueAt ? (
               <Text style={styles.cardMeta}>
-                下次接種：{new Date(record.nextDueAt).toLocaleDateString('zh-TW')}
+                下次接種：
+                {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                  timeZone: TAIPEI_TIME_ZONE,
+                })}
               </Text>
             ) : null}
           </TouchableOpacity>

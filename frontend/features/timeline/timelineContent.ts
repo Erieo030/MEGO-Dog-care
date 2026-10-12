@@ -93,6 +93,6 @@ export function getTimelineCategoriesForTypes(types: TimelineType[]): TimelineCa
 
 export function formatTimelineDateHeading(date: Date, today = new Date()): string {
   const weekday = date.toLocaleDateString('zh-TW', { weekday: 'long' });
-  const prefix = getLocalDateKey(date) === getLocalDateKey(today) ? '今天' : '';
+  const prefix = getLocalDateKey(date) === taipeiDateKey(today) ? '今天' : '';
   return `${prefix}${date.getMonth() + 1} 月 ${date.getDate()} 日，${weekday}`;
 }

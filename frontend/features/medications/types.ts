@@ -4,7 +4,7 @@
  * API：../../../services/medicationService.ts
  */
 import type { MedicationCourse, MedicationMealTiming } from '../../types';
-import { taipeiDateKey } from '../../utils/taipeiDate';
+import { taipeiDateKey, taipeiDateFromKey } from '../../utils/taipeiDate';
 
 export type MedicationDraft = {
   name: string;
@@ -44,7 +44,6 @@ export const createBlankMedicationDraft = (): MedicationDraft => ({
 
 export const timeValue = (value?: string) => {
   const [hour, minute] = (value || '08:00').split(':').map(Number);
-  const date = new Date();
-  date.setHours(Number.isFinite(hour) ? hour : 8, Number.isFinite(minute) ? minute : 0, 0, 0);
-  return date;
+  const time = `${String(Number.isFinite(hour) ? hour : 8).padStart(2, '0')}:${String(Number.isFinite(minute) ? minute : 0).padStart(2, '0')}`;
+  return taipeiDateFromKey(taipeiDateKey(), time);
 };

@@ -1,13 +1,6 @@
+import { aiChatStyles as s } from '../features/ai/aiChatStyles';
 import React, { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   KeyboardAvoidingView,
@@ -29,7 +22,6 @@ import {
   AIChatMessage,
   AIChatMessageBubble,
 } from '../features/ai/components/AIChatContent';
-import { Type } from '../constants/Typography';
 
 const CONTEXT_WARNING_TOKENS = 12000;
 
@@ -156,6 +148,7 @@ export default function AIChatScreen() {
           sources: result.sources,
           knowledgeSources: result.knowledgeSources,
           contextTokens: result.contextTokens ?? undefined,
+          generationMode: result.generationMode,
         },
       ];
       shouldScrollToEndRef.current = isNearEndRef.current;
@@ -166,12 +159,20 @@ export default function AIChatScreen() {
           session.userId,
           selectedPet.id,
           nextMessages.map(
-            ({ role, text: messageText, sources, knowledgeSources, contextTokens }) => ({
+            ({
               role,
               text: messageText,
               sources,
               knowledgeSources,
               contextTokens,
+              generationMode,
+            }) => ({
+              role,
+              text: messageText,
+              sources,
+              knowledgeSources,
+              contextTokens,
+              generationMode,
             }),
           ),
           result.usage,
@@ -375,129 +376,3 @@ export default function AIChatScreen() {
     </SafeAreaView>
   );
 }
-const s = StyleSheet.create({
-  safeArea: { flex: 1, overflow: 'hidden', backgroundColor: Colors.background },
-  root: { flex: 1, backgroundColor: Colors.background },
-  keyboardContent: { flex: 1 },
-  list: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 7,
-  },
-  content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 12 },
-  titleBody: { flex: 1, marginLeft: 8 },
-  eyebrow: {
-    fontSize: Type.caption2,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-    color: Colors.primary,
-  },
-  title: { fontSize: Type.title2, fontWeight: '800', color: Colors.text, marginTop: 2 },
-  headerAction: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  avatar: { width: 46, height: 46, borderRadius: 16 },
-  avatarFallback: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  usageBadge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: Colors.primarySoft,
-  },
-  usage: { fontSize: Type.caption, color: Colors.primary, fontWeight: '700' },
-  subtitle: {
-    marginTop: 8,
-    marginBottom: 12,
-    color: Colors.subtext,
-    fontSize: Type.body,
-    lineHeight: 22,
-  },
-  muted: { color: Colors.subtext },
-  error: { color: Colors.danger },
-  sessionState: { alignItems: 'flex-start', gap: 8, marginBottom: 12 },
-  sessionRetry: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: Colors.primarySoft,
-  },
-  sessionRetryText: { color: Colors.primary, fontWeight: '700' },
-  sendError: { alignItems: 'flex-start', gap: 8 },
-  contextWarning: {
-    marginTop: 12,
-    padding: 13,
-    gap: 7,
-    borderRadius: 16,
-    backgroundColor: Colors.warningSoft,
-    borderWidth: 1,
-    borderColor: Colors.warningBorder,
-  },
-  contextWarningHeading: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  contextWarningTitle: { color: Colors.warningTitle, fontSize: Type.subhead, fontWeight: '800' },
-  contextWarningText: { color: Colors.warningText, fontSize: Type.caption, lineHeight: 18 },
-  contextWarningAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 2,
-  },
-  contextWarningActionText: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
-  disclaimer: { fontSize: Type.caption, color: Colors.subtext, marginTop: 12, lineHeight: 18 },
-  composer: {
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  inputShell: {
-    width: '100%',
-    height: 48,
-    justifyContent: 'center',
-  },
-  input: {
-    width: '100%',
-    height: 48,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 24,
-    paddingLeft: 20,
-    paddingRight: 70,
-    color: Colors.text,
-    backgroundColor: Colors.surfaceSoft,
-    fontSize: Type.callout,
-  },
-  send: {
-    position: 'absolute',
-    right: 5,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 25,
-    backgroundColor: Colors.primary,
-  },
-  sendDisabled: { opacity: 0.52 },
-});

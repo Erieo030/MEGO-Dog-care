@@ -1,3 +1,4 @@
+import { formatTaipeiDate, formatTaipeiDateTime } from '../../utils/taipeiDate';
 import { FOLLOW_UP_STATUS_LABELS } from '../../constants/MedicalVisits';
 import { MedicalVisit } from '../../types';
 
@@ -10,10 +11,9 @@ const dateTimeFormat: Intl.DateTimeFormatOptions = {
 };
 
 export const formatMedicalVisitDateTime = (value?: string | null, fallback = '未提供') =>
-  value ? new Date(value).toLocaleString('zh-TW', dateTimeFormat) : fallback;
+  value ? formatTaipeiDateTime(value, dateTimeFormat) : fallback;
 
-export const formatMedicalVisitDate = (value: string) =>
-  new Date(value).toLocaleDateString('zh-TW');
+export const formatMedicalVisitDate = (value: string) => formatTaipeiDate(value);
 
 export const buildMedicalVisitDetailRows = (item: MedicalVisit): [string, string][] => [
   ['就醫日期', formatMedicalVisitDateTime(item.visitedAt)],

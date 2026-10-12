@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../utils/taipeiDate';
 import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示目前毛孩依日期排序的就醫紀錄列表與完整畫面狀態。 */
@@ -163,7 +164,11 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
               </View>
               <View style={s.cardTitleBody}>
                 <Text style={s.clinic}>{item.clinicName || '未填寫醫院'}</Text>
-                <Text style={s.date}>{new Date(item.visitedAt).toLocaleDateString('zh-TW')}</Text>
+                <Text style={s.date}>
+                  {new Date(item.visitedAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })}
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
             </View>
@@ -173,7 +178,11 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
             </Text>
             <Text style={s.meta}>
               下次回診：
-              {item.followUpAt ? new Date(item.followUpAt).toLocaleDateString('zh-TW') : '未安排'}
+              {item.followUpAt
+                ? new Date(item.followUpAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })
+                : '未安排'}
             </Text>
           </TouchableOpacity>
         )}

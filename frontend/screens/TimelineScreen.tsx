@@ -1,3 +1,4 @@
+import { taipeiWallDate } from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：以月曆瀏覽每日照護紀錄，並可進入各筆來源明細。 */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -34,10 +35,10 @@ export default function TimelineScreen({ navigation }: Props) {
     [],
   );
   const [month, setMonth] = useState(() => {
-    const today = new Date();
+    const today = taipeiWallDate();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => taipeiWallDate());
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,7 +63,6 @@ export default function TimelineScreen({ navigation }: Props) {
         if (showLoader || loadedCalendarKey.current !== key) setLoading(true);
         const summary = await getTimelineCalendar(session.userId, selectedPet.id, {
           ...range,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei',
           signal,
         });
         if (current !== calendarRequestId.current) return;
@@ -167,7 +167,7 @@ export default function TimelineScreen({ navigation }: Props) {
     setSelectedDate(date);
   };
   const goToday = () => {
-    const today = new Date();
+    const today = taipeiWallDate();
     const todayMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     if (todayMonth.getTime() !== month.getTime()) {
       setItems([]);

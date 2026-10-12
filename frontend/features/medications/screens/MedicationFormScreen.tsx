@@ -30,7 +30,7 @@ import {
   timeValue,
   type MedicationDraft,
 } from '../types';
-import { localDateKey } from '../../../utils/taipeiDate';
+import { taipeiDateKey, taipeiDateFromKey, formatTaipeiTime } from '../../../utils/taipeiDate';
 
 const fields = [
   ['name', '藥品名稱（必填）'],
@@ -148,11 +148,11 @@ export function MedicationFormScreen() {
                 <DatePickerField
                   key={key}
                   label={label}
-                  value={value ? new Date(`${value}T12:00:00`) : undefined}
-                  onChange={(date) => setField(key, localDateKey(date))}
+                  value={value ? taipeiDateFromKey(value) : undefined}
+                  onChange={(date) => setField(key, taipeiDateKey(date))}
                   minimumDate={
                     key === 'endDate' && draft.startDate
-                      ? new Date(`${draft.startDate}T12:00:00`)
+                      ? taipeiDateFromKey(draft.startDate)
                       : undefined
                   }
                   maximumDate={key === 'startDate' ? new Date() : undefined}
@@ -198,7 +198,7 @@ export function MedicationFormScreen() {
           mode="time"
           value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
           onChange={(date) => {
-            const next = date.toTimeString().slice(0, 5);
+            const next = formatTaipeiTime(date);
             setField('reminderTimeDraft', next);
             if (editingReminderTime) {
               setField(

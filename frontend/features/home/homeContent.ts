@@ -2,6 +2,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { HomeStackParamList } from '../../navigation/types';
 import type { RecordCategoryKey } from '../../constants/RecordCategoryColors';
+import { taipeiWallDate } from '../../utils/taipeiDate';
 
 export type HomeIcon = keyof typeof Ionicons.glyphMap;
 export type HomeActionItem = [HomeIcon, string, keyof HomeStackParamList];
@@ -37,9 +38,10 @@ export function getHomeActionCategory(route: keyof HomeStackParamList): RecordCa
 
 export const calculatePetAge = (value?: string) => {
   if (!value) return '年齡未設定';
-  const birth = new Date(value);
-  if (Number.isNaN(birth.getTime())) return '年齡未設定';
-  const now = new Date();
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '年齡未設定';
+  const birth = taipeiWallDate(parsed);
+  const now = taipeiWallDate();
   let years = now.getFullYear() - birth.getFullYear();
   if (
     now.getMonth() < birth.getMonth() ||

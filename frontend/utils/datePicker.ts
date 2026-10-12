@@ -1,7 +1,6 @@
-import { localDateKey } from './taipeiDate';
-
+/** Date-only comparisons operate on UTC-component picker values, not instants. */
 export function dateInRange(value: Date, minimum?: Date, maximum?: Date, dateOnly = false) {
-  const key = (date: Date) => (dateOnly ? localDateKey(date) : date.getTime());
+  const key = (date: Date) => (dateOnly ? date.toISOString().slice(0, 10) : date.getTime());
   return (
     !Number.isNaN(value.getTime()) &&
     (!minimum || key(value) >= key(minimum)) &&

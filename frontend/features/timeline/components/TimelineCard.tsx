@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { RECORD_CATEGORY_TEXT_COLORS } from '../../../constants/RecordCategoryColors';
 import { Colors } from '../../../constants/Colors';
+import { formatTaipeiTime } from '../../../utils/taipeiDate';
 import { TIMELINE_META } from '../../../constants/Timeline';
 import { TimelineItem } from '../../../types';
 import { getTimelineCategory, TIMELINE_CATEGORIES } from '../timelineContent';
@@ -17,13 +18,7 @@ const TimelineCard = React.memo(function TimelineCard({ item, onPress }: Props) 
     TIMELINE_CATEGORIES.find((entry) => entry.key === category)?.color ?? Colors.primary;
   const occurredAt = new Date(item.occurredAt);
   const timeLabel =
-    occurredAt.getHours() === 0 && occurredAt.getMinutes() === 0
-      ? '當日紀錄'
-      : occurredAt.toLocaleTimeString('zh-TW', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-        });
+    formatTaipeiTime(occurredAt) === '00:00' ? '當日紀錄' : formatTaipeiTime(occurredAt);
   return (
     <TouchableOpacity
       accessibilityRole="button"

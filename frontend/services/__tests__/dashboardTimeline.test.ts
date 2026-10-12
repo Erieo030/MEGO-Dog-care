@@ -1,6 +1,11 @@
 import { apiData } from '../api';
 import { getHealthDashboard } from '../dashboardService';
-import { getTimelineCalendar, getTimelineDay, getTimelinePage, getRecentTimeline } from '../timelineService';
+import {
+  getTimelineCalendar,
+  getTimelineDay,
+  getTimelinePage,
+  getRecentTimeline,
+} from '../timelineService';
 
 jest.mock('../api', () => ({ apiData: jest.fn() }));
 const request = apiData as jest.MockedFunction<typeof apiData>;
@@ -47,12 +52,11 @@ test('timeline forwards an optional cancellation signal', async () => {
   expect(request.mock.calls[0][1]).toEqual({ signal: controller.signal });
 });
 
-test('calendar summary requests compact month markers with device timezone', async () => {
+test('calendar summary requests compact month markers with fixed Taipei timezone', async () => {
   request.mockResolvedValueOnce({ days: [] });
   await getTimelineCalendar('u1', 'p1', {
     startAt: '2026-08-31T16:00:00.000Z',
     endAt: '2026-09-30T16:00:00.000Z',
-    timeZone: 'Asia/Taipei',
   });
   expect(request.mock.calls[0][0]).toContain('/api/pets/p1/timeline/calendar?');
   expect(request.mock.calls[0][0]).toContain('timeZone=Asia%2FTaipei');

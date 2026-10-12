@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示健康異常紀錄完整內容，並提供編輯及確認刪除操作。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -162,9 +163,12 @@ export default function HealthEventDetailScreen({ route, navigation }: Props) {
             </Text>
             <Text style={styles.heroDate}>
               {new Date(item.occurredAt).toLocaleDateString('zh-TW', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
+                ...{
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                },
+                timeZone: TAIPEI_TIME_ZONE,
               })}
             </Text>
           </View>

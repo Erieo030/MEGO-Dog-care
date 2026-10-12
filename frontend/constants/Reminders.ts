@@ -1,5 +1,6 @@
 /** 用途：集中提醒畫面的週期選項與「今晚」時間規則。 */
 import { RecurrenceRule, ReminderType } from '../types';
+import { addDateKeyDays, taipeiDateKey, taipeiDateFromKey } from '../utils/taipeiDate';
 
 export const REMINDER_TYPES: Array<[ReminderType, string, RecurrenceRule]> = [
   ['vaccine', '疫苗', 'yearly'],
@@ -19,9 +20,9 @@ export const RECURRENCE_RULES: Array<[RecurrenceRule, string]> = [
 ];
 
 export function tonightAt(now = new Date(), value = '20:00') {
-  const [hour, minute] = value.split(':').map(Number);
-  const date = new Date(now);
-  date.setHours(hour, minute, 0, 0);
-  if (date.getTime() <= now.getTime()) date.setDate(date.getDate() + 1);
-  return date;
+  const today = taipeiDateKey(now);
+  const date = taipeiDateFromKey(today, value);
+  return date.getTime() <= now.getTime()
+    ? taipeiDateFromKey(addDateKeyDays(today, 1), value)
+    : date;
 }

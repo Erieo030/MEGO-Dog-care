@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,7 +83,8 @@ export const AIConversationSessionRow = React.memo(function AIConversationSessio
             {item.title}
           </Text>
           <Text style={styles.sessionMeta}>
-            {new Date(item.updatedAt).toLocaleDateString('zh-TW')} · {item.messages.length} 則訊息
+            {new Date(item.updatedAt).toLocaleDateString('zh-TW', { timeZone: TAIPEI_TIME_ZONE })} ·{' '}
+            {item.messages.length} 則訊息
           </Text>
         </View>
         <Text style={styles.chevron}>›</Text>

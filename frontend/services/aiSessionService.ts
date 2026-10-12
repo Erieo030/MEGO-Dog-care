@@ -14,57 +14,77 @@ export type StoredMessage = {
   sources?: ChatSource[];
   knowledgeSources?: ChatKnowledgeSource[];
   contextTokens?: number;
+  generationMode?: string;
 };
 export type AISession = { sessionId?: string; messages?: StoredMessage[]; usage?: AIUsage };
 
 export async function loadAISession(userId: string, petId: string): Promise<AISession> {
-  try { return JSON.parse((await AsyncStorage.getItem(key(userId, petId))) || '{}'); } catch { return {}; }
+  try {
+    return JSON.parse((await AsyncStorage.getItem(key(userId, petId))) || '{}');
+  } catch {
+    return {};
+  }
 }
 export async function saveAISession(userId: string, petId: string, value: AISession) {
   await AsyncStorage.setItem(key(userId, petId), JSON.stringify(value));
 }
 
-export type AISessionRecord = { id: string; title: string; messages: StoredMessage[]; createdAt: string; updatedAt: string };
-export async function createNewAISession(userId: string, petId: string) {
-  const current = await loadAISession(userId, petId);
-  const history: AISessionRecord[] = JSON.parse((await AsyncStorage.getItem(historyKey(userId, petId))) || '[]');
-  if (current.messages?.length) history.push({ id: createSessionId(), title: current.messages.find((m) => m.role === 'user')?.text.slice(0, 24) || '未命名對話', messages: current.messages, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-  const ordered = history.sort((a,b) => b.updatedAt.localeCompare(a.updatedAt));
-  const overflow = ordered.length > 5 ? ordered[ordered.length - 1] : undefined;
-  return { sessions: ordered.slice(0, 5), overflow };
-}
-export async function commitNewAISession(userId: string, petId: string, sessions: AISessionRecord[]) {
-  await AsyncStorage.setItem(historyKey(userId, petId), JSON.stringify(sessions.slice(0, 5)));
-  await saveAISession(userId, petId, { messages: [] });
-}
-
+export type AISessionRecord = {
+  id: string;
+  title: string;
+  messages: StoredMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
 export async function loadAISessions(userId: string, petId: string): Promise<AISessionRecord[]> {
-  try { return JSON.parse((await AsyncStorage.getItem(historyKey(userId, petId))) || '[]'); } catch { return []; }
+  try {
+    return JSON.parse((await AsyncStorage.getItem(historyKey(userId, petId))) || '[]');
+  } catch {
+    return [];
+  }
 }
 
 export async function deleteAISession(userId: string, petId: string, sessionId: string) {
   const sessions = await loadAISessions(userId, petId);
-  await AsyncStorage.setItem(historyKey(userId, petId), JSON.stringify(sessions.filter((item) => item.id !== sessionId)));
+  await AsyncStorage.setItem(
+    historyKey(userId, petId),
+    JSON.stringify(sessions.filter((item) => item.id !== sessionId)),
+  );
 }
 
 export async function clearAccountAISessions(userId: string) {
   const prefixes = [`mego:ai-session:${userId}:`, `mego:ai-sessions:${userId}:`];
   const keys = await AsyncStorage.getAllKeys();
-  const ownedKeys = keys.filter((storedKey) => prefixes.some((prefix) => storedKey.startsWith(prefix)));
+  const ownedKeys = keys.filter((storedKey) =>
+    prefixes.some((prefix) => storedKey.startsWith(prefix)),
+  );
   if (ownedKeys.length) await AsyncStorage.multiRemove(ownedKeys);
 }
 
 export async function activateAISession(userId: string, petId: string, session: AISessionRecord) {
   const current = await loadAISession(userId, petId);
-  await saveAISession(userId, petId, { sessionId: session.id, messages: session.messages, usage: current.usage });
+  await saveAISession(userId, petId, {
+    sessionId: session.id,
+    messages: session.messages,
+    usage: current.usage,
+  });
 }
 
 export async function activateEmptyAISession(userId: string, petId: string) {
   const current = await loadAISession(userId, petId);
-  await saveAISession(userId, petId, { sessionId: createSessionId(), messages: [], usage: current.usage });
+  await saveAISession(userId, petId, {
+    sessionId: createSessionId(),
+    messages: [],
+    usage: current.usage,
+  });
 }
 
-export async function saveActiveAISession(userId: string, petId: string, messages: StoredMessage[], usage?: AIUsage) {
+export async function saveActiveAISession(
+  userId: string,
+  petId: string,
+  messages: StoredMessage[],
+  usage?: AIUsage,
+) {
   const current = await loadAISession(userId, petId);
   const sessionId = current.sessionId || createSessionId();
   const now = new Date().toISOString();

@@ -16,7 +16,7 @@ import {
 import type { PetFormTextField as PetFormTextFieldData } from '../petFormContent';
 import { Type } from '../../../constants/Typography';
 import { PET_NAME_MAX_LENGTH, petNameLength, limitPetName } from '../petFormContent';
-import { localDateKey } from '../../../utils/taipeiDate';
+import { taipeiDateKey, taipeiDateFromKey } from '../../../utils/taipeiDate';
 
 type Props = {
   field: PetFormTextFieldData;
@@ -34,9 +34,9 @@ export default function PetFormTextField({ field, value, onChange }: Props) {
           <Text style={styles.label}>{field.label}</Text>
           <DatePickerField
             label=""
-            value={value ? new Date(`${value}T12:00:00`) : undefined}
+            value={value ? taipeiDateFromKey(value) : undefined}
             placeholder={field.placeholder}
-            onChange={(date) => onChange(localDateKey(date))}
+            onChange={(date) => onChange(taipeiDateKey(date))}
             maximumDate={new Date()}
           />
         </>

@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -146,11 +147,17 @@ export function DewormingListScreen() {
             </View>
             <Text style={styles.cardText}>{record.productName}</Text>
             <Text style={styles.cardText}>
-              使用日期：{new Date(record.administeredAt).toLocaleDateString('zh-TW')}
+              使用日期：
+              {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
+                timeZone: TAIPEI_TIME_ZONE,
+              })}
             </Text>
             {record.nextDueAt ? (
               <Text style={styles.cardMeta}>
-                下次：{new Date(record.nextDueAt).toLocaleDateString('zh-TW')}
+                下次：
+                {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                  timeZone: TAIPEI_TIME_ZONE,
+                })}
               </Text>
             ) : null}
             <Text style={styles.cardHint}>{record.reminderId ? '已建立提醒' : '尚未建立提醒'}</Text>

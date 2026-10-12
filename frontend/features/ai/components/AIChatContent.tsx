@@ -6,6 +6,13 @@ import { Colors } from '../../../constants/Colors';
 import type { ChatResponse } from '../../../services/aiService';
 import { AIChatMarkdown } from './AIChatMarkdown';
 import { Type } from '../../../constants/Typography';
+import {
+  AI_RECORD_SOURCE_HEADING,
+  AI_RECORD_SOURCE_HINT,
+  AI_KNOWLEDGE_SOURCE_HEADING,
+  AI_KNOWLEDGE_SOURCE_HINT,
+  responseGenerationLabel,
+} from '../aiResponseContent';
 
 export type AIChatMessage = {
   role: 'user' | 'assistant';
@@ -14,6 +21,7 @@ export type AIChatMessage = {
   sources?: ChatResponse['sources'];
   knowledgeSources?: ChatResponse['knowledgeSources'];
   contextTokens?: number;
+  generationMode?: string;
 };
 
 const QUICK_PROMPTS = [
@@ -41,7 +49,9 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
             isUser ? styles.userBubbleLabel : styles.assistantBubbleLabel,
           ]}
         >
-          {isUser ? '你' : 'MEGO AI'}
+          {isUser
+            ? '你'
+            : responseGenerationLabel(item.generationMode ?? item.result?.generationMode)}
         </Text>
       </View>
       {isUser ? (
@@ -68,17 +78,21 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
       {!isUser && !!item.sources?.length && (
         <View style={styles.sources}>
           <Ionicons name="document-text-outline" size={13} color={Colors.successDecoration} />
-          <Text style={styles.sourcesText}>
-            參考你的 MEGO 紀錄：{item.sources.map((source) => source.label).join('、')}
-          </Text>
+          <View style={styles.sourceCopy}>
+            <Text style={styles.sourcesText}>
+              {AI_RECORD_SOURCE_HEADING}：{item.sources.map((source) => source.label).join('、')}
+            </Text>
+            <Text style={styles.sourceHint}>{AI_RECORD_SOURCE_HINT}</Text>
+          </View>
         </View>
       )}
       {!isUser && !!item.knowledgeSources?.length && (
         <View style={styles.knowledgeSources}>
           <View style={styles.knowledgeHeading}>
             <Ionicons name="book-outline" size={13} color={Colors.primaryDecoration} />
-            <Text style={styles.knowledgeHeadingText}>參考資料</Text>
+            <Text style={styles.knowledgeHeadingText}>{AI_KNOWLEDGE_SOURCE_HEADING}</Text>
           </View>
+          <Text style={styles.sourceHint}>{AI_KNOWLEDGE_SOURCE_HINT}</Text>
           {item.knowledgeSources.map((source) => (
             <TouchableOpacity
               key={source.url}
@@ -99,6 +113,12 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
           ))}
         </View>
       )}
+      {!isUser &&
+        (item.generationMode ?? item.result?.generationMode) === 'llm' &&
+        !item.sources?.length &&
+        !item.knowledgeSources?.length && (
+          <Text style={styles.sourceHint}>本則未附照護紀錄或文獻來源，內容仍需自行核對。</Text>
+        )}
     </View>
   );
 }
@@ -267,6 +287,8 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
   },
   sourcesText: { flex: 1, color: Colors.success, fontSize: Type.caption, lineHeight: 17 },
+  sourceCopy: { flex: 1, minWidth: 0, gap: 4 },
+  sourceHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18, marginTop: 4 },
   knowledgeSources: {
     marginTop: 10,
     paddingTop: 8,

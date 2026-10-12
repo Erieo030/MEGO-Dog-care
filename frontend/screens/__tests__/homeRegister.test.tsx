@@ -4,6 +4,9 @@ import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import HomeScreen from '../HomeScreen';
 import RegisterScreen from '../RegisterScreen';
+jest.mock('../../features/home/components/FirstUseGuide', () => ({
+  FirstUseGuide: 'FirstUseGuide',
+}));
 import { getHealthDashboard } from '../../services/dashboardService';
 import { getTodayReminders } from '../../services/reminderService';
 

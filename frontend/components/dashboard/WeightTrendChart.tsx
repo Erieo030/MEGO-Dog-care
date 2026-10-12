@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../utils/taipeiDate';
 /** 用途：顯示 Dashboard 期間體重折線，不依賴完整 chart framework。 */
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -62,8 +63,11 @@ export default function WeightTrendChart({ items }: { items: DashboardWeightPoin
         ))}
         <SvgText x={left} y={height - 6} fontSize="10" fill={Colors.subtext}>
           {new Date(points[0].measuredAt).toLocaleDateString('zh-TW', {
-            month: 'numeric',
-            day: 'numeric',
+            ...{
+              month: 'numeric',
+              day: 'numeric',
+            },
+            timeZone: TAIPEI_TIME_ZONE,
           })}
         </SvgText>
         <SvgText
@@ -74,8 +78,11 @@ export default function WeightTrendChart({ items }: { items: DashboardWeightPoin
           fill={Colors.subtext}
         >
           {new Date(points[points.length - 1].measuredAt).toLocaleDateString('zh-TW', {
-            month: 'numeric',
-            day: 'numeric',
+            ...{
+              month: 'numeric',
+              day: 'numeric',
+            },
+            timeZone: TAIPEI_TIME_ZONE,
           })}
         </SvgText>
       </Svg>

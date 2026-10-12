@@ -32,6 +32,7 @@ import { CARE_ACTIONS, DAILY_ACTIONS } from '../features/home/homeContent';
 import { HomePetHeader } from '../features/home/components/HomePetHeader';
 import { HomePetSelectorModal } from '../features/home/components/HomePetSelectorModal';
 import { HomeMemorialCard } from '../features/home/components/HomeMemorialCard';
+import { FirstUseGuide } from '../features/home/components/FirstUseGuide';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { Type } from '../constants/Typography';
 
@@ -217,6 +218,7 @@ export default function HomeScreen() {
               />
             ) : (
               <>
+                <FirstUseGuide userId={session?.userId} />
                 <HomeTodayOverview
                   compact={compact}
                   loading={loading}

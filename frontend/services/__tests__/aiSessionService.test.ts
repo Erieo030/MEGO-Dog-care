@@ -78,3 +78,26 @@ test('deleting a session removes only the selected conversation', async () => {
     expect.objectContaining({ title: 'first' }),
   ]);
 });
+
+test('saved replies retain generation mode and both kinds of sources after reopening', async () => {
+  await activateEmptyAISession('u1', 'p1');
+  const messages = [
+    {
+      role: 'assistant' as const,
+      text: '依紀錄整理',
+      generationMode: 'deterministic',
+      sources: [{ type: 'weight', label: '體重紀錄' }],
+      knowledgeSources: [
+        {
+          title: '公開照護資料',
+          documentTitle: '犬隻照護',
+          section: '飲食',
+          url: 'https://example.org/care',
+        },
+      ],
+    },
+  ];
+  await saveActiveAISession('u1', 'p1', messages);
+  expect((await loadAISession('u1', 'p1')).messages).toEqual(messages);
+  expect((await loadAISessions('u1', 'p1'))[0].messages).toEqual(messages);
+});

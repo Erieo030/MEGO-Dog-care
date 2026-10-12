@@ -1,3 +1,9 @@
+import {
+  TAIPEI_TIME_ZONE,
+  addDateKeyDays,
+  taipeiDateKey,
+  taipeiDayStart,
+} from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：列出目前毛孩的健康異常紀錄，並連結至詳細頁。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -42,12 +48,15 @@ export default function HealthEventListScreen({ navigation }: Props) {
         setError('');
         const result = await service.getHealthEvents(session.userId, selectedPet.id, signal);
         if (currentRequest !== requestId.current) return;
-        const cutoff = new Date();
-        cutoff.setHours(0, 0, 0, 0);
-        cutoff.setDate(cutoff.getDate() - 6);
+        const today = taipeiDateKey();
+        const cutoff = taipeiDayStart(addDateKeyDays(today, -6));
+        const end = taipeiDayStart(addDateKeyDays(today, 1));
         setItems(
           result
-            .filter((item) => new Date(item.occurredAt).getTime() >= cutoff.getTime())
+            .filter((item) => {
+              const time = new Date(item.occurredAt).getTime();
+              return time >= cutoff && time < end;
+            })
             .sort(
               (left, right) =>
                 new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
@@ -158,9 +167,12 @@ export default function HealthEventListScreen({ navigation }: Props) {
                 </View>
                 <Text style={styles.date}>
                   {new Date(item.occurredAt).toLocaleDateString('zh-TW', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
+                    ...{
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                    },
+                    timeZone: TAIPEI_TIME_ZONE,
                   })}
                 </Text>
               </View>

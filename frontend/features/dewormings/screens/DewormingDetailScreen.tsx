@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -126,14 +127,18 @@ export function DewormingDetailScreen() {
         <ScreenPageHeader
           style={styles.detailHero}
           title={record.productName}
-          description={`${dewormingTypeLabels[record.type]} · ${new Date(record.administeredAt).toLocaleDateString('zh-TW')}`}
+          description={`${dewormingTypeLabels[record.type]} · ${new Date(record.administeredAt).toLocaleDateString('zh-TW', { timeZone: TAIPEI_TIME_ZONE })}`}
           icon="shield-checkmark-outline"
         />
         <View style={styles.detailGroup}>
           <DetailRow
             label="下次日期"
             value={
-              record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
+              record.nextDueAt
+                ? new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })
+                : '尚未安排'
             }
           />
           {record.dosageText ? <DetailRow label="使用劑量" value={record.dosageText} /> : null}

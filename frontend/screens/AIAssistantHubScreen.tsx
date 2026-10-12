@@ -1,3 +1,4 @@
+import { aiHubStyles as styles } from '../features/ai/aiHubStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：AI 助手入口，集中整理 AI 查詢與健康紀錄入口。 */
 import React, { useCallback, useState } from 'react';
@@ -6,7 +7,6 @@ import {
   Alert,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -31,8 +31,7 @@ import { AIConversationSessionRow } from '../features/ai/components/AIConversati
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { acceptAIDataConsent, getAIDataConsent } from '../services/aiDataConsentService';
 import AuthenticatedPetAvatar from '../components/AuthenticatedPetAvatar';
-import { Type } from '../constants/Typography';
-import { CardShadow, Radius, Spacing } from '../constants/Layout';
+import { AI_LOCAL_HISTORY_NOTICE } from '../features/ai/aiResponseContent';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthOverview'>;
 
@@ -266,6 +265,7 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>最近對話</Text>
         </View>
         <Text style={styles.sectionHint}>最多保留 5 個；超過時，建立新對話會刪除最舊的一個。</Text>
+        <Text style={styles.sectionHint}>{AI_LOCAL_HISTORY_NOTICE}</Text>
         {sessionsLoading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={Colors.primary} />
@@ -381,202 +381,3 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingHorizontal: 20, paddingTop: 20 },
-  petHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  petAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    marginRight: 13,
-    borderWidth: 2,
-    borderColor: Colors.surface,
-  },
-  petAvatarFallback: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    marginRight: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primarySoft,
-  },
-  petHeaderText: { flex: 1, minWidth: 0 },
-  eyebrow: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800', letterSpacing: 1 },
-  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800', marginTop: 2 },
-  subtitle: { color: Colors.subtext, lineHeight: 21, marginBottom: 14 },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    color: Colors.text,
-    fontSize: Type.headline,
-    fontWeight: '800',
-  },
-  sectionHint: { color: Colors.subtext, fontSize: Type.caption },
-  empty: { color: Colors.subtext, paddingVertical: 12 },
-  loadError: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  retryButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: Colors.primarySoft,
-  },
-  retryText: { color: Colors.primary, fontWeight: '700' },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
-  loadingText: { color: Colors.subtext, marginLeft: 8 },
-  emptyState: {
-    alignItems: 'center',
-    padding: 18,
-    backgroundColor: Colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-  },
-  emptyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-
-  hero: {
-    marginTop: Spacing.sm,
-    padding: Spacing.xl,
-    borderRadius: Radius.xl,
-    backgroundColor: Colors.primary,
-    ...CardShadow,
-  },
-  heroIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceWarm,
-  },
-  heroTitle: {
-    marginTop: Spacing.md,
-    color: Colors.onPrimary,
-    fontSize: Type.title3,
-    fontWeight: '800',
-  },
-  heroText: {
-    marginTop: Spacing.xs,
-    color: Colors.primarySoft,
-    fontSize: Type.subhead,
-    lineHeight: 21,
-  },
-  heroAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: Spacing.xs,
-    minHeight: 44,
-    marginTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
-  },
-  heroActionText: { color: Colors.primary, fontSize: Type.body, fontWeight: '800' },
-  toolsTitle: { marginTop: Spacing.xxl, marginBottom: Spacing.md },
-  tools: { flexDirection: 'row', gap: Spacing.md },
-  tool: {
-    flex: 1,
-    minHeight: 132,
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  toolIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolIconCare: { backgroundColor: Colors.successSoft },
-  toolIconMap: { backgroundColor: Colors.primarySoft },
-  toolTitle: {
-    marginTop: Spacing.md,
-    color: Colors.text,
-    fontSize: Type.callout,
-    fontWeight: '800',
-  },
-  toolText: {
-    marginTop: Spacing.xxs,
-    color: Colors.subtext,
-    fontSize: Type.footnote,
-    lineHeight: 18,
-  },
-  consentBackdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 22,
-    backgroundColor: 'rgba(35, 27, 22, 0.48)',
-  },
-  consentDialog: {
-    maxHeight: '90%',
-    flexShrink: 1,
-    borderRadius: 24,
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  consentContent: { padding: 22 },
-  consentActions: {
-    paddingHorizontal: 22,
-    paddingBottom: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  consentIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primarySoft,
-    marginBottom: 12,
-  },
-  consentTitle: { color: Colors.text, fontSize: Type.title3, fontWeight: '800', marginBottom: 8 },
-  consentIntro: { color: Colors.text, fontSize: Type.subhead, lineHeight: 22, marginBottom: 12 },
-  consentInfoBlock: {
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    marginBottom: 8,
-  },
-  consentInfoHeading: {
-    color: Colors.primary,
-    fontSize: Type.footnote,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  consentBody: { color: Colors.text, fontSize: Type.subhead, lineHeight: 22 },
-  consentFootnote: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 19, marginTop: 12 },
-  consentPrimary: {
-    minHeight: 50,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 18,
-    paddingHorizontal: 12,
-  },
-  consentPrimaryText: { color: Colors.onPrimary, fontSize: Type.body, fontWeight: '800' },
-  consentDisabled: { opacity: 0.65 },
-  consentLater: { alignItems: 'center', padding: 12, marginTop: 2 },
-  consentLaterText: { color: Colors.subtext, fontSize: Type.subhead, fontWeight: '700' },
-});

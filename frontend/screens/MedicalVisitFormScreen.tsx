@@ -200,12 +200,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
             label="就醫日期（必填）"
             value={visitedAt}
             mode="date"
-            onChange={(date) => {
-              const next = new Date(visitedAt);
-              next.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-              next.setHours(12, 0, 0, 0);
-              setVisitedAt(next);
-            }}
+            onChange={setVisitedAt}
           />
           {fieldError(errors.visitedAt)}
         </View>

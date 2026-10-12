@@ -1,7 +1,12 @@
 /** 用途：讀取具 ownership、類型篩選與分頁的毛孩統一時間軸。 */
 import { apiData } from './api';
 import { TimelineCalendar, TimelineItem, TimelinePage, TimelineType } from '../types';
-import { addDateKeyDays, localDateKey, taipeiDayStart } from '../utils/taipeiDate';
+import {
+  addDateKeyDays,
+  localDateKey,
+  taipeiDayStart,
+  TAIPEI_TIME_ZONE,
+} from '../utils/taipeiDate';
 export const getTimelinePage = async (
   userId: string,
   petId: string,
@@ -33,13 +38,13 @@ export const getRecentTimeline = async (userId: string, petId: string, limit = 5
 export const getTimelineCalendar = async (
   userId: string,
   petId: string,
-  options: { startAt: string; endAt: string; timeZone?: string; signal?: AbortSignal },
+  options: { startAt: string; endAt: string; signal?: AbortSignal },
 ): Promise<TimelineCalendar> => {
   const query = new URLSearchParams({
     userId,
     startAt: options.startAt,
     endAt: options.endAt,
-    timeZone: options.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei',
+    timeZone: TAIPEI_TIME_ZONE,
   });
   const path = `/api/pets/${petId}/timeline/calendar?${query.toString()}`;
   return options.signal

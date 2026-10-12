@@ -1,3 +1,9 @@
+import {
+  TAIPEI_TIME_ZONE,
+  addDateKeyDays,
+  taipeiDateKey,
+  taipeiDayStart,
+} from '../../utils/taipeiDate';
 import type { WeightRecord, WeightSummary } from '../../types';
 
 export type WeightPeriod = 7 | 'all';
@@ -16,17 +22,24 @@ export const WEIGHT_PERIODS: Array<{ value: WeightPeriod; label: string }> = [
 
 export function formatWeightDate(value: string) {
   return new Date(value).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
+    ...{
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+    },
+    timeZone: TAIPEI_TIME_ZONE,
   });
 }
 
 export function filterWeightsByPeriod(items: WeightRecord[], period: WeightPeriod) {
   if (period === 'all') return items;
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - (period - 1));
-  return items.filter((item) => new Date(item.measuredAt) >= cutoff);
+  const today = taipeiDateKey();
+  const start = taipeiDayStart(addDateKeyDays(today, -(period - 1)));
+  const end = taipeiDayStart(addDateKeyDays(today, 1));
+  return items.filter((item) => {
+    const timestamp = new Date(item.measuredAt).getTime();
+    return timestamp >= start && timestamp < end;
+  });
 }
 
 export function getWeightDifferenceText(summary: WeightSummary) {

@@ -1,5 +1,6 @@
 /** 用途：持久化非敏感 App 偏好；不保存帳密或秘密。 */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { taipeiDateKey, taipeiDateFromKey } from '../utils/taipeiDate';
 import { DEFAULT_HOME_THEME, HomeThemeId, isHomeThemeId } from '../constants/HomeThemeIds';
 export interface AppSettings {
   localNotificationsEnabled: boolean;
@@ -46,8 +47,5 @@ export async function localNotificationsEnabled() {
   return (await loadSettings()).localNotificationsEnabled;
 }
 export function timeOnDate(value: string, base = new Date()) {
-  const [hour, minute] = value.split(':').map(Number);
-  const result = new Date(base);
-  result.setHours(hour, minute, 0, 0);
-  return result;
+  return taipeiDateFromKey(taipeiDateKey(base), value);
 }

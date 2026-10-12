@@ -11,6 +11,7 @@ import {
 } from '../timelineContent';
 import MonthPicker from '../../../components/MonthPicker';
 import { Type } from '../../../constants/Typography';
+import { taipeiDateKey } from '../../../utils/taipeiDate';
 
 type Props = {
   petName?: string;
@@ -43,7 +44,7 @@ export default function TimelineHeader({
 }: Props) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const days = useMemo(() => buildCalendarDays(month), [month]);
-  const todayKey = getLocalDateKey(new Date());
+  const todayKey = taipeiDateKey();
   const selectedKey = getLocalDateKey(selectedDate);
   const selectedHeading = `${selectedDate.getMonth() + 1} 月 ${selectedDate.getDate()} 日，${selectedDate.toLocaleDateString('zh-TW', { weekday: 'long' })}`;
   const isToday = selectedKey === todayKey;

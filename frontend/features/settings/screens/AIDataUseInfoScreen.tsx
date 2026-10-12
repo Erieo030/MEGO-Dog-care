@@ -1,5 +1,6 @@
 /** 用途：提供 MEGO AI 資料使用方式的唯讀說明。 */
 import React from 'react';
+import { AI_LOCAL_HISTORY_NOTICE } from '../../ai/aiResponseContent';
 import {
   SettingsDocumentHero,
   SettingsDocumentParagraph,
@@ -46,6 +47,25 @@ const sections = [
         text: '最近對話保存在這台裝置，用來顯示與延續同一段對話，不會由 MEGO 後端同步到其他裝置。',
       },
       { label: '刪除對話', text: '會將它從本機最近對話清單移除。' },
+      { label: '換機或移除 App', text: AI_LOCAL_HISTORY_NOTICE },
+    ],
+  },
+  {
+    title: '如何辨識回答的來源？',
+    icon: 'book-outline' as const,
+    rows: [
+      {
+        label: '使用你的照護紀錄',
+        text: '代表參考你在 MEGO 填寫的毛孩資料或過往紀錄，不是外部文獻。',
+      },
+      {
+        label: '照護參考文獻',
+        text: '代表引用外部照護資料，可點選來源查看原文。引用來源不代表獸醫已審閱這則回答。',
+      },
+      {
+        label: '系統整理（非 AI）',
+        text: '代表依紀錄和固定規則整理，不是語言模型產生的內容。未附來源的 AI 回覆也仍需核對。',
+      },
     ],
   },
   {
@@ -98,11 +118,11 @@ export function AIDataUseInfoScreen() {
           index={index + 1}
           icon={section.icon}
         >
-            {section.rows.map((row) => (
-              <SettingsDocumentParagraph key={row.label} label={row.label} emphasis={row.emphasis}>
-                {row.text}
-              </SettingsDocumentParagraph>
-            ))}
+          {section.rows.map((row) => (
+            <SettingsDocumentParagraph key={row.label} label={row.label} emphasis={row.emphasis}>
+              {row.text}
+            </SettingsDocumentParagraph>
+          ))}
         </SettingsDocumentSection>
       ))}
     </SettingsPage>

@@ -1,30 +1,14 @@
+import { dailyLogStyles as s } from '../features/daily-logs/dailyLogStyles';
 import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { HomeStackParamList } from '../navigation/types';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { RecordActionButton } from '../components/RecordActionButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 import { Colors } from '../constants/Colors';
-import {
-  FORM_BUTTON_HEIGHT,
-  FORM_BUTTON_RADIUS,
-  FORM_FIELD_LABEL_FONT_SIZE,
-  FORM_FIELD_LABEL_FONT_WEIGHT,
-  FORM_FIELD_LABEL_MARGIN_BOTTOM,
-  FORM_FIELD_LABEL_MARGIN_TOP,
-  FORM_PAGE_HORIZONTAL_PADDING,
-} from '../constants/FormTokens';
 import ScreenState from '../components/ScreenState';
 import { ScreenPageHeader, ScreenPageFrame, ScreenPageState } from '../components/ScreenPageHeader';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
@@ -50,7 +34,6 @@ import {
   emptyDailyLog,
   shouldAutoApplyStool,
 } from '../features/daily-logs/dailyLogContent';
-import { Type } from '../constants/Typography';
 const DAILY_ARTWORKS = {
   'morning-home': require('../assets/artwork/themes/morning-home/page-decorations/daily-checkin-v1.webp'),
   'afternoon-living-room': require('../assets/artwork/themes/afternoon-living-room/page-decorations/daily-checkin-v1.webp'),
@@ -443,90 +426,3 @@ function Options({
     </View>
   );
 }
-const s = StyleSheet.create({
-  page: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  pageDecoration: { alignItems: 'flex-end', minHeight: 20, marginBottom: 2 },
-  pageArtwork: { width: 76, height: 51 },
-  introHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2, lineHeight: 17 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: Type.title1, fontWeight: '700', marginBottom: 14, color: Colors.text },
-  label: {
-    fontSize: FORM_FIELD_LABEL_FONT_SIZE,
-    fontWeight: FORM_FIELD_LABEL_FONT_WEIGHT,
-    marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
-    marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
-    color: Colors.text,
-  },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  classifierSection: {
-    marginTop: 14,
-    padding: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  classifierHeading: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 48 },
-  classifierTitle: { color: Colors.text, fontSize: Type.subhead, fontWeight: '800' },
-  classifierHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 5 },
-  classifierActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  classifierButton: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 46,
-    paddingHorizontal: 8,
-    flexDirection: 'row',
-    gap: 6,
-  },
-  classifierButtonText: {
-    color: Colors.success,
-    fontSize: Type.footnote,
-    fontWeight: '700',
-    flexShrink: 1,
-  },
-  suggestion: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
-  },
-  suggestionTitle: {
-    color: Colors.text,
-    fontSize: Type.footnote,
-    lineHeight: 19,
-    fontWeight: '800',
-  },
-  suggestionText: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 3 },
-  suggestionDisclaimer: {
-    color: Colors.subtext,
-    fontSize: Type.caption2,
-    lineHeight: 16,
-    marginTop: 5,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { color: Colors.text, fontWeight: '700' },
-  selectedText: { color: Colors.onPrimary },
-  save: {
-    marginTop: 22,
-    backgroundColor: Colors.primary,
-    padding: 14,
-    minHeight: FORM_BUTTON_HEIGHT,
-    borderRadius: FORM_BUTTON_RADIUS,
-    alignItems: 'center',
-  },
-  saveText: { color: Colors.onPrimary, fontWeight: '700' },
-  error: { color: Colors.danger, marginBottom: 8 },
-  deleteAction: {
-    alignSelf: 'center',
-    marginTop: 8,
-  },
-});

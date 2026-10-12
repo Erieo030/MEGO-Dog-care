@@ -1,3 +1,4 @@
+import { addDateKeyDays, taipeiDateKey, taipeiDateFromKey } from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：建立或編輯提醒；後端成功後同步裝置 Local Notification。 */
 import React, { useState } from 'react';
@@ -55,11 +56,11 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
     existing
       ? new Date(existing.scheduledAt)
       : (() => {
-          const date = new Date();
-          const [hour, minute] = settings.defaultReminderTime.split(':').map(Number);
-          date.setHours(hour, minute, 0, 0);
-          if (date.getTime() <= Date.now()) date.setDate(date.getDate() + 1);
-          return date;
+          const today = taipeiDateKey();
+          const date = taipeiDateFromKey(today, settings.defaultReminderTime);
+          return date.getTime() <= Date.now()
+            ? taipeiDateFromKey(addDateKeyDays(today, 1), settings.defaultReminderTime)
+            : date;
         })(),
   );
   const [rule, setRule] = useState<RecurrenceRule>(existing?.recurrenceRule ?? 'monthly');

@@ -1,5 +1,12 @@
 /** 用途：集中管理登入、註冊、SecureStore session 恢復與登出狀態。 */
-import React, { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import * as authService from '../services/authService';
 import { normalizePets } from '../services/petService';
@@ -7,6 +14,7 @@ import { ApiError, setAuthExpiredHandler } from '../services/api';
 import { clearAuthTokens, readAuthTokens, saveAuthTokens } from '../services/authTokenStorage';
 import { cancelAccountNotifications } from '../services/notificationService';
 import { clearAccountAISessions } from '../services/aiSessionService';
+import { clearFirstUseGuide } from '../features/home/useFirstUseGuide';
 import { Pet } from '../types';
 
 interface Session {
@@ -116,9 +124,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
           } catch {
             // Continue clearing local credentials if secure storage is unavailable.
           }
-          try { await clearAuthTokens(); } catch { /* Keep local navigation signed out. */ }
+          try {
+            await clearAuthTokens();
+          } catch {
+            /* Keep local navigation signed out. */
+          }
           if (refreshToken) {
-            try { await authService.logout(refreshToken); } catch { /* Server-side expiry remains the fallback. */ }
+            try {
+              await authService.logout(refreshToken);
+            } catch {
+              /* Server-side expiry remains the fallback. */
+            }
           }
         })();
         setSession(null);
@@ -133,6 +149,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           await Promise.allSettled([
             cancelAccountNotifications(session.userId),
             clearAccountAISessions(session.userId),
+            clearFirstUseGuide(session.userId),
           ]);
           await clearAuthTokens().catch(() => undefined);
           setSession(null);

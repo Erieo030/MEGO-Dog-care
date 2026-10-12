@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '../../../components/AppButton';
@@ -33,11 +34,14 @@ export default function ReminderListCard({
       <View style={styles.metaRow}>
         <Text style={styles.meta}>
           {new Date(item.scheduledAt).toLocaleString('zh-TW', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
+            ...{
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            },
+            timeZone: TAIPEI_TIME_ZONE,
           })}
         </Text>
         <Text style={[styles.statusBadge, styles[`status_${item.status}` as keyof typeof styles]]}>

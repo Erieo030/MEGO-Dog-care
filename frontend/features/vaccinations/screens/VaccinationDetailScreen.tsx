@@ -1,3 +1,4 @@
+import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -115,7 +116,7 @@ export function VaccinationDetailScreen() {
         <ScreenPageHeader
           style={styles.detailHero}
           title={record.vaccineName}
-          description={`接種於 ${new Date(record.administeredAt).toLocaleDateString('zh-TW')}`}
+          description={`接種於 ${new Date(record.administeredAt).toLocaleDateString('zh-TW', { timeZone: TAIPEI_TIME_ZONE })}`}
           icon="medkit-outline"
         />
         <View style={styles.detailGroup}>
@@ -123,7 +124,11 @@ export function VaccinationDetailScreen() {
           <DetailRow
             label="下次接種"
             value={
-              record.nextDueAt ? new Date(record.nextDueAt).toLocaleDateString('zh-TW') : '尚未安排'
+              record.nextDueAt
+                ? new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })
+                : '尚未安排'
             }
           />
           {record.notes ? <DetailRow label="補充備註" value={record.notes} /> : null}
