@@ -58,6 +58,8 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const requestId = useRef(0);
   const formValues = { type, summary, occurredAt, severity, notes, attachments };
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -127,10 +129,19 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   );
 
   const submit = async () => {
-    if (!item || !session?.userId || submitting || attachmentsBusy) return;
+    if (
+      !item ||
+      !session?.userId ||
+      submitting ||
+      attachmentsBusy ||
+      attachmentActivity.current ||
+      submissionLock.current
+    )
+      return;
     if (!summary.trim()) return Alert.alert('請填寫摘要', '摘要不可留白');
     if (Number.isNaN(occurredAt.getTime())) return Alert.alert('日期錯誤', '請選擇有效日期');
     if (occurredAt.getTime() > Date.now()) return Alert.alert('日期錯誤', '發生時間不可晚於現在');
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       await service.updateHealthEvent(session.userId, item.id, {
@@ -146,6 +157,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
     } catch (requestError) {
       Alert.alert('更新失敗', (requestError as Error).message);
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -223,7 +235,10 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
           placeholder="補充重要資訊"
         />
         <AttachmentPicker
-          onBusyChange={setAttachmentsBusy}
+          onBusyChange={(busy) => {
+            attachmentActivity.current = busy;
+            setAttachmentsBusy(busy);
+          }}
           userId={session.userId}
           petId={item.petId}
           sourceType="health_event"

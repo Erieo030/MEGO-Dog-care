@@ -1,3 +1,5 @@
+import { weightTimePositions } from '../weightChartContent';
+import { formatTaipeiTime } from '../../../utils/taipeiDate';
 import React, { useMemo, useState } from 'react';
 import { LayoutChangeEvent, Text, View } from 'react-native';
 
@@ -9,9 +11,15 @@ export function WeightLineChart({ items }: { items: WeightRecord[] }) {
   const [width, setWidth] = useState(0);
   const chronological = useMemo(
     () =>
-      [...items].sort(
-        (left, right) => new Date(left.measuredAt).getTime() - new Date(right.measuredAt).getTime(),
-      ),
+      [...items]
+        .filter(
+          (item) =>
+            Number.isFinite(new Date(item.measuredAt).getTime()) && Number.isFinite(item.weightKg),
+        )
+        .sort(
+          (left, right) =>
+            new Date(left.measuredAt).getTime() - new Date(right.measuredAt).getTime(),
+        ),
     [items],
   );
 
@@ -31,15 +39,27 @@ export function WeightLineChart({ items }: { items: WeightRecord[] }) {
   // Measure the inner canvas (not the padded card) and reserve half a point
   // radius at both ends so the first and last markers stay fully visible.
   const plotWidth = Math.max(width - plotLeft - 8 - 4, 1);
+  const timePositions = weightTimePositions(chronological, plotWidth);
+  const sameDay =
+    formatWeightDate(chronological[0].measuredAt) ===
+    formatWeightDate(chronological[chronological.length - 1].measuredAt);
+  const timeLabel = (value: string) =>
+    sameDay
+      ? `${formatWeightDate(value)} ${formatTaipeiTime(new Date(value))}`
+      : formatWeightDate(value);
   const points = chronological.map((item, index) => ({
-    x: plotLeft + (index / (chronological.length - 1)) * plotWidth,
+    x: plotLeft + timePositions[index],
     y: plotTop + ((max - item.weightKg) / (max - min || 1)) * plotHeight,
     item,
   }));
   const onLayout = (event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width);
 
   return (
-    <View style={styles.chartCard}>
+    <View
+      style={styles.chartCard}
+      accessible
+      accessibilityLabel={`體重時間曲線，共 ${chronological.length} 筆；${chronological.map((item) => `${timeLabel(item.measuredAt)} ${item.weightKg} 公斤`).join('，')}`}
+    >
       <View style={styles.chartCanvas} onLayout={onLayout}>
         <Text style={[styles.axisLabel, { top: 0 }]}>{max.toFixed(1)} kg</Text>
         <Text style={[styles.axisLabel, { top: plotHeight - 4 }]}>{min.toFixed(1)} kg</Text>
@@ -80,10 +100,11 @@ export function WeightLineChart({ items }: { items: WeightRecord[] }) {
             />
           ))}
       </View>
+      <Text style={styles.empty}>橫軸依實際測量時間；同一時間的紀錄位於同一位置。</Text>
       <View style={styles.xLabels}>
-        <Text style={styles.xLabel}>{formatWeightDate(chronological[0].measuredAt)}</Text>
+        <Text style={styles.xLabel}>{timeLabel(chronological[0].measuredAt)}</Text>
         <Text style={[styles.xLabel, styles.xLabelRight]}>
-          {formatWeightDate(chronological[chronological.length - 1].measuredAt)}
+          {timeLabel(chronological[chronological.length - 1].measuredAt)}
         </Text>
       </View>
     </View>

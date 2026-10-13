@@ -1,3 +1,4 @@
+import { useReducedMotion } from '../hooks/usePressFeedback';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -38,6 +39,7 @@ export default function SupplementalNotesField({
   maxLength,
   accessibilityLabel,
 }: Props) {
+  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const [visible, setVisible] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -45,13 +47,19 @@ export default function SupplementalNotesField({
 
   useEffect(() => {
     if (!visible) return;
+    if (reducedMotion) {
+      entrance.stopAnimation();
+      entrance.setValue(1);
+      return;
+    }
     entrance.setValue(0);
     Animated.timing(entrance, {
       toValue: 1,
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [entrance, visible]);
+    return () => entrance.stopAnimation();
+  }, [entrance, visible, reducedMotion]);
 
   const open = () => {
     setDraft(value);
@@ -105,15 +113,17 @@ export default function SupplementalNotesField({
               styles.modalCard,
               {
                 marginBottom: Math.max(insets.bottom, 16),
-                opacity: entrance,
-                transform: [
-                  {
-                    translateY: entrance.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [14, 0],
-                    }),
-                  },
-                ],
+                opacity: reducedMotion ? 1 : entrance,
+                transform: reducedMotion
+                  ? []
+                  : [
+                      {
+                        translateY: entrance.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [14, 0],
+                        }),
+                      },
+                    ],
               },
             ]}
           >

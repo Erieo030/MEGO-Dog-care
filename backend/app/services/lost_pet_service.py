@@ -157,7 +157,7 @@ def public_html(token):
   <meta name="theme-color" content="#F7F4EE">
   <title>{name}｜MEGO 毛孩資訊卡</title>
   <style>
-    :root {{ color-scheme: light; --ink:#2F2925; --muted:#746B63; --accent:#B7653B; --green:#5F9274; --line:#E4DDD4; --paper:#F7F4EE; --surface:#fff; }}
+    :root {{ color-scheme: light; --ink:#2F2925; --muted:#746B63; --accent:#984B2C; --green:#3F6F53; --line:#E4DDD4; --paper:#F7F4EE; --surface:#fff; }}
     * {{ box-sizing:border-box; }}
     body {{ margin:0; min-height:100vh; padding:24px 16px calc(28px + env(safe-area-inset-bottom)); background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }}
     main {{ width:min(100%,520px); margin:0 auto; }}

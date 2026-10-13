@@ -173,8 +173,12 @@ export default function HealthObservationScreen() {
               />
             </SoftEntrance>
             <Ionicons name="leaf-outline" size={30} color={Colors.successDecoration} />
-            <Text style={styles.stableTitle}>今天狀況穩定</Text>
-            <Text style={styles.muted}>目前沒有持續出現、需要特別留意的日常變化。</Text>
+            <Text style={styles.stableTitle}>
+              {result ? getHealthObservationText(result) : '尚無日常紀錄'}
+            </Text>
+            <Text style={styles.muted}>
+              觀察依你填寫的資料計算；沒有提醒不代表毛孩健康已獲確認。
+            </Text>
           </View>
         ) : (
           <>

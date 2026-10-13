@@ -84,6 +84,8 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const requestId = useRef(0);
   const formValues = { details, occurredAt, severity, notes, images };
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -164,12 +166,21 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
   );
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting || attachmentsBusy) return;
+    if (
+      !selectedPet ||
+      !session?.userId ||
+      submitting ||
+      attachmentsBusy ||
+      attachmentActivity.current ||
+      submissionLock.current
+    )
+      return;
     if (!details.vomitCount) return Alert.alert('尚未完成', '請選擇發生次數');
     if (!details.energyCondition) return Alert.alert('尚未完成', '請選擇精神狀況');
     if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now()) {
       return Alert.alert('時間錯誤', '請選擇有效且不晚於現在的發生時間');
     }
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       const input = {
@@ -202,6 +213,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
     } catch (requestError) {
       Alert.alert('儲存失敗', (requestError as Error).message || '請稍後再試');
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -260,7 +272,10 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
         <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />
 
         <AttachmentPicker
-          onBusyChange={setAttachmentsBusy}
+          onBusyChange={(busy) => {
+            attachmentActivity.current = busy;
+            setAttachmentsBusy(busy);
+          }}
           userId={session!.userId}
           petId={selectedPet!.id}
           sourceType="health_event"

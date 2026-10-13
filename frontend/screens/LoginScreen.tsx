@@ -1,7 +1,9 @@
+import { useReducedMotion } from '../hooks/usePressFeedback';
 /** 用途：以輕量原生版面登入，鍵盤開啟時保持欄位與送出按鈕可操作。 */
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  AppState,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
@@ -27,6 +29,15 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScreenProps) {
+  const reducedMotion = useReducedMotion();
+  const loginLock = useRef(false);
+  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) =>
+      setAppActive(state === 'active'),
+    );
+    return () => subscription.remove();
+  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -39,12 +50,17 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
 
   useEffect(() => {
     const keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      scrollRef.current?.scrollTo({ y: 0, animated: !reducedMotion });
     });
     return () => keyboardHideSubscription.remove();
-  }, []);
+  }, [reducedMotion]);
 
   useEffect(() => {
+    if (reducedMotion || !appActive) {
+      dogEntrance.setValue(1);
+      dogFloat.setValue(0);
+      return;
+    }
     const entrance = Animated.timing(dogEntrance, {
       toValue: 1,
       duration: 520,
@@ -63,10 +79,10 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
       entrance.stop();
       floating.stop();
     };
-  }, [dogEntrance, dogFloat]);
+  }, [dogEntrance, dogFloat, reducedMotion, appActive]);
 
   useEffect(() => {
-    if (!isSubmitting) {
+    if (!isSubmitting || reducedMotion || !appActive) {
       loadingPawTurn.setValue(0);
       return;
     }
@@ -75,22 +91,25 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
     );
     spinning.start();
     return () => spinning.stop();
-  }, [isSubmitting, loadingPawTurn]);
+  }, [isSubmitting, loadingPawTurn, reducedMotion, appActive]);
 
   const revealFormForKeyboard = () => {
     // KeyboardAvoidingView 先騰出空間，再將整個表單帶入可視區，避免欄位被遮住。
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: !reducedMotion }), 120);
   };
 
   const handleLoginPress = async () => {
+    if (loginLock.current) return;
     if (!email || !password) {
       Alert.alert('提示', '請輸入帳號和密碼 🐾');
       return;
     }
+    loginLock.current = true;
     setIsSubmitting(true);
     try {
       await onLoginSuccess(email, password);
     } finally {
+      loginLock.current = false;
       setIsSubmitting(false);
     }
   };
@@ -125,15 +144,17 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
               style={[
                 styles.dogArtwork,
                 {
-                  opacity: dogEntrance,
-                  transform: [
-                    {
-                      translateY: Animated.add(
-                        dogFloat,
-                        dogEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
-                      ),
-                    },
-                  ],
+                  opacity: reducedMotion ? 1 : dogEntrance,
+                  transform: reducedMotion
+                    ? []
+                    : [
+                        {
+                          translateY: Animated.add(
+                            dogFloat,
+                            dogEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
+                          ),
+                        },
+                      ],
                 },
               ]}
             />
@@ -208,14 +229,16 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                     style={[
                       styles.loadingPaw,
                       {
-                        transform: [
-                          {
-                            rotate: loadingPawTurn.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: ['0deg', '360deg'],
-                            }),
-                          },
-                        ],
+                        transform: reducedMotion
+                          ? []
+                          : [
+                              {
+                                rotate: loadingPawTurn.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: ['0deg', '360deg'],
+                                }),
+                              },
+                            ],
                       },
                     ]}
                   />

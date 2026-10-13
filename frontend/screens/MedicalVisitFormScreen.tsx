@@ -63,6 +63,8 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   const [medications, setMedications] = useState<Medication[]>(existing?.medications || []);
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const [errors, setErrors] = useState<VisitErrors>({});
   const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
   const fieldPositions = useRef<Record<string, number>>({});
@@ -136,7 +138,17 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
     return true;
   };
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting || attachmentsBusy || !validate()) return;
+    if (
+      !selectedPet ||
+      !session?.userId ||
+      submitting ||
+      attachmentsBusy ||
+      attachmentActivity.current ||
+      submissionLock.current ||
+      !validate()
+    )
+      return;
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       const data = {
@@ -163,7 +175,9 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         await service.updateMedicalVisit(session.userId, existing.id, data);
       else await service.createMedicalVisit(session.userId, selectedPet.id, data);
       markSaved(formValues);
-      await reconcileAccountNotifications(session.userId, pets).catch(() => undefined);
+      const notificationResult = await reconcileAccountNotifications(session.userId, pets).catch(
+        () => null,
+      );
       if (quickEntry) {
         showQuickRecordFeedback({
           message: '就醫紀錄已儲存，完整內容可到「紀錄」查看。',
@@ -171,13 +185,20 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           onAddAnother: () => navigation.replace('MedicalVisitForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', '就醫紀錄、時間軸與回診提醒已同步。', [
-          { text: '完成', onPress: () => navigation.goBack() },
-        ]);
+        Alert.alert(
+          '已儲存',
+          !data.createFollowUpReminder
+            ? '就醫紀錄已儲存。'
+            : !notificationResult || notificationResult.permission !== 'granted'
+              ? '就醫紀錄與 App 內回診提醒已儲存；手機通知未排定，請到設定確認。'
+              : '就醫紀錄與回診提醒已儲存，手機通知已同步。',
+          [{ text: '完成', onPress: () => navigation.goBack() }],
+        );
       }
     } catch (e) {
       Alert.alert('儲存失敗', (e as Error).message || '請稍後再試');
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -313,7 +334,10 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         <Text style={s.sectionHeading}>附件與補充</Text>
         <SupplementalNotesField value={notes} onChange={setNotes} />
         <AttachmentPicker
-          onBusyChange={setAttachmentsBusy}
+          onBusyChange={(busy) => {
+            attachmentActivity.current = busy;
+            setAttachmentsBusy(busy);
+          }}
           userId={session!.userId}
           petId={existing?.petId || selectedPet!.id}
           sourceType="medical_visit"

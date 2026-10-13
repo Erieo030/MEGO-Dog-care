@@ -74,6 +74,8 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const requestId = useRef(0);
   const formValues = { values, occurredAt, severity, notes, images };
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -141,10 +143,19 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
   );
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting || attachmentsBusy) return;
+    if (
+      !selectedPet ||
+      !session?.userId ||
+      submitting ||
+      attachmentsBusy ||
+      attachmentActivity.current ||
+      submissionLock.current
+    )
+      return;
     if (!values[config.primaryKey]) return Alert.alert('尚未完成', `請選擇${config.primaryLabel}`);
     if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now())
       return Alert.alert('時間錯誤', '請選擇有效且不晚於現在的發生時間');
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       const input = {
@@ -178,6 +189,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
     } catch (requestError) {
       Alert.alert('儲存失敗', (requestError as Error).message || '請稍後再試');
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -258,7 +270,10 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
           onChange={(value) => setSeverity(value as Severity)}
         />
         <AttachmentPicker
-          onBusyChange={setAttachmentsBusy}
+          onBusyChange={(busy) => {
+            attachmentActivity.current = busy;
+            setAttachmentsBusy(busy);
+          }}
           userId={session!.userId}
           petId={selectedPet!.id}
           sourceType="health_event"

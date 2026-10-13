@@ -39,10 +39,11 @@ const fields = [
 export function MedicationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { selectedPet, pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'MedicationForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as MedicationCourse | undefined;
+  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<MedicationDraft>(() =>
@@ -56,7 +57,7 @@ export function MedicationFormScreen() {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const save = async () => {
-    if (!session?.userId || !selectedPet || saveLock.current) return;
+    if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
     if (!draft.name.trim()) {
       Alert.alert('請填寫藥名');
       return;
@@ -90,7 +91,7 @@ export function MedicationFormScreen() {
       const response =
         existing && !duplicate
           ? await updateMedication(session.userId, existing.id, payload)
-          : await createMedication(session.userId, selectedPet.id, payload);
+          : await createMedication(session.userId, ownerPet.id, payload);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -124,6 +125,9 @@ export function MedicationFormScreen() {
           icon="medical-outline"
         />
 
+        <Text style={styles.label}>
+          毛孩：{ownerPet?.name || '原紀錄毛孩無法取得，請返回重新載入'}
+        </Text>
         {fields
           .filter(([key]) => key !== 'notes')
           .map(([key, label]) => {
@@ -250,7 +254,7 @@ export function MedicationFormScreen() {
         <AppButton
           title={saving ? '儲存中…' : '儲存'}
           variant="primary"
-          disabled={saving}
+          disabled={saving || !ownerPet || Boolean(ownerPet.memorial)}
           busy={saving}
           style={styles.primary}
           textStyle={styles.primaryText}

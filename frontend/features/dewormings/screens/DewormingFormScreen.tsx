@@ -38,10 +38,11 @@ const fields = [
 export function DewormingFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { selectedPet, pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'DewormingForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as Deworming | undefined;
+  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<DewormingDraft>(() =>
@@ -54,7 +55,7 @@ export function DewormingFormScreen() {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const save = async () => {
-    if (!session?.userId || !selectedPet || saveLock.current) return;
+    if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
     if (!draft.productName.trim()) return Alert.alert('請填寫產品名稱');
     const administered = validDewormingDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validDewormingDate(draft.nextDueAt) : undefined;
@@ -78,7 +79,7 @@ export function DewormingFormScreen() {
       const response =
         existing && !duplicate
           ? await updateDeworming(session.userId, existing.id, payload)
-          : await createDeworming(session.userId, selectedPet.id, payload);
+          : await createDeworming(session.userId, ownerPet.id, payload);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -111,6 +112,9 @@ export function DewormingFormScreen() {
           description="記下產品與下次日期"
           icon="shield-checkmark-outline"
         />
+        <Text style={styles.label}>
+          毛孩：{ownerPet?.name || '原紀錄毛孩無法取得，請返回重新載入'}
+        </Text>
         <Text style={styles.section}>驅蟲類型</Text>
         <View style={styles.options}>
           {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (
@@ -162,7 +166,7 @@ export function DewormingFormScreen() {
         <AppButton
           title={saving ? '儲存中…' : '儲存'}
           variant="primary"
-          disabled={saving}
+          disabled={saving || !ownerPet || Boolean(ownerPet.memorial)}
           busy={saving}
           style={styles.primary}
           textStyle={styles.primaryText}

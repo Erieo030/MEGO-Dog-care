@@ -31,10 +31,11 @@ const fields = [
 export function VaccinationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { selectedPet, pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'VaccinationForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as Vaccination | undefined;
+  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<VaccinationDraft>(() =>
@@ -46,7 +47,7 @@ export function VaccinationFormScreen() {
   const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
   const save = async () => {
-    if (!session?.userId || !selectedPet || saveLock.current) return;
+    if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
     if (!draft.vaccineName.trim()) return Alert.alert('請填寫疫苗名稱');
     const administered = validVaccinationDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validVaccinationDate(draft.nextDueAt) : undefined;
@@ -69,7 +70,7 @@ export function VaccinationFormScreen() {
       const response =
         existing && !duplicate
           ? await updateVaccination(session.userId, existing.id, payload)
-          : await createVaccination(session.userId, selectedPet.id, payload);
+          : await createVaccination(session.userId, ownerPet.id, payload);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -101,6 +102,9 @@ export function VaccinationFormScreen() {
           description="記下接種日期與下次安排"
           icon="medkit-outline"
         />
+        <Text style={styles.label}>
+          毛孩：{ownerPet?.name || '原紀錄毛孩無法取得，請返回重新載入'}
+        </Text>
         {fields
           .filter(([key]) => key !== 'notes')
           .map(([key, label]) => {
@@ -140,7 +144,7 @@ export function VaccinationFormScreen() {
         <AppButton
           title={saving ? '儲存中…' : '儲存'}
           variant="primary"
-          disabled={saving}
+          disabled={saving || !ownerPet || Boolean(ownerPet.memorial)}
           busy={saving}
           style={styles.primary}
           textStyle={styles.primaryText}

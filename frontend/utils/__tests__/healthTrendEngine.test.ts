@@ -1,4 +1,8 @@
-import { analyzeHealthTrend, getHealthObservationText, DailyRecord } from '../healthTrendEngine';
+import {
+  analyzeHealthTrend as analyze,
+  getHealthObservationText,
+  DailyRecord,
+} from '../healthTrendEngine';
 
 const records = (values: Partial<DailyRecord>[]): DailyRecord[] =>
   values.map((value, index) => ({
@@ -70,4 +74,33 @@ describe('healthTrendEngine', () => {
     );
     expect(result).toMatchObject({ overallLevel: 'stable', watchCount: 0, continuedCount: 0 });
   });
+});
+
+function analyzeHealthTrend(records: DailyRecord[]) {
+  return analyze(records, records.at(-1)?.date ?? '2026-09-20');
+}
+
+test('coverage distinguishes empty, stale, interrupted and current normal records', () => {
+  const normal = { water: 'normal', food: 'normal', energy: 'normal', stool: 'normal' } as const;
+  const states = [
+    analyze([], '2026-10-13'),
+    analyze([{ date: '2026-10-12', ...normal }], '2026-10-13'),
+    analyze(
+      [
+        { date: '2026-10-10', ...normal },
+        { date: '2026-10-13', ...normal },
+      ],
+      '2026-10-13',
+    ),
+    analyze([{ date: '2026-10-13', ...normal }], '2026-10-13'),
+  ];
+  expect(states.map((x) => x.dataStatus)).toEqual(['empty', 'stale', 'insufficient', 'current']);
+  expect(new Set(states.map(getHealthObservationText)).size).toBe(4);
+  expect(states[1].lastRecordDate).toBe('2026-10-12');
+  expect(getHealthObservationText(states[3])).not.toContain('今天狀況穩定');
+});
+test('today incomplete data is not enough to call stable', () => {
+  expect(analyze([{ date: '2026-10-13', water: 'normal' }], '2026-10-13').dataStatus).toBe(
+    'insufficient',
+  );
 });

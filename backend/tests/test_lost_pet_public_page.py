@@ -131,3 +131,17 @@ def test_cannot_change_another_users_public_profile(monkeypatch):
     with pytest.raises(HTTPException) as error:
         lost_pet_service.save(str(pet_id), "user-2", LostPetProfileRequest(enabled=True, contactPhone="0912345678"))
     assert error.value.status_code == 404
+
+
+def test_public_page_small_text_has_accessible_contrast(monkeypatch):
+    import re
+    monkeypatch.setattr(lost_pet_service, "public", lambda _: {"name": "Kuro", "contactPhone": "0912345678"})
+    html = lost_pet_service.public_html("test")
+    colors = dict(re.findall(r"--([a-z]+):(#[0-9A-Fa-f]{6})", html))
+    def luminance(color):
+        values = [int(color[i:i+2], 16) / 255 for i in (1, 3, 5)]
+        linear = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in values]
+        return sum(v * weight for v, weight in zip(linear, (0.2126, 0.7152, 0.0722)))
+    for foreground, background in ((colors["accent"], "#F7F4EE"), (colors["green"], "#F3F8F4")):
+        light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+        assert (light + 0.05) / (dark + 0.05) >= 4.5

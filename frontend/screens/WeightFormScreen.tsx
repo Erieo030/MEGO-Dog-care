@@ -1,7 +1,7 @@
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：新增或編輯體重，驗證公斤數與有效測量日期並防止重複提交。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
 import { Alert, StyleSheet, Text, TextInput } from 'react-native';
@@ -47,6 +47,8 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const [notes, setNotes] = useState(record?.notes || '');
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const [attachments, setAttachments] = useState(record?.attachments ?? []);
 
   const formValues = { weight, date, notes, attachments };
@@ -58,7 +60,8 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   });
 
   const submit = async () => {
-    if (submitting || attachmentsBusy) return;
+    if (submitting || attachmentsBusy || attachmentActivity.current || submissionLock.current)
+      return;
     const normalizedWeight = weight.trim();
     const value = Number(normalizedWeight);
     if (
@@ -79,6 +82,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       return;
     }
 
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       const data = {
@@ -106,6 +110,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -143,7 +148,10 @@ export default function WeightFormScreen({ route, navigation }: Props) {
 
         {session?.userId && (selectedPet || record) && (
           <AttachmentPicker
-            onBusyChange={setAttachmentsBusy}
+            onBusyChange={(busy) => {
+              attachmentActivity.current = busy;
+              setAttachmentsBusy(busy);
+            }}
             userId={session.userId}
             petId={record?.petId || selectedPet!.id}
             sourceType="weight"

@@ -39,12 +39,27 @@ export default function ExportCenterScreen() {
   const [period, setPeriod] = useState<ExportPeriod>('30_days');
   const [job, setJob] = useState<ExportJob | null>(null);
   const [sharing, setSharing] = useState(false);
+  const createLock = useRef(false);
+  const [creating, setCreating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const cancelLock = useRef(false);
+  const shareLock = useRef(false);
+  const [pollError, setPollError] = useState('');
+  const [retryPoll, setRetryPoll] = useState(0);
+  const [jobLabel, setJobLabel] = useState('');
   const requestRef = useRef<(() => Promise<void>) | undefined>(undefined);
   const run = async () => {
+    if (createLock.current || (job && ['queued', 'processing'].includes(job.status))) return;
     if (!session?.userId || (scope === 'current_pet' && !selectedPet)) {
       Alert.alert('無法匯出', '請先選擇毛孩');
       return;
     }
+    createLock.current = true;
+    setCreating(true);
+    setPollError('');
+    setJobLabel(
+      `${scope === 'current_pet' ? selectedPet?.name : '所有毛孩'} · ${periods.find(([value]) => value === period)?.[1]}`,
+    );
     try {
       setJob(null);
       const result = await exportService.createExport(session.userId, {
@@ -57,11 +72,20 @@ export default function ExportCenterScreen() {
       setJob(result);
     } catch (e) {
       Alert.alert('匯出失敗', (e as Error).message);
+    } finally {
+      createLock.current = false;
+      setCreating(false);
     }
   };
   requestRef.current = run;
   useEffect(() => {
-    if (!isFocused || !session?.userId || !job || !['queued', 'processing'].includes(job.status))
+    if (
+      !isFocused ||
+      !session?.userId ||
+      !job ||
+      pollError ||
+      !['queued', 'processing'].includes(job.status)
+    )
       return;
     const controller = new AbortController();
     const timer = setTimeout(
@@ -73,7 +97,7 @@ export default function ExportCenterScreen() {
           })
           .catch((e) => {
             if (!controller.signal.aborted)
-              setJob((x) => (x ? { ...x, status: 'failed', error: (e as Error).message } : x));
+              setPollError((e as Error).message || '目前無法讀取進度');
           }),
       900,
     );
@@ -81,23 +105,36 @@ export default function ExportCenterScreen() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [isFocused, job, session?.userId]);
+  }, [isFocused, job, session?.userId, pollError, retryPoll]);
   const share = async () => {
-    if (!session?.userId || !job) return;
+    if (!session?.userId || !job || shareLock.current) return;
+    shareLock.current = true;
     try {
       setSharing(true);
       await exportService.downloadAndShareExport(session.userId, job);
-      Alert.alert('分享成功 🐾', '照護報告已準備好，帶著 MEGO 一起照顧毛孩吧！');
+      Alert.alert('報告已準備好', '照護報告已準備好，帶著 MEGO 一起照顧毛孩吧！');
     } catch (e) {
       Alert.alert('檔案處理失敗', (e as Error).message);
     } finally {
+      shareLock.current = false;
       setSharing(false);
     }
   };
   const cancel = async () => {
-    if (session?.userId && job) setJob(await exportService.cancelExport(session.userId, job.id));
+    if (!session?.userId || !job || cancelLock.current) return;
+    cancelLock.current = true;
+    setCancelling(true);
+    try {
+      setJob(await exportService.cancelExport(session.userId, job.id));
+      setPollError('');
+    } catch (error) {
+      Alert.alert('取消尚未完成', (error as Error).message);
+    } finally {
+      cancelLock.current = false;
+      setCancelling(false);
+    }
   };
-  const busy = job && ['queued', 'processing'].includes(job.status);
+  const busy = creating || Boolean(job && ['queued', 'processing'].includes(job.status));
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
@@ -156,6 +193,24 @@ export default function ExportCenterScreen() {
         </AppButton>
         {job && (
           <View style={styles.status}>
+            <Text style={styles.muted}>{jobLabel}</Text>
+            {!!pollError && (
+              <>
+                <Text style={styles.error}>
+                  進度讀取失敗：{pollError}。工作仍保留，可重新查詢。
+                </Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="重新查詢原匯出工作"
+                  onPress={() => {
+                    setPollError('');
+                    setRetryPoll((value) => value + 1);
+                  }}
+                >
+                  <Text style={styles.link}>重試查詢</Text>
+                </TouchableOpacity>
+              </>
+            )}
             <View style={styles.statusHeading}>
               <View style={styles.statusIcon}>
                 <Ionicons
@@ -190,8 +245,8 @@ export default function ExportCenterScreen() {
                   <View style={[styles.fill, { width: `${job.progress}%` }]} />
                 </View>
                 <Text style={styles.muted}>{job.progress}%</Text>
-                <TouchableOpacity onPress={cancel}>
-                  <Text style={styles.danger}>取消</Text>
+                <TouchableOpacity disabled={cancelling} onPress={cancel}>
+                  <Text style={styles.danger}>{cancelling ? '取消中…' : '取消'}</Text>
                 </TouchableOpacity>
               </>
             )}

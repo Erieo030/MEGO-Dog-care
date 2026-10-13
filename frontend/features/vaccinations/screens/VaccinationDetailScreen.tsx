@@ -31,7 +31,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 export function VaccinationDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'VaccinationDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<Vaccination | null>(null);
@@ -88,6 +88,7 @@ export function VaccinationDetailScreen() {
         />
       </ScreenPageState>
     );
+  const ownerPet = pets.find((pet) => pet.id === record.petId);
   const deleteRecord = () =>
     Alert.alert('刪除疫苗', '確定刪除？', [
       { text: '取消' },
@@ -113,6 +114,7 @@ export function VaccinationDetailScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <Text style={styles.label}>毛孩：{ownerPet?.name || '原紀錄毛孩'}</Text>
         <ScreenPageHeader
           style={styles.detailHero}
           title={record.vaccineName}
@@ -141,7 +143,7 @@ export function VaccinationDetailScreen() {
             style={styles.actionButton}
             onPress={() => navigation.navigate('VaccinationForm', { record })}
           />
-          {!selectedPet?.memorial && (
+          {ownerPet && !ownerPet.memorial && (
             <AppButton
               title="複製新增"
               disabled={deleting}

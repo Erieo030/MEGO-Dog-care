@@ -1,9 +1,8 @@
 import { ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import Constants from 'expo-constants';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   AppState,
-  Alert,
   Linking,
   Platform,
   StyleSheet,
@@ -23,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { MainTabParamList, ProfileStackParamList } from '../../../navigation/types';
 import {
+  reconcileAccountNotifications,
   getNotificationPermissionState,
   requestNotificationPermission,
   NotificationPermissionState,
@@ -74,6 +74,11 @@ export function PetManagementScreen({
 }
 
 export function NotificationSettingsScreen() {
+  const { pets } = usePet();
+  const syncLock = useRef(false);
+  const pendingValue = useRef<boolean | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState('');
   const { session } = useAuth();
   const { settings, update, saving } = useSettings();
   const [permission, setPermission] = useState<NotificationPermissionState | null>('undetermined');
@@ -131,13 +136,34 @@ export function NotificationSettingsScreen() {
       return () => subscription.remove();
     }, [refreshPermissions]),
   );
-  const toggle = async (value: boolean) => {
+  const synchronize = async () => {
     if (!session?.userId) return;
+    const result = await reconcileAccountNotifications(session.userId, pets);
+    setPermission(
+      result.permission === 'undetermined'
+        ? await getNotificationPermissionState()
+        : result.permission,
+    );
+  };
+  const toggle = async (value: boolean) => {
+    if (!session?.userId || syncLock.current) return;
+    pendingValue.current = value;
+    syncLock.current = true;
+    setSyncing(true);
+    setSyncError('');
+    let preferenceSaved = false;
     try {
       await update({ localNotificationsEnabled: value });
+      preferenceSaved = true;
       if (value) setPermission(await requestNotificationPermission());
+      await synchronize();
     } catch {
-      Alert.alert('設定失敗', '請稍後再試');
+      setSyncError(
+        preferenceSaved ? '偏好已儲存，但手機通知排程尚未同步，請重試。' : '偏好尚未儲存，請重試。',
+      );
+    } finally {
+      syncLock.current = false;
+      setSyncing(false);
     }
   };
   return (
@@ -168,17 +194,33 @@ export function NotificationSettingsScreen() {
           <Ionicons name="paw-outline" size={20} color={palette.primary} style={s.rowIcon} />
           <View style={{ flex: 1 }}>
             <Text style={s.rowTitle}>照護提醒</Text>
-            <Text style={s.notificationDescription}>開啟後，MEGO 會在重要照護時間提醒你。</Text>
+            <Text style={s.notificationDescription}>
+              開啟後安排手機通知；關閉仍可在 App 內查看提醒。
+            </Text>
           </View>
           <Switch
             style={s.notificationSwitch}
             accessibilityLabel="照護提醒"
-            disabled={saving}
+            disabled={saving || syncing}
             value={settings.localNotificationsEnabled}
             onValueChange={toggle}
           />
         </View>
       </View>
+      {syncing && <Text style={s.note}>正在同步手機通知排程…</Text>}
+      {!!syncError && (
+        <View>
+          <Text style={s.note}>{syncError}</Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="重試通知設定與同步"
+            disabled={syncing}
+            onPress={() => toggle(pendingValue.current ?? settings.localNotificationsEnabled)}
+          >
+            <Text style={s.note}>重試</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {permission && permission !== 'granted' ? (
         <Text style={s.note}>手機通知尚未開啟，你仍可在 App 內查看提醒。</Text>
       ) : null}

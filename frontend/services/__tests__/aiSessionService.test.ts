@@ -132,3 +132,9 @@ test('storage read failures do not erase a conversation', async () => {
   await expect(activateEmptyAISession('u1', 'p1')).rejects.toThrow('offline storage');
   expect(storage.setItem).not.toHaveBeenCalled();
 });
+
+test('corrupt history blocks new conversation activation before any write', async () => {
+  storedValues.set('mego:ai-sessions:u1:p1', '{"not":"a history array"}');
+  await expect(activateEmptyAISession('u1', 'p1')).rejects.toThrow();
+  expect(storage.setItem).not.toHaveBeenCalled();
+});

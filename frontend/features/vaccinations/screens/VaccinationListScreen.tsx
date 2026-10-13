@@ -31,14 +31,28 @@ export function VaccinationListScreen() {
   const { selectedPet } = usePet();
   const { settings } = useSettings();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
-  const [records, setRecords] = useState<Vaccination[]>([]);
+  const [storedRecords, setRecords] = useState<Vaccination[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestId = useRef(0);
+  const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const [dataOwner, setDataOwner] = useState('');
+  const records = dataOwner === ownerKey ? storedRecords : [];
+  const cacheOwner = useRef('');
   const load = useCallback(
     async (signal?: AbortSignal) => {
       const current = ++requestId.current;
-      if (!session?.userId || !selectedPet) return;
+      if (!session?.userId || !selectedPet) {
+        setLoading(false);
+        setError('請先登入並選擇毛孩');
+        return;
+      }
+      if (cacheOwner.current !== ownerKey) {
+        setRecords([]);
+        cacheOwner.current = ownerKey;
+      }
+      setDataOwner(ownerKey);
+      setError('');
       setLoading(true);
       try {
         const result = await getVaccinations(session.userId, selectedPet.id, signal);
@@ -52,7 +66,7 @@ export function VaccinationListScreen() {
         if (current === requestId.current) setLoading(false);
       }
     },
-    [selectedPet, session?.userId],
+    [selectedPet, session?.userId, ownerKey],
   );
   useFocusEffect(
     useCallback(() => {
@@ -64,7 +78,7 @@ export function VaccinationListScreen() {
       };
     }, [load]),
   );
-  if (loading)
+  if (loading && !records.length)
     return (
       <ScreenPageState title="疫苗紀錄" description="查看接種與下次日期" icon="medkit-outline">
         <ScreenState loading text="載入中…" />
@@ -106,7 +120,7 @@ export function VaccinationListScreen() {
                 <Text style={styles.primaryText}>新增疫苗紀錄</Text>
               </AppButton>
             )}
-            {!records.length ? (
+            {!error && !records.length ? (
               <View style={styles.emptyBox}>
                 <SoftEntrance>
                   <Image

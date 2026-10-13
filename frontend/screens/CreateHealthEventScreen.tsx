@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：依異常類型呈現快速選項，支援時間、嚴重程度、圖片與備註。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,6 +54,8 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   const [images, setImages] = useState<Attachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
+  const attachmentActivity = useRef(false);
+  const submissionLock = useRef(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const formValues = { occurredAt, severity, details, notes, images };
@@ -66,7 +68,16 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   });
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting || attachmentsBusy) return;
+    if (
+      !selectedPet ||
+      !session?.userId ||
+      submitting ||
+      attachmentsBusy ||
+      attachmentActivity.current ||
+      submissionLock.current
+    )
+      return;
+    submissionLock.current = true;
     setSubmitting(true);
     try {
       await createHealthEvent(session.userId, selectedPet.id, {
@@ -109,6 +120,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
     } catch (e) {
       Alert.alert('儲存失敗', (e as Error).message);
     } finally {
+      submissionLock.current = false;
       setSubmitting(false);
     }
   };
@@ -152,7 +164,10 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
           onChange={setOccurredAt}
         />
         <AttachmentPicker
-          onBusyChange={setAttachmentsBusy}
+          onBusyChange={(busy) => {
+            attachmentActivity.current = busy;
+            setAttachmentsBusy(busy);
+          }}
           userId={session!.userId}
           petId={selectedPet!.id}
           sourceType="health_event"

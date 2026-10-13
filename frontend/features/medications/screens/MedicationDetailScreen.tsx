@@ -8,7 +8,7 @@ import {
  * API：../../../services/medicationService.ts
  */
 import React, { useCallback, useState, useRef } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -33,7 +33,7 @@ import { usePet } from '../../../contexts/PetContext';
 export function MedicationDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'MedicationDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<MedicationCourse | null>(null);
@@ -119,9 +119,11 @@ export function MedicationDetailScreen() {
       },
     ]);
 
+  const ownerPet = pets.find((pet) => pet.id === record.petId);
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <Text style={styles.label}>毛孩：{ownerPet?.name || '原紀錄毛孩'}</Text>
         <ScreenPageHeader
           style={styles.detailHero}
           title={record.name}
@@ -160,7 +162,7 @@ export function MedicationDetailScreen() {
             style={styles.actionButton}
             onPress={() => navigation.navigate('MedicationForm', { record })}
           />
-          {!selectedPet?.memorial && (
+          {ownerPet && !ownerPet.memorial && (
             <AppButton
               title="複製新增"
               disabled={submitting}

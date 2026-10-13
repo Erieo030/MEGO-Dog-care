@@ -1,3 +1,5 @@
+import { taipeiDateKey } from './taipeiDate';
+
 export type HealthTrendLevel = 'stable' | 'watch' | 'continued';
 
 export interface DailyRecord {
@@ -19,6 +21,8 @@ export interface HealthTrendAlert {
 
 export interface HealthTrendResult {
   overallLevel: HealthTrendLevel;
+  dataStatus?: 'empty' | 'insufficient' | 'stale' | 'current';
+  lastRecordDate?: string;
   watchCount: number;
   continuedCount: number;
   alerts: HealthTrendAlert[];
@@ -135,7 +139,33 @@ const consecutiveStatusDays = (records: DailyRecord[], category: TrendKey, statu
   return consecutiveDays;
 };
 
-export function analyzeHealthTrend(records: DailyRecord[]): HealthTrendResult {
+export function analyzeHealthTrend(
+  records: DailyRecord[],
+  asOf = taipeiDateKey(),
+): HealthTrendResult {
+  const asOfDay = dateToUtcDay(asOf)!;
+  const ordered = records
+    .filter((record) => {
+      const day = dateToUtcDay(record.date);
+      return day !== null && day <= asOfDay;
+    })
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const latest = ordered[0];
+  const lastRecordDate = latest?.date.slice(0, 10);
+  const complete =
+    latest &&
+    (['water', 'food', 'energy', 'stool'] as const).every((field) => latest[field] !== undefined);
+  const gap =
+    ordered.length > 1 && dateToUtcDay(ordered[0].date)! - dateToUtcDay(ordered[1].date)! > DAY_MS;
+  const dataStatus = !latest
+    ? 'empty'
+    : lastRecordDate !== asOf
+      ? 'stale'
+      : !complete || gap
+        ? 'insufficient'
+        : 'current';
+  records = ordered;
+
   const alerts = RULES.flatMap((rule) => {
     const consecutiveDays = consecutiveStatusDays(records, rule.category, rule.status);
     if (consecutiveDays < rule.watchAt) return [];
@@ -156,6 +186,8 @@ export function analyzeHealthTrend(records: DailyRecord[]): HealthTrendResult {
   const continuedCount = alerts.filter((alert) => alert.level === 'continued').length;
   const watchCount = alerts.filter((alert) => alert.level === 'watch').length;
   return {
+    dataStatus,
+    lastRecordDate,
     overallLevel: continuedCount ? 'continued' : watchCount ? 'watch' : 'stable',
     watchCount,
     continuedCount,
@@ -164,7 +196,11 @@ export function analyzeHealthTrend(records: DailyRecord[]): HealthTrendResult {
 }
 
 export function getHealthObservationText(result: HealthTrendResult): string {
+  if (result.dataStatus === 'empty') return '尚無日常紀錄';
+  if (result.dataStatus === 'stale') return `今日尚未記錄，最後紀錄 ${result.lastRecordDate}`;
+  if (result.dataStatus === 'insufficient' && result.overallLevel === 'stable')
+    return '紀錄不足或中斷，請持續記錄';
   if (result.overallLevel === 'continued') return `有 ${result.continuedCount} 項持續需留意`;
   if (result.overallLevel === 'watch') return `近期有 ${result.watchCount} 項需留意`;
-  return '今天狀況穩定';
+  return '依已記錄資料，未觸發留意規則';
 }

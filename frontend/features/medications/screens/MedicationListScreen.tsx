@@ -39,15 +39,29 @@ export function MedicationListScreen() {
   const { selectedPet } = usePet();
   const { settings } = useSettings();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
-  const [data, setData] = useState<MedicationCourse[]>([]);
+  const [storedRecords, setData] = useState<MedicationCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const requestId = useRef(0);
+  const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const [dataOwner, setDataOwner] = useState('');
+  const data = dataOwner === ownerKey ? storedRecords : [];
+  const cacheOwner = useRef('');
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
       const current = ++requestId.current;
-      if (!session?.userId || !selectedPet) return;
+      if (!session?.userId || !selectedPet) {
+        setLoading(false);
+        setError('請先登入並選擇毛孩');
+        return;
+      }
+      if (cacheOwner.current !== ownerKey) {
+        setData([]);
+        cacheOwner.current = ownerKey;
+      }
+      setDataOwner(ownerKey);
+      setError('');
       setLoading(true);
       try {
         const result = await getMedications(session.userId, selectedPet.id, undefined, signal);
@@ -61,7 +75,7 @@ export function MedicationListScreen() {
         if (current === requestId.current) setLoading(false);
       }
     },
-    [selectedPet, session?.userId],
+    [selectedPet, session?.userId, ownerKey],
   );
 
   useFocusEffect(
@@ -75,7 +89,7 @@ export function MedicationListScreen() {
     }, [load]),
   );
 
-  if (loading)
+  if (loading && !data.length)
     return (
       <ScreenPageState title="用藥紀錄" description="查看療程與用藥提醒" icon="medical-outline">
         <ScreenState loading text="載入中…" />
@@ -135,7 +149,7 @@ export function MedicationListScreen() {
                 <Text style={styles.primaryText}>新增用藥療程</Text>
               </AppButton>
             )}
-            {!data.length ? (
+            {!error && !data.length ? (
               <View style={styles.emptyBox}>
                 <SoftEntrance>
                   <Image

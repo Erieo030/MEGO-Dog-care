@@ -96,3 +96,14 @@ test('reconciliation schedules future reminders for every pet', async () => {
     }),
   );
 });
+
+test('disabled reconciliation removes only this accounts scheduled notifications', async () => {
+  enabled.mockResolvedValue(false);
+  notifications.getAllScheduledNotificationsAsync.mockResolvedValue([
+    { identifier: 'owned', content: { data: { owner: 'mego-local-reminder', userId: 'u1' } } },
+    { identifier: 'other', content: { data: { owner: 'mego-local-reminder', userId: 'u2' } } },
+  ] as unknown as Notifications.NotificationRequest[]);
+  await reconcileAccountNotifications('u1', []);
+  expect(notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('owned');
+  expect(notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('other');
+});

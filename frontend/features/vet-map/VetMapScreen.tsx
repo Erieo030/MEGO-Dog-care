@@ -1,3 +1,4 @@
+import { useReducedMotion } from '../../hooks/usePressFeedback';
 /** 用途：在 MEGO 內瀏覽動物醫院地圖，並提供電話與外部導航入口。 */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -46,6 +47,7 @@ const openSource = (url: string) =>
   Linking.openURL(url).catch(() => Alert.alert('無法開啟資料來源', '請稍後再試。'));
 
 export default function VetMapScreen({ navigation, route }: Props) {
+  const reducedMotion = useReducedMotion();
   const bottomPadding = useTabContentBottomPadding(20);
   const [mode, setMode] = useState<DisplayMode>('map');
   const [query, setQuery] = useState('');
@@ -71,8 +73,8 @@ export default function VetMapScreen({ navigation, route }: Props) {
   const { locating, locate, cancel } = useVetMapLocation(handleLocated);
   useFocusEffect(useCallback(() => () => setInteractingWithMap(false), []));
   useEffect(() => {
-    if (mode === 'map') mapRef.current?.animateToRegion(region, 250);
-  }, [mode, region]);
+    if (mode === 'map') mapRef.current?.animateToRegion(region, reducedMotion ? 0 : 250);
+  }, [mode, region, reducedMotion]);
 
   const openDirections = async (hospital: (typeof VET_HOSPITALS)[number]) =>
     Linking.openURL(getHospitalDirectionsUrl(hospital, Platform.OS)).catch(() =>
@@ -99,7 +101,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
     const coordinate = getHospitalCoordinate(hospital);
     setMode(coordinate ? 'map' : 'list');
     if (coordinate) setRegion({ ...coordinate, latitudeDelta: 0.035, longitudeDelta: 0.035 });
-    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: 0, animated: true }));
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: 0, animated: !reducedMotion }));
   };
 
   return (

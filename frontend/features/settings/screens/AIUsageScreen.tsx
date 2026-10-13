@@ -1,3 +1,4 @@
+import { ScreenPageState } from '../../../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：設定中的 AI 使用狀況；由 ProfileStack 的 AIUsage route 開啟。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -40,13 +41,21 @@ export function AIUsageScreen() {
         return;
       }
       try {
-        const [today, recent] = await Promise.all([
+        const [today, recent] = await Promise.allSettled([
           getAIUsage(userId, signal),
           getAIUsageHistory(userId, 7, signal),
         ]);
         if (isCurrent()) {
-          setUsage(today);
-          setHistory(recent);
+          if (today.status === 'fulfilled') setUsage(today.value);
+          if (recent.status === 'fulfilled') setHistory(recent.value);
+          setError(
+            [
+              today.status === 'rejected' ? '今日用量載入失敗' : '',
+              recent.status === 'rejected' ? '近 7 天用量載入失敗' : '',
+            ]
+              .filter(Boolean)
+              .join('；'),
+          );
         }
       } catch (caught) {
         if (isCurrent()) setError((caught as Error).message || '暫時無法取得 AI 使用紀錄');
@@ -66,13 +75,20 @@ export function AIUsageScreen() {
       };
     }, [load]),
   );
-  if (loading) return <ScreenState loading text="正在載入 AI 使用紀錄…" />;
-  if (error || !usage || !history)
+  if (loading)
     return (
-      <ScreenState error text={error || '暫時無法取得 AI 使用紀錄'} action={() => void load()} />
+      <ScreenPageState title="AI 使用紀錄">
+        <ScreenState loading text="正在載入 AI 使用紀錄…" />
+      </ScreenPageState>
     );
-  const used = usage.used ?? 0;
-  const maximum = Math.max(1, ...history.dailyUsage.map((entry) => entry.used));
+  if (!usage && !history)
+    return (
+      <ScreenPageState title="AI 使用紀錄">
+        <ScreenState error text={error || '暫時無法取得 AI 使用紀錄'} action={() => void load()} />
+      </ScreenPageState>
+    );
+  const used = usage?.used ?? 0;
+  const maximum = Math.max(1, ...(history?.dailyUsage ?? []).map((entry) => entry.used));
   const todayKey = taipeiDateKey();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.safe}>
@@ -85,62 +101,69 @@ export function AIUsageScreen() {
           <Text style={s.usageHeading}>AI 使用紀錄</Text>
           <Text style={s.usageIntroHint}>查看今天與最近七天使用 MEGO AI 的次數。</Text>
         </View>
-        <View style={s.usageCard}>
-          <View style={s.cardHeading}>
-            <View style={s.todayIcon}>
-              <Ionicons name="today-outline" size={18} color={Colors.primaryDecoration} />
-            </View>
-            <Text style={s.cardTitle}>今天</Text>
-          </View>
-          <View style={s.metricRow}>
-            <Text style={s.usageValue}>{used}</Text>
-            <Text style={s.usageUnit}>次使用</Text>
-          </View>
-          <Text style={s.usageHint}>
-            {usage.unlimited
-              ? '目前沒有每日使用次數上限。'
-              : `今天還可使用 ${usage.remaining ?? 0} 次，額度於台灣時間午夜更新。`}
-          </Text>
-        </View>
-        <View style={s.historyCard}>
-          <View style={s.historyHeading}>
-            <View>
-              <Text style={s.cardTitle}>近 7 天</Text>
-              <Text style={s.historySub}>每日使用次數</Text>
-            </View>
-            <View style={s.totalPill}>
-              <Text style={s.totalLabel}>合計</Text>
-              <Text style={s.totalValue}>{history.totalUsed} 次</Text>
-            </View>
-          </View>
-          {history.dailyUsage.map((entry, index) => {
-            const isToday = entry.date === todayKey;
-            const dateLabel = formatTaipeiDate(`${entry.date}T12:00:00+08:00`, {
-              month: 'numeric',
-              day: 'numeric',
-              weekday: 'short',
-            });
-            const barWidth = entry.used
-              ? (`${Math.max(5, (entry.used / maximum) * 100)}%` as `${number}%`)
-              : 0;
-            return (
-              <View key={entry.date} style={[s.historyRow, index === 0 && s.firstHistoryRow]}>
-                <View style={s.dateLabelWrap}>
-                  <Text style={[s.dateLabel, isToday && s.todayLabel]}>{dateLabel}</Text>
-                  {isToday ? <Text style={s.todayBadge}>今天</Text> : null}
-                </View>
-                <View style={s.barTrack}>
-                  <View style={[s.barFill, { width: barWidth }]} />
-                </View>
-                <Text style={s.countLabel}>{entry.used} 次</Text>
+        {!!error && <ScreenState error text={error} action={() => void load()} />}
+        {usage && (
+          <View style={s.usageCard}>
+            <View style={s.cardHeading}>
+              <View style={s.todayIcon}>
+                <Ionicons name="today-outline" size={18} color={Colors.primaryDecoration} />
               </View>
-            );
-          })}
-          <View style={s.usageNotice}>
-            <Ionicons name="heart-outline" size={18} color={Colors.successDecoration} />
-            <Text style={s.usageNoticeText}>AI 回覆供照護整理與一般資訊參考，不取代獸醫判斷。</Text>
+              <Text style={s.cardTitle}>今天</Text>
+            </View>
+            <View style={s.metricRow}>
+              <Text style={s.usageValue}>{used}</Text>
+              <Text style={s.usageUnit}>次使用</Text>
+            </View>
+            <Text style={s.usageHint}>
+              {usage.unlimited
+                ? '目前沒有每日使用次數上限。'
+                : `今天還可使用 ${usage.remaining ?? 0} 次，額度於台灣時間午夜更新。`}
+            </Text>
           </View>
-        </View>
+        )}
+        {history && (
+          <View style={s.historyCard}>
+            <View style={s.historyHeading}>
+              <View>
+                <Text style={s.cardTitle}>近 7 天</Text>
+                <Text style={s.historySub}>每日使用次數</Text>
+              </View>
+              <View style={s.totalPill}>
+                <Text style={s.totalLabel}>合計</Text>
+                <Text style={s.totalValue}>{history.totalUsed} 次</Text>
+              </View>
+            </View>
+            {history.dailyUsage.map((entry, index) => {
+              const isToday = entry.date === todayKey;
+              const dateLabel = formatTaipeiDate(`${entry.date}T12:00:00+08:00`, {
+                month: 'numeric',
+                day: 'numeric',
+                weekday: 'short',
+              });
+              const barWidth = entry.used
+                ? (`${Math.max(5, (entry.used / maximum) * 100)}%` as `${number}%`)
+                : 0;
+              return (
+                <View key={entry.date} style={[s.historyRow, index === 0 && s.firstHistoryRow]}>
+                  <View style={s.dateLabelWrap}>
+                    <Text style={[s.dateLabel, isToday && s.todayLabel]}>{dateLabel}</Text>
+                    {isToday ? <Text style={s.todayBadge}>今天</Text> : null}
+                  </View>
+                  <View style={s.barTrack}>
+                    <View style={[s.barFill, { width: barWidth }]} />
+                  </View>
+                  <Text style={s.countLabel}>{entry.used} 次</Text>
+                </View>
+              );
+            })}
+            <View style={s.usageNotice}>
+              <Ionicons name="heart-outline" size={18} color={Colors.successDecoration} />
+              <Text style={s.usageNoticeText}>
+                AI 回覆供照護整理與一般資訊參考，不取代獸醫判斷。
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

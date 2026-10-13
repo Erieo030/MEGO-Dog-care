@@ -259,6 +259,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
                   <Text style={styles.fieldLabel}>{label}</Text>
                   <Text style={styles.fieldHint}>{hint}</Text>
                   <TextInput
+                    accessibilityLabel={label}
                     style={styles.input}
                     placeholder="請輸入"
                     placeholderTextColor={Colors.subtext}

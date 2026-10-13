@@ -1,3 +1,6 @@
+import { createMedication, updateMedication } from '../../services/medicationService';
+import { saveLostProfile, getLostProfile } from '../../services/lostPetService';
+import { DEFAULT_PROFILE } from '../../features/pet-identity/identityFields';
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -342,4 +345,119 @@ test('existing overlong pet name cannot be submitted until shortened', async () 
   await act(async () => screen.root.findByType('AppButton' as never).props.onPress());
   expect(onSubmit).not.toHaveBeenCalled();
   expect(Alert.alert).toHaveBeenCalledWith('姓名太長', expect.stringContaining('20'));
+});
+
+test('editing then removing a medication reminder does not restore its hidden time on save', async () => {
+  mockRoute = {
+    params: {
+      record: {
+        id: 'm1',
+        petId: 'p1',
+        name: '藥品',
+        instructions: '',
+        timesPerDay: 1,
+        startDate: '2026-10-01',
+        endDate: '',
+        mealTiming: 'anytime',
+        notes: '',
+        status: 'active',
+        reminderTimes: ['08:00'],
+      },
+    },
+  };
+  (updateMedication as jest.Mock).mockResolvedValue({ record: { id: 'm1' } });
+  await act(async () => {
+    screen = create(<MedicationFormScreen />);
+  });
+  const action = (kind: string) =>
+    screen.root
+      .findAllByType('RecordActionButton' as never)
+      .find((node) => node.props.kind === kind)!;
+  await act(async () => action('edit').props.onPress());
+  const timePicker = () =>
+    screen.root.findAllByType('DatePicker' as never).find((node) => node.props.mode === 'time')!;
+  await act(async () => timePicker().props.onChange(new Date('2026-10-13T09:00:00+08:00')));
+  await act(async () => action('delete').props.onPress());
+  await act(async () => screen.root.findByType('AppButton' as never).props.onPress());
+  expect(updateMedication).toHaveBeenCalledWith(
+    'u1',
+    'm1',
+    expect.objectContaining({ reminderTimes: [], reminderEnabled: false }),
+  );
+});
+test('a copied completed medication starts a new active course owned by the source pet', async () => {
+  mockRoute = {
+    params: {
+      duplicate: true,
+      record: {
+        id: 'm1',
+        petId: 'p1',
+        name: '藥品',
+        instructions: '每日使用',
+        timesPerDay: 2,
+        mealTiming: 'after_meal',
+        notes: '',
+        status: 'completed',
+        startDate: '2020-01-01',
+        endDate: '2020-02-01',
+        reminderTimes: ['08:00'],
+        medicalVisitId: 'old-visit',
+      },
+    },
+  };
+  (createMedication as jest.Mock).mockResolvedValue({ record: { id: 'new' } });
+  await act(async () => {
+    screen = create(<MedicationFormScreen />);
+  });
+  expect(screen.root.findByType(ScreenPageHeader).props.title).toBe('新增用藥療程');
+  await act(async () => screen.root.findByType('AppButton' as never).props.onPress());
+  expect(createMedication).toHaveBeenCalledWith(
+    'u1',
+    'p1',
+    expect.objectContaining({
+      status: 'active',
+      endDate: '',
+      reminderTimes: [],
+      medicalVisitId: undefined,
+    }),
+  );
+});
+test('QR slow save preserves newer phone edits and keeps the leave guard dirty', async () => {
+  const initial = { ...DEFAULT_PROFILE, enabled: true, contactPhone: '0911111111' };
+  (getLostProfile as jest.Mock).mockResolvedValueOnce({ profile: initial });
+  let resolve!: (value: unknown) => void;
+  (saveLostProfile as jest.Mock).mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  await act(async () => {
+    screen = create(
+      <LostPetSettingsScreen
+        navigation={mockNavigation as never}
+        route={{ params: {} } as never}
+      />,
+    );
+  });
+  const phone = () =>
+    screen.root
+      .findAllByType('Input' as never)
+      .find((node) => node.props.accessibilityLabel === '主要電話（選填）')!;
+  await act(async () => phone().props.onChangeText('0922222222'));
+  let pending: Promise<void>;
+  await act(async () => {
+    pending = screen.root
+      .findAllByType('AppButton' as never)
+      .find((node) => node.props.title === '儲存公開設定')!
+      .props.onPress();
+  });
+  await act(async () => phone().props.onChangeText('0933333333'));
+  await act(async () => {
+    resolve({ profile: { ...initial, contactPhone: '0922222222' } });
+    await pending!;
+  });
+  expect(phone().props.value).toBe('0933333333');
+  expect(guardTabNavigation(jest.fn())).toBe(true);
+  await act(async () => choose('繼續編輯'));
 });

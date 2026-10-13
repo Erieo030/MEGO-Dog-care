@@ -42,7 +42,7 @@ function DetailRow({
 export function DewormingDetailScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'DewormingDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [record, setRecord] = useState<Deworming | null>(null);
@@ -99,6 +99,7 @@ export function DewormingDetailScreen() {
         />
       </ScreenPageState>
     );
+  const ownerPet = pets.find((pet) => pet.id === record.petId);
   const deleteRecord = () =>
     Alert.alert('刪除驅蟲紀錄', '確定要刪除嗎？', [
       { text: '取消' },
@@ -124,6 +125,7 @@ export function DewormingDetailScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
+        <Text style={styles.label}>毛孩：{ownerPet?.name || '原紀錄毛孩'}</Text>
         <ScreenPageHeader
           style={styles.detailHero}
           title={record.productName}
@@ -153,7 +155,7 @@ export function DewormingDetailScreen() {
             style={styles.actionButton}
             onPress={() => navigation.navigate('DewormingForm', { record })}
           />
-          {!selectedPet?.memorial && (
+          {ownerPet && !ownerPet.memorial && (
             <AppButton
               title="複製新增"
               disabled={deleting}

@@ -6,7 +6,10 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { Linking } from 'react-native';
 import * as Location from 'expo-location';
 import * as ImagePicker from 'expo-image-picker';
-import { getNotificationPermissionState } from '../../../services/notificationService';
+import {
+  getNotificationPermissionState,
+  reconcileAccountNotifications,
+} from '../../../services/notificationService';
 import { NotificationSettingsScreen } from '../screens/SettingsScreens';
 
 const mockRemove = jest.fn();
@@ -46,13 +49,18 @@ jest.mock('expo-location', () => ({
 jest.mock('../../../contexts/AuthContext', () => ({
   useAuth: () => ({ session: { userId: 'u1' } }),
 }));
-jest.mock('../../../contexts/PetContext', () => ({ usePet: jest.fn() }));
+jest.mock('../../../contexts/PetContext', () => ({
+  usePet: jest.fn().mockReturnValue({ pets: [] }),
+}));
 jest.mock('../../../contexts/SettingsContext', () => ({
   useSettings: () => ({ settings: { localNotificationsEnabled: false }, update: jest.fn() }),
 }));
 jest.mock('../../../services/notificationService', () => ({
   getNotificationPermissionState: jest.fn().mockResolvedValue('granted'),
   requestNotificationPermission: jest.fn(),
+  reconcileAccountNotifications: jest
+    .fn()
+    .mockResolvedValue({ permission: 'granted', scheduled: 0, cancelled: 0 }),
 }));
 jest.mock('../components/SettingsLayout', () => ({
   SettingsPage: 'Page',
@@ -134,3 +142,12 @@ test('notification-read failures are distinguished from an undecided permission'
   expect(row('手機通知權限').props.value).toBe('暫時無法讀取');
   expect(row('相機權限').props.value).toBe('未開啟');
 });
+
+test.each([false, true])(
+  'saving notification preference %s immediately reconciles schedules',
+  async (value) => {
+    await mount();
+    await act(async () => screen.root.findByType('Switch' as never).props.onValueChange(value));
+    expect(reconcileAccountNotifications).toHaveBeenCalledWith('u1', []);
+  },
+);

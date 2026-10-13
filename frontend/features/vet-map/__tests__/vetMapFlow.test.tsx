@@ -99,7 +99,7 @@ test('selecting a hospital returns to the existing visit form and merges its par
   await mount();
   expect(Location.requestForegroundPermissionsAsync).not.toHaveBeenCalled();
   await act(async () => byLabel('查看仁愛犬醫院位置').props.onPress());
-  expect(mockScroll).toHaveBeenCalledWith({ y: 0, animated: true });
+  expect(mockScroll).toHaveBeenCalledWith({ y: 0, animated: false });
   await act(async () => byLabel('將仁愛犬醫院帶入就醫紀錄').props.onPress());
   expect(popTo).toHaveBeenCalledWith(
     'MedicalVisitForm',
@@ -199,4 +199,11 @@ test('location timeout releases the button for retry', async () => {
   await act(async () => jest.advanceTimersByTime(12000));
   expect(byLabel('使用目前位置').props.disabled).toBe(false);
   expect(Alert.alert).toHaveBeenCalledWith('無法取得目前位置', expect.any(String));
+});
+
+test('map and scroll remain immediate when reduced motion is enabled', async () => {
+  await mount();
+  await act(async () => byLabel('查看仁愛犬醫院位置').props.onPress());
+  expect(mockAnimate).toHaveBeenLastCalledWith(expect.any(Object), 0);
+  expect(mockScroll).toHaveBeenCalledWith({ y: 0, animated: false });
 });
