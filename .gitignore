@@ -71,6 +71,7 @@ coverage/
 .logs/
 backend/uploads/
 backend/exports/
+backend/mego-exports/
 backend/models/stool_classifier/
 stool-classification/model/efficientnet_b0/model.onnx
 
