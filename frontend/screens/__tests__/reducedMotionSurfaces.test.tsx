@@ -4,17 +4,22 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import LoginScreen from '../LoginScreen';
 import SupplementalNotesField from '../../components/SupplementalNotesField';
 let mockReduced = true;
-let mockAppStateChange: (state: string) => void;
+// 畫面與 LottieArt 各自訂閱 AppState，替身要廣播給全部訂閱者。
+const mockAppStateListeners = new Set<(state: string) => void>();
+const mockAppStateChange = (state: string) =>
+  mockAppStateListeners.forEach((listener) => listener(state));
 const mockStart = jest.fn();
 const mockStop = jest.fn();
 const mockTiming: jest.Mock = jest.fn(() => ({ start: mockStart, stop: mockStop }));
 jest.mock('../../hooks/usePressFeedback', () => ({ useReducedMotion: () => mockReduced }));
-jest.mock('../../assets/artwork/auth/login-dog-v1.webp', () => 1);
 jest.mock('../../assets/artwork/auth/login-paw-v1.webp', () => 1);
+jest.mock('../../assets/artwork/auth/dog-run-v1.json', () => ({ dog: true }));
+jest.mock('../../assets/artwork/auth/paws-loading-light-v1.json', () => ({ paws: true }));
 jest.mock('react-native', () => ({
   Text: 'Text',
   TextInput: 'Input',
   TouchableOpacity: 'Button',
+  Image: 'Image',
   View: 'View',
   ScrollView: 'Scroll',
   Modal: 'Modal',
@@ -26,8 +31,8 @@ jest.mock('react-native', () => ({
   AppState: {
     currentState: 'active',
     addEventListener: (_event: string, callback: (state: string) => void) => {
-      mockAppStateChange = callback;
-      return { remove: jest.fn() };
+      mockAppStateListeners.add(callback);
+      return { remove: () => mockAppStateListeners.delete(callback) };
     },
   },
   StyleSheet: { create: (x: object) => x },
@@ -55,30 +60,41 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 let screen: ReactTestRenderer;
 beforeEach(() => {
   jest.clearAllMocks();
+  mockAppStateListeners.clear();
   mockReduced = true;
 });
 afterEach(async () => {
   if (screen) await act(async () => screen.unmount());
 });
-test('reduced-motion login renders a static illustration without starting loops', async () => {
+test('reduced-motion login holds the dog animation on its first frame', async () => {
   await act(async () => {
     screen = create(<LoginScreen onLoginSuccess={jest.fn()} onGoToRegister={jest.fn()} />);
   });
-  expect(mockTiming).not.toHaveBeenCalled();
   const dog = screen.root.find(
-    (node) =>
-      node.type === ('AnimatedImage' as never) && node.props.accessibilityLabel === '友善狗狗插畫',
+    (node) => node.type === ('View' as never) && node.props.accessibilityLabel === '奔跑的狗狗插畫',
   );
-  expect(dog.props.style.at(-1)).toMatchObject({ opacity: 1, transform: [] });
+  const player = dog.findByType('LottieView' as never);
+  expect(player.props.autoPlay).toBe(false);
+  expect(player.props.loop).toBe(false);
+  expect(player.props.progress).toBe(0);
 });
-test('ordinary login animation stops when the app moves to the background', async () => {
+test('the dog animation plays normally and pauses when the app moves to the background', async () => {
   mockReduced = false;
   await act(async () => {
     screen = create(<LoginScreen onLoginSuccess={jest.fn()} onGoToRegister={jest.fn()} />);
   });
-  expect(mockStart).toHaveBeenCalled();
+  const player = () =>
+    screen.root
+      .find(
+        (node) =>
+          node.type === ('View' as never) && node.props.accessibilityLabel === '奔跑的狗狗插畫',
+      )
+      .findByType('LottieView' as never);
+  expect(player().props.autoPlay).toBe(true);
+  expect(player().props.progress).toBeUndefined();
   await act(async () => mockAppStateChange('background'));
-  expect(mockStop).toHaveBeenCalled();
+  expect(player().props.autoPlay).toBe(false);
+  expect(player().props.progress).toBe(0);
 });
 test('reduced-motion notes open immediately without spatial entrance', async () => {
   await act(async () => {

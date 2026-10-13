@@ -2,9 +2,8 @@ import { useReducedMotion } from '../hooks/usePressFeedback';
 /** 用途：以輕量原生版面登入，鍵盤開啟時保持欄位與送出按鈕可操作。 */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  AppState,
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -18,9 +17,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
+import { LottieArt } from '../components/LottieArt';
 import { Type } from '../constants/Typography';
 
-const LOGIN_DOG = require('../assets/artwork/auth/login-dog-v1.webp');
+const LOGIN_DOG_RUN = require('../assets/artwork/auth/dog-run-v1.json');
+// 送出中的按鈕是深棕底，改用白色版本才看得見。
+const LOGIN_PAWS_LOADING = require('../assets/artwork/auth/paws-loading-light-v1.json');
 const LOGIN_PAW = require('../assets/artwork/auth/login-paw-v1.webp');
 
 interface LoginScreenProps {
@@ -31,22 +33,12 @@ interface LoginScreenProps {
 export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScreenProps) {
   const reducedMotion = useReducedMotion();
   const loginLock = useRef(false);
-  const [appActive, setAppActive] = useState(AppState.currentState === 'active');
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) =>
-      setAppActive(state === 'active'),
-    );
-    return () => subscription.remove();
-  }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const passwordInputRef = useRef<TextInput>(null);
-  const dogEntrance = useRef(new Animated.Value(0)).current;
-  const dogFloat = useRef(new Animated.Value(0)).current;
-  const loadingPawTurn = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
@@ -54,44 +46,6 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
     });
     return () => keyboardHideSubscription.remove();
   }, [reducedMotion]);
-
-  useEffect(() => {
-    if (reducedMotion || !appActive) {
-      dogEntrance.setValue(1);
-      dogFloat.setValue(0);
-      return;
-    }
-    const entrance = Animated.timing(dogEntrance, {
-      toValue: 1,
-      duration: 520,
-      delay: 100,
-      useNativeDriver: true,
-    });
-    const floating = Animated.loop(
-      Animated.sequence([
-        Animated.timing(dogFloat, { toValue: -5, duration: 1700, useNativeDriver: true }),
-        Animated.timing(dogFloat, { toValue: 0, duration: 1700, useNativeDriver: true }),
-      ]),
-    );
-    entrance.start();
-    floating.start();
-    return () => {
-      entrance.stop();
-      floating.stop();
-    };
-  }, [dogEntrance, dogFloat, reducedMotion, appActive]);
-
-  useEffect(() => {
-    if (!isSubmitting || reducedMotion || !appActive) {
-      loadingPawTurn.setValue(0);
-      return;
-    }
-    const spinning = Animated.loop(
-      Animated.timing(loadingPawTurn, { toValue: 1, duration: 900, useNativeDriver: true }),
-    );
-    spinning.start();
-    return () => spinning.stop();
-  }, [isSubmitting, loadingPawTurn, reducedMotion, appActive]);
 
   const revealFormForKeyboard = () => {
     // KeyboardAvoidingView 先騰出空間，再將整個表單帶入可視區，避免欄位被遮住。
@@ -128,35 +82,20 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.hero}>
-            <Animated.Image
+            <Image
               source={LOGIN_PAW}
               accessibilityElementsHidden
               style={[styles.decorativePaw, styles.decorativePawLeft]}
             />
-            <Animated.Image
+            <Image
               source={LOGIN_PAW}
               accessibilityElementsHidden
               style={[styles.decorativePaw, styles.decorativePawRight]}
             />
-            <Animated.Image
-              source={LOGIN_DOG}
-              accessibilityLabel="友善狗狗插畫"
-              style={[
-                styles.dogArtwork,
-                {
-                  opacity: reducedMotion ? 1 : dogEntrance,
-                  transform: reducedMotion
-                    ? []
-                    : [
-                        {
-                          translateY: Animated.add(
-                            dogFloat,
-                            dogEntrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }),
-                          ),
-                        },
-                      ],
-                },
-              ]}
+            <LottieArt
+              source={LOGIN_DOG_RUN}
+              accessibilityLabel="奔跑的狗狗插畫"
+              style={styles.dogArtwork}
             />
             <Text style={styles.brandName}>MEGO</Text>
             <Text style={styles.brandSlogan}>記錄毛孩成長的每一刻</Text>
@@ -226,25 +165,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 disabled={isSubmitting}
               >
                 {isSubmitting && (
-                  <Animated.Image
-                    source={LOGIN_PAW}
-                    accessibilityElementsHidden
-                    style={[
-                      styles.loadingPaw,
-                      {
-                        transform: reducedMotion
-                          ? []
-                          : [
-                              {
-                                rotate: loadingPawTurn.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: ['0deg', '360deg'],
-                                }),
-                              },
-                            ],
-                      },
-                    ]}
-                  />
+                  <LottieArt source={LOGIN_PAWS_LOADING} style={styles.loadingPaw} />
                 )}
                 <Text style={styles.loginButtonText}>
                   {isSubmitting ? '正在登入…' : '開啟紀錄之旅'}
@@ -342,7 +263,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.3,
   },
-  loadingPaw: { width: 22, height: 22, resizeMode: 'contain', tintColor: Colors.onPrimary },
+  loadingPaw: { width: 22, height: 22, marginRight: 8 },
   registerLinkButton: {
     minHeight: 44,
     flexDirection: 'row',
