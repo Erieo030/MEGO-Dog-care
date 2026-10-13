@@ -33,6 +33,10 @@ jest.mock('react-native', () => {
     Platform: { OS: 'ios' },
     Keyboard: { dismiss: jest.fn() },
     Alert: { alert: jest.fn() },
+    AppState: {
+      currentState: 'active',
+      addEventListener: () => ({ remove: jest.fn() }),
+    },
   };
 });
 jest.mock('react-native-safe-area-context', () => ({

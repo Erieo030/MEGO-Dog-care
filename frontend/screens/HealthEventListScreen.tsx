@@ -20,7 +20,10 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Colors } from '../constants/Colors';
+import { LottieArt } from '../components/LottieArt';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
+
+const EMPTY_PUPPY = require('../assets/artwork/care/puppy-sleeping-v1.json');
 import ScreenState from '../components/ScreenState';
 import { HEALTH_EVENT_LABELS, SEVERITY_LABELS } from '../constants/HealthEvents';
 import { useAuth } from '../contexts/AuthContext';
@@ -147,9 +150,7 @@ export default function HealthEventListScreen({ navigation }: Props) {
           ListEmptyComponent={
             !error ? (
               <View style={styles.emptyBox}>
-                <View style={styles.emptyIcon}>
-                  <Ionicons name="leaf-outline" size={30} color={Colors.primaryDecoration} />
-                </View>
+                <LottieArt source={EMPTY_PUPPY} style={styles.emptyArtwork} />
                 <Text style={styles.empty}>尚無健康異常紀錄</Text>
                 <Text style={styles.emptyHint}>有需要時再記下來，方便之後回想。</Text>
               </View>
@@ -212,15 +213,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', backgroundColor: Colors.background },
   state: { alignItems: 'center', padding: 30 },
   emptyBox: { alignItems: 'center', paddingVertical: 28 },
-  emptyIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primarySoft,
-    marginBottom: 8,
-  },
+  emptyArtwork: { width: 96, height: 96, marginBottom: 4 },
   emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   empty: { color: Colors.subtext, textAlign: 'center', padding: 40 },
   error: { color: Colors.dangerText, textAlign: 'center' },

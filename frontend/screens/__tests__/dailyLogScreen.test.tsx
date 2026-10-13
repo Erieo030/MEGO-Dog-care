@@ -16,6 +16,7 @@ jest.mock('react-native', () => ({
   TouchableOpacity: 'TouchableOpacity',
   View: 'View',
   StyleSheet: { create: (value: object) => value, hairlineWidth: 1 },
+  AppState: { currentState: 'active', addEventListener: () => ({ remove: jest.fn() }) },
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 jest.mock('@react-navigation/native', () => {

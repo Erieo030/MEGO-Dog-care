@@ -4,7 +4,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { HomeStackParamList } from '../navigation/types';
-import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { RecordActionButton } from '../components/RecordActionButton';
@@ -14,6 +14,7 @@ import ScreenState from '../components/ScreenState';
 import { ScreenPageHeader, ScreenPageFrame, ScreenPageState } from '../components/ScreenPageHeader';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { SoftEntrance } from '../components/SoftMotion';
+import { LottieArt } from '../components/LottieArt';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -27,6 +28,8 @@ import {
 import { classifyStoolPhoto, StoolClassification } from '../services/stoolClassifierService';
 import { DailyLog, DailyEnergyLevel, DailyStoolLevel, DailyWaterLevel } from '../types';
 import { taipeiDateKey } from '../utils/taipeiDate';
+
+const CLASSIFY_PAWS = require('../assets/artwork/care/paws-loading-success-v1.json');
 import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import {
   dailyLogDateLabel,
@@ -322,7 +325,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
                   onPress={() => void runStoolClassification('camera')}
                 >
                   {classifying ? (
-                    <ActivityIndicator color={Colors.success} />
+                    <LottieArt source={CLASSIFY_PAWS} style={s.classifierWaiting} />
                   ) : (
                     <Ionicons name="camera-outline" size={19} color={Colors.successDecoration} />
                   )}

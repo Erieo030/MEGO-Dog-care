@@ -1,7 +1,6 @@
 /** 用途：註冊畫面，保留帳密驗證並提供欄位提示與提交回饋。 */
 import React, { useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Keyboard,
   KeyboardAvoidingView,
@@ -17,7 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { SoftButton, SoftEntrance, SoftField } from '../components/SoftMotion';
+import { LottieArt } from '../components/LottieArt';
 import { Type } from '../constants/Typography';
+
+const REGISTER_DOG_RUN = require('../assets/artwork/auth/dog-run-v1.json');
+// 建立中的按鈕是深棕底，改用白色版本才看得見。
+const REGISTER_PAWS_LOADING = require('../assets/artwork/auth/paws-loading-light-v1.json');
 
 interface RegisterScreenProps {
   onRegisterSuccess: (email: string, password: string) => void | Promise<void>;
@@ -123,9 +127,11 @@ export default function RegisterScreen({ onRegisterSuccess, onGoToLogin }: Regis
               <Ionicons name="chevron-back" size={22} color={Colors.text} />
             </TouchableOpacity>
             <SoftEntrance style={styles.hero}>
-              <View style={styles.heroMark}>
-                <Ionicons name="paw" size={30} color={Colors.primaryDecoration} />
-              </View>
+              <LottieArt
+                source={REGISTER_DOG_RUN}
+                accessibilityLabel="奔跑的狗狗插畫"
+                style={styles.heroArtwork}
+              />
               <Text style={styles.brand}>MEGO</Text>
               <Text style={styles.title}>建立帳號</Text>
               <Text style={styles.subtitle}>開始記錄毛孩生活</Text>
@@ -208,7 +214,9 @@ export default function RegisterScreen({ onRegisterSuccess, onGoToLogin }: Regis
                 accessibilityRole="button"
                 accessibilityState={{ busy: submitting, disabled: submitting }}
               >
-                {submitting && <ActivityIndicator color={Colors.surfaceSoft} />}
+                {submitting && (
+                  <LottieArt source={REGISTER_PAWS_LOADING} style={styles.loadingPaw} />
+                )}
                 <Text style={styles.registerButtonText}>{submitting ? '建立中…' : '註冊帳號'}</Text>
               </SoftButton>
               <TouchableOpacity
@@ -235,15 +243,8 @@ const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingHorizontal: 28, paddingTop: 18, paddingBottom: 32 },
   backButton: { width: 44, height: 44, alignItems: 'flex-start', justifyContent: 'center' },
   hero: { alignItems: 'center', marginTop: 8, marginBottom: 24 },
-  heroMark: {
-    width: 64,
-    height: 64,
-    borderRadius: 22,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
+  heroArtwork: { width: 116, height: 116, marginBottom: 6 },
+  loadingPaw: { width: 22, height: 22, marginRight: 8 },
   brand: {
     fontSize: Type.display2,
     fontWeight: '800',

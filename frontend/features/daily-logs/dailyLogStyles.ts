@@ -36,6 +36,7 @@ export const dailyLogStyles = StyleSheet.create({
   classifierHeading: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 48 },
   classifierTitle: { color: Colors.text, fontSize: Type.subhead, fontWeight: '800' },
   classifierHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 5 },
+  classifierWaiting: { width: 20, height: 20 },
   classifierActions: { flexDirection: 'row', gap: 8, marginTop: 10 },
   classifierButton: {
     flex: 1,
