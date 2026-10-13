@@ -52,6 +52,7 @@ App 底部有四個分頁。照護相簿收在「紀錄」分頁右上角的「�
 | --- | --- |
 | 前端 | React 19.2.3、React Native 0.86.3、Expo SDK 57、TypeScript 6、React Navigation 7、Ionicons、AsyncStorage |
 | 前端原生功能 | expo-image-picker、expo-notifications、expo-secure-store、react-native-maps、expo-location |
+| 前端動畫 | react-native-reanimated、lottie-react-native |
 | 後端 | Python 3、FastAPI、Pydantic 2、PyMongo、Uvicorn、ReportLab、PyJWT |
 | 照片分類 | ONNX Runtime、NumPy、Pillow |
 | 資料庫 | MongoDB 7 |
