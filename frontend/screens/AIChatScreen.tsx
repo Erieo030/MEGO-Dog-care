@@ -1,3 +1,4 @@
+import { useReducedMotion } from '../hooks/usePressFeedback';
 import { aiChatStyles as s } from '../features/ai/aiChatStyles';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -16,6 +17,7 @@ import { usePet } from '../contexts/PetContext';
 import { sendAIChat, AIUsage } from '../services/aiService';
 import {
   activateEmptyAISession,
+  captureAISessionGeneration,
   loadAISession,
   saveActiveAISession,
 } from '../services/aiSessionService';
@@ -37,6 +39,7 @@ function KeyboardScrollSpacer() {
 
 export default function AIChatScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const reducedMotion = useReducedMotion();
   const { session } = useAuth();
   const { selectedPet } = usePet();
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
@@ -131,6 +134,7 @@ export default function AIChatScreen() {
     sendLock.current = sendToken;
     const requestGeneration = sessionRequestId.current;
     const requestSessionId = activeSessionId;
+    const storageGeneration = captureAISessionGeneration(session.userId);
     const isCurrent = () => requestGeneration === sessionRequestId.current;
     setInput('');
     setError('');
@@ -203,6 +207,7 @@ export default function AIChatScreen() {
             }),
           ),
           result.usage,
+          storageGeneration,
         );
       } catch {
         if (isCurrent()) setError('回覆已收到，但無法儲存到本機對話紀錄。');
@@ -247,7 +252,7 @@ export default function AIChatScreen() {
           onContentSizeChange={() => {
             if (!shouldScrollToEndRef.current) return;
             shouldScrollToEndRef.current = false;
-            requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+            requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: !reducedMotion }));
           }}
           ListHeaderComponent={
             <View>

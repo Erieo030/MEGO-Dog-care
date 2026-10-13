@@ -1,3 +1,6 @@
+import { CardSurface } from '../constants/Layout';
+import { useReducedMotion } from '../hooks/usePressFeedback';
+import { useFormPet } from '../hooks/useFormPet';
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：新增或編輯就醫紀錄，支援多筆藥物、附件與回診提醒同步。 */
@@ -38,14 +41,17 @@ import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard'
 import { Type } from '../constants/Typography';
 type Props = NativeStackScreenProps<HomeStackParamList, 'MedicalVisitForm'>;
 export default function MedicalVisitFormScreen({ route, navigation }: Props) {
+  const reducedMotion = useReducedMotion();
   const bottomContentPadding = useTabContentBottomPadding();
   const existing = route.params?.visit;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const { session } = useAuth();
-  const { selectedPet, pets } = usePet();
+  const { pets } = usePet();
+  const selectedPet = useFormPet(existing?.petId);
   const clientRequestId = useRef(
-    existing?.clientRequestId ?? 'visit-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+    (!duplicate && existing?.clientRequestId) ||
+      'visit-' + Date.now() + '-' + Math.random().toString(36).slice(2),
   ).current;
   const [visitedAt, setVisitedAt] = useState(existing ? new Date(existing.visitedAt) : new Date());
   const [reason, setReason] = useState(existing?.reason || '');
@@ -54,12 +60,16 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   const [vetNotes, setVetNotes] = useState(existing?.veterinarianNotes || '');
   const [treatment, setTreatment] = useState(existing?.treatmentNotes || '');
   const [followUp, setFollowUp] = useState(
-    existing?.followUpAt ? new Date(existing.followUpAt) : null,
+    !duplicate && existing?.followUpAt ? new Date(existing.followUpAt) : null,
   );
-  const [createReminder, setCreateReminder] = useState(Boolean(existing?.followUpReminderId));
+  const [createReminder, setCreateReminder] = useState(
+    !duplicate && Boolean(existing?.followUpReminderId),
+  );
   const [cost, setCost] = useState(existing?.cost != null ? String(existing.cost) : '');
   const [notes, setNotes] = useState(existing?.notes || '');
-  const [attachments, setAttachments] = useState<Attachment[]>(existing?.attachments || []);
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    duplicate ? [] : existing?.attachments || [],
+  );
   const [medications, setMedications] = useState<Medication[]>(existing?.medications || []);
   const [submitting, setSubmitting] = useState(false);
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
@@ -91,21 +101,26 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
     attachments,
     medications,
   };
-  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
-    setVisitedAt(value.visitedAt);
-    setReason(value.reason);
-    setClinic(value.clinic);
-    setVet(value.vet);
-    setVetNotes(value.vetNotes);
-    setTreatment(value.treatment);
-    setFollowUp(value.followUp);
-    setCreateReminder(value.createReminder);
-    setCost(value.cost);
-    setNotes(value.notes);
-    setAttachments(value.attachments);
-    setMedications(value.medications);
-    setErrors({});
-  });
+  const { markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setVisitedAt(value.visitedAt);
+      setReason(value.reason);
+      setClinic(value.clinic);
+      setVet(value.vet);
+      setVetNotes(value.vetNotes);
+      setTreatment(value.treatment);
+      setFollowUp(value.followUp);
+      setCreateReminder(value.createReminder);
+      setCost(value.cost);
+      setNotes(value.notes);
+      setAttachments(value.attachments);
+      setMedications(value.medications);
+      setErrors({});
+    },
+    true,
+    submitting,
+  );
   useEffect(() => {
     if (!route.params?.clinicName) return;
     setClinic(route.params.clinicName);
@@ -130,7 +145,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
       requestAnimationFrame(() =>
         scrollRef.current?.scrollTo({
           y: Math.max((fieldPositions.current[first] || 0) - 16, 0),
-          animated: true,
+          animated: !reducedMotion,
         }),
       );
       return false;
@@ -296,7 +311,12 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
               <Text style={s.switchText}>是否建立回診提醒？</Text>
               <Text style={s.helper}>關閉時會移除這筆就醫紀錄原有的回診提醒。</Text>
             </View>
-            <Switch value={createReminder} onValueChange={setCreateReminder} />
+            <Switch
+              accessibilityLabel="建立回診 App 內提醒"
+              accessibilityState={{ checked: createReminder }}
+              value={createReminder}
+              onValueChange={setCreateReminder}
+            />
           </View>
         )}
         <Text style={s.sectionHeading}>藥物與費用</Text>
@@ -360,7 +380,12 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   );
 }
 const s = StyleSheet.create({
-  fieldError: { color: Colors.dangerText, fontSize: Type.footnote, marginTop: 6 },
+  fieldError: {
+    ...CardSurface.hint,
+    color: Colors.dangerText,
+    fontSize: Type.footnote,
+    marginTop: 6,
+  },
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 20, paddingBottom: 48 },
   title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },

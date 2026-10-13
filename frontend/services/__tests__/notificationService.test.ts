@@ -4,6 +4,10 @@ import { localNotificationsEnabled } from '../settingsService';
 import { Reminder, Pet } from '../../types';
 import {
   getNotificationPermissionState,
+  cancelAccountNotifications,
+  activateAccountNotifications,
+  retryNotificationCancellations,
+  invalidateAllNotificationSchedules,
   scheduleReminderNotification,
   reconcileAccountNotifications,
 } from '../notificationService';
@@ -106,4 +110,59 @@ test('disabled reconciliation removes only this accounts scheduled notifications
   await reconcileAccountNotifications('u1', []);
   expect(notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('owned');
   expect(notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('other');
+});
+
+test.each(['disable', 'logout'])('late native scheduling is removed after %s', async (action) => {
+  const userId = `race-${action}`;
+  enabled.mockResolvedValue(true);
+  notifications.getPermissionsAsync.mockResolvedValue({
+    granted: true,
+    status: 'granted',
+  } as never);
+  notifications.getAllScheduledNotificationsAsync.mockResolvedValue([]);
+  let resolve!: (id: string) => void;
+  notifications.scheduleNotificationAsync.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const pending = scheduleReminderNotification(userId, reminder, 'Kuro', false);
+  for (let i = 0; i < 20 && !resolve; i++) await Promise.resolve();
+  expect(resolve).toBeDefined();
+  let cancellation: Promise<void> | undefined;
+  if (action === 'disable') {
+    invalidateAllNotificationSchedules();
+    enabled.mockResolvedValue(false);
+  } else cancellation = cancelAccountNotifications(userId);
+  resolve('late-notification');
+  await expect(pending).resolves.toEqual({ status: 'disabled' });
+  await cancellation;
+  expect(notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('late-notification');
+});
+
+test('account activation rejects former-account scheduling and recovers only owned stale OS notifications', async () => {
+  activateAccountNotifications('current-owner');
+  enabled.mockResolvedValue(true);
+  await expect(
+    scheduleReminderNotification('former-owner', reminder, 'Kuro', false),
+  ).resolves.toEqual({ status: 'disabled' });
+  notifications.getAllScheduledNotificationsAsync.mockResolvedValue([
+    {
+      identifier: 'stale-owned',
+      content: { data: { owner: 'mego-local-reminder', userId: 'former-owner' } },
+    },
+    {
+      identifier: 'current-owned',
+      content: { data: { owner: 'mego-local-reminder', userId: 'current-owner' } },
+    },
+    {
+      identifier: 'unrelated',
+      content: { data: { owner: 'another-app', userId: 'former-owner' } },
+    },
+  ] as never);
+  await retryNotificationCancellations();
+  expect(notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('stale-owned');
+  expect(notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('current-owned');
+  expect(notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('unrelated');
 });

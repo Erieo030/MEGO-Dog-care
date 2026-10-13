@@ -1,3 +1,5 @@
+import { clearExportTracking } from '../services/exportTrackingService';
+import { clearPreVetDrafts } from '../services/preVetDraftService';
 /** 用途：集中管理登入、註冊、SecureStore session 恢復與登出狀態。 */
 import React, {
   createContext,
@@ -6,13 +8,18 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useRef,
+  useCallback,
 } from 'react';
 
 import * as authService from '../services/authService';
 import { normalizePets } from '../services/petService';
 import { ApiError, setAuthExpiredHandler } from '../services/api';
 import { clearAuthTokens, readAuthTokens, saveAuthTokens } from '../services/authTokenStorage';
-import { cancelAccountNotifications } from '../services/notificationService';
+import {
+  activateAccountNotifications,
+  cancelAccountNotifications,
+} from '../services/notificationService';
 import { clearAccountAISessions } from '../services/aiSessionService';
 import { clearFirstUseGuide } from '../features/home/useFirstUseGuide';
 import { Pet } from '../types';
@@ -26,6 +33,8 @@ interface Session {
 interface AuthContextValue {
   session: Session | null;
   isLoading: boolean;
+  isRestoring: boolean;
+  isSubmitting: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -38,7 +47,17 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isRestoring, setIsRestoring] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const operationLock = useRef(false);
+  const credentialQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const credentials = useCallback(<T,>(operation: () => Promise<T>) => {
+    const next = credentialQueue.current.catch(() => undefined).then(operation);
+    credentialQueue.current = next;
+    return next;
+  }, []);
+  const currentSession = useRef(session);
+  currentSession.current = session;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,14 +65,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const restoreSession = async () => {
       try {
         const tokens = await readAuthTokens();
-        if (!tokens?.refreshToken) return;
+        if (!tokens?.refreshToken) {
+          activateAccountNotifications(null);
+          return;
+        }
         const result = await authService.refresh(tokens.refreshToken);
-        await saveAuthTokens({
-          accessToken: result.accessToken,
-          refreshToken: result.refreshToken,
-          expiresIn: result.expiresIn,
-        });
+        await credentials(() =>
+          saveAuthTokens({
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            expiresIn: result.expiresIn,
+          }),
+        );
         if (mounted) {
+          activateAccountNotifications(result.userId);
           setSession({
             userId: result.userId,
             email: result.email,
@@ -61,88 +86,97 @@ export function AuthProvider({ children }: PropsWithChildren) {
           });
         }
       } catch (restoreError) {
+        activateAccountNotifications(null);
         if ((restoreError as ApiError).status === 401) await clearAuthTokens();
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted) setIsRestoring(false);
       }
     };
     void restoreSession();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [credentials]);
 
   useEffect(() => {
     setAuthExpiredHandler(() => {
+      if (currentSession.current)
+        void cancelAccountNotifications(currentSession.current.userId).catch(() => undefined);
       setSession(null);
       setError('登入狀態已失效，請重新登入');
     });
     return () => setAuthExpiredHandler(null);
   }, []);
 
-  const authenticate = async (
-    request: typeof authService.login,
-    email: string,
-    password: string,
-  ) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await request(email, password);
-      await saveAuthTokens({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-        expiresIn: result.expiresIn,
-      });
-      setSession({
-        userId: result.userId,
-        email: result.email || email.trim(),
-        pets: normalizePets(result.pets),
-      });
-    } catch (requestError) {
-      const message = (requestError as Error).message || '操作失敗';
-      setError(message);
-      throw requestError;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const authenticate = useCallback(
+    async (request: typeof authService.login, email: string, password: string) => {
+      if (operationLock.current) return;
+      operationLock.current = true;
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const result = await request(email, password);
+        await credentials(() =>
+          saveAuthTokens({
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            expiresIn: result.expiresIn,
+          }),
+        );
+        activateAccountNotifications(result.userId);
+        setSession({
+          userId: result.userId,
+          email: result.email || email.trim(),
+          pets: normalizePets(result.pets),
+        });
+      } catch (requestError) {
+        const message = (requestError as Error).message || '操作失敗';
+        setError(message);
+        throw requestError;
+      } finally {
+        operationLock.current = false;
+        setIsSubmitting(false);
+      }
+    },
+    [credentials],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
-      isLoading,
+      isLoading: isRestoring || isSubmitting,
+      isRestoring,
+      isSubmitting,
       error,
       login: (email, password) => authenticate(authService.login, email, password),
       register: (email, password) => authenticate(authService.register, email, password),
       logout: () => {
-        void (async () => {
+        if (session) {
+          void cancelAccountNotifications(session.userId).catch(() => undefined);
+          void clearExportTracking(session.userId).catch(() => undefined);
+        }
+        void credentials(async () => {
           let refreshToken: string | undefined;
           try {
-            const tokens = await readAuthTokens();
-            refreshToken = tokens?.refreshToken;
+            refreshToken = (await readAuthTokens())?.refreshToken;
           } catch {
-            // Continue clearing local credentials if secure storage is unavailable.
+            /* Still clear local credentials. */
           }
-          try {
-            await clearAuthTokens();
-          } catch {
-            /* Keep local navigation signed out. */
-          }
-          if (refreshToken) {
-            try {
-              await authService.logout(refreshToken);
-            } catch {
-              /* Server-side expiry remains the fallback. */
-            }
-          }
-        })();
+          await clearAuthTokens().catch(() => undefined);
+          return refreshToken;
+        })
+          .then(async (refreshToken) => {
+            if (refreshToken) await authService.logout(refreshToken).catch(() => undefined);
+          })
+          .catch(() => undefined);
         setSession(null);
         setError(null);
       },
       deleteAccount: async (password) => {
         if (!session?.userId) throw new Error('請重新登入後再試一次');
-        setIsLoading(true);
+        if (operationLock.current) return;
+        operationLock.current = true;
+        setIsSubmitting(true);
         setError(null);
         try {
           await authService.deleteAccount(password);
@@ -150,19 +184,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
             cancelAccountNotifications(session.userId),
             clearAccountAISessions(session.userId),
             clearFirstUseGuide(session.userId),
+            clearExportTracking(session.userId),
+            clearPreVetDrafts(session.userId),
           ]);
-          await clearAuthTokens().catch(() => undefined);
+          await credentials(() => clearAuthTokens()).catch(() => undefined);
           setSession(null);
         } catch (deleteError) {
           setError((deleteError as Error).message || '帳號刪除失敗，請稍後重試');
           throw deleteError;
         } finally {
-          setIsLoading(false);
+          operationLock.current = false;
+          setIsSubmitting(false);
         }
       },
       clearError: () => setError(null),
     }),
-    [session, isLoading, error],
+    [session, isRestoring, isSubmitting, error, authenticate, credentials],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

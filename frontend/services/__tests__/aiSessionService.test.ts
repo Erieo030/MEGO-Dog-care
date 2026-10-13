@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   activateEmptyAISession,
+  captureAISessionGeneration,
+  clearAccountAISessions,
   deleteAISession,
   loadAISession,
   loadAISessions,
@@ -12,6 +14,8 @@ const storedValues = new Map<string, string>();
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
+  getAllKeys: jest.fn(),
+  multiRemove: jest.fn(),
 }));
 
 const storage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
@@ -19,6 +23,10 @@ const storage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 beforeEach(() => {
   jest.clearAllMocks();
   storedValues.clear();
+  storage.getAllKeys.mockImplementation(async () => [...storedValues.keys()]);
+  storage.multiRemove.mockImplementation(async (keys) => {
+    keys.forEach((key) => storedValues.delete(key));
+  });
   storage.getItem.mockImplementation(async (storageKey) => storedValues.get(storageKey) ?? null);
   storage.setItem.mockImplementation(async (storageKey, value) => {
     storedValues.set(storageKey, value);
@@ -140,4 +148,32 @@ test('corrupt history blocks new conversation activation before any write', asyn
   storedValues.set('mego:ai-sessions:u1:p1', '{"not":"a history array"}');
   await expect(activateEmptyAISession('u1', 'p1')).rejects.toThrow();
   expect(storage.setItem).not.toHaveBeenCalled();
+});
+
+test('deleting the active session removes its messages and rejects a delayed save', async () => {
+  const id = await activateEmptyAISession('delete-owner', 'p1');
+  await saveActiveAISession('delete-owner', 'p1', id, [{ role: 'user', text: 'old' }]);
+  await deleteAISession('delete-owner', 'p1', id);
+  await saveActiveAISession('delete-owner', 'p1', id, [{ role: 'assistant', text: 'late' }]);
+  expect((await loadAISession('delete-owner', 'p1')).messages).toEqual([]);
+  expect(await loadAISessions('delete-owner', 'p1')).toEqual([]);
+});
+test('an account clear invalidates requests captured before removal and permits new sessions', async () => {
+  const userId = 'cleared-owner';
+  const id = await activateEmptyAISession(userId, 'p1');
+  const generation = captureAISessionGeneration(userId);
+  await clearAccountAISessions(userId);
+  await saveActiveAISession(
+    userId,
+    'p1',
+    id,
+    [{ role: 'assistant', text: 'late' }],
+    undefined,
+    generation,
+  );
+  expect(await loadAISessions(userId, 'p1')).toEqual([]);
+  expect(await loadAISession(userId, 'p1')).toEqual({});
+  const fresh = await activateEmptyAISession(userId, 'p1');
+  await saveActiveAISession(userId, 'p1', fresh, [{ role: 'user', text: 'new' }]);
+  expect((await loadAISessions(userId, 'p1'))[0].id).toBe(fresh);
 });

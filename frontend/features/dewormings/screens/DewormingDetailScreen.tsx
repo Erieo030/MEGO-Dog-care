@@ -1,3 +1,4 @@
+import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
@@ -112,6 +113,7 @@ export function DewormingDetailScreen() {
           setDeleting(true);
           try {
             await deleteDeworming(userId, record.id);
+            await syncCareNotifications(userId, pets);
             navigation.goBack();
           } catch (caught) {
             Alert.alert('刪除失敗', (caught as Error).message || '請稍後再試');

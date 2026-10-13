@@ -1,5 +1,5 @@
 /** 用途：切換登入導航樹，並在登入、回前景及通知點擊時同步 Local Notification。 */
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -15,8 +15,10 @@ import { usePet } from '../contexts/PetContext';
 import { useSettings } from '../contexts/SettingsContext';
 import {
   reconcileAccountNotifications,
+  retryNotificationCancellations,
   subscribeToNotificationResponses,
 } from '../services/notificationService';
+import { guardTabNavigation } from '../hooks/useUnsavedChangesGuard';
 import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
 import PetSetupStack from './PetSetupStack';
@@ -35,10 +37,12 @@ const AppStack = createNativeStackNavigator<RootStackParamList>();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { session, isLoading } = useAuth();
-  const { pets, isLoading: isLoadingPets, selectPet } = usePet();
+  const { session, isRestoring } = useAuth();
+  const { pets, selectPet } = usePet();
   const { loading: isLoadingSettings } = useSettings();
-  const isAppLoading = isLoading || isLoadingPets || isLoadingSettings;
+  const initializing = useRef(true);
+  if (!isRestoring && !isLoadingSettings) initializing.current = false;
+  const isAppLoading = initializing.current;
   const navigationTheme = {
     ...DefaultTheme,
     colors: {
@@ -54,7 +58,8 @@ export default function RootNavigator() {
   };
 
   const reconcile = useCallback(() => {
-    if (!session?.userId || !pets.length) return;
+    void retryNotificationCancellations().catch(() => undefined);
+    if (!session?.userId) return;
     reconcileAccountNotifications(session.userId, pets).catch(() => undefined);
   }, [session?.userId, pets]);
   const handleNavigationReady = useCallback(() => {
@@ -79,14 +84,17 @@ export default function RootNavigator() {
     () =>
       subscribeToNotificationResponses((target) => {
         if (!session || target.userId !== session.userId || !navigationRef.isReady()) return;
-        if (pets.some((pet) => pet.id === target.petId)) selectPet(target.petId);
-        navigationRef.navigate('MainTabs', {
-          screen: 'Home',
-          params: {
-            screen: 'ReminderList',
-            params: { focusReminderId: target.reminderId },
-          },
-        });
+        const proceed = () => {
+          if (pets.some((pet) => pet.id === target.petId)) selectPet(target.petId);
+          navigationRef.navigate('MainTabs', {
+            screen: 'Home',
+            params: {
+              screen: 'ReminderList',
+              params: { focusReminderId: target.reminderId },
+            },
+          });
+        };
+        if (!guardTabNavigation(proceed)) proceed();
       }),
     [session, pets, selectPet],
   );

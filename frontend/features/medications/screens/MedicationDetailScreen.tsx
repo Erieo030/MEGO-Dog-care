@@ -1,3 +1,4 @@
+import { syncCareNotifications } from '../../../services/careNotificationSync';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -108,6 +109,7 @@ export function MedicationDetailScreen() {
           setSubmitting(true);
           try {
             await action(userId, record.id);
+            await syncCareNotifications(userId, pets);
             navigation.goBack();
           } catch (caught) {
             Alert.alert(`${label}失敗`, (caught as Error).message || '請稍後再試');

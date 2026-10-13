@@ -57,6 +57,7 @@ jest.mock('../../features/ai/components/AIChatContent', () => ({
 }));
 jest.mock('../../services/aiService', () => ({ sendAIChat: jest.fn() }));
 jest.mock('../../services/aiSessionService', () => ({
+  captureAISessionGeneration: jest.fn().mockReturnValue(0),
   loadAISession: jest.fn(),
   saveActiveAISession: jest.fn().mockResolvedValue(undefined),
   activateEmptyAISession: jest.fn(),
@@ -115,7 +116,21 @@ test('late A reply neither changes B messages nor clears B waiting state', async
   expect(
     screen!.root.findByType('List' as never).props.data.map((item: { text: string }) => item.text),
   ).toEqual(['question B', 'answer B']);
-  expect(saveActiveAISession).toHaveBeenCalledWith('u1', 'p1', 'A', expect.any(Array), undefined);
-  expect(saveActiveAISession).toHaveBeenCalledWith('u1', 'p1', 'B', expect.any(Array), undefined);
+  expect(saveActiveAISession).toHaveBeenCalledWith(
+    'u1',
+    'p1',
+    'A',
+    expect.any(Array),
+    undefined,
+    0,
+  );
+  expect(saveActiveAISession).toHaveBeenCalledWith(
+    'u1',
+    'p1',
+    'B',
+    expect.any(Array),
+    undefined,
+    0,
+  );
   await act(async () => screen!.unmount());
 });

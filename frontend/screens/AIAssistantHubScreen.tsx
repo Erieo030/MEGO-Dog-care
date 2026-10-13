@@ -48,6 +48,9 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
   const [consentGranted, setConsentGranted] = useState(false);
   const [consentLoaded, setConsentLoaded] = useState(false);
   const [consentOwnerId, setConsentOwnerId] = useState('');
+  const openingLock = React.useRef(false);
+  const consentLock = React.useRef(false);
+  const sessionStartLock = React.useRef(false);
   const pendingAIAction = React.useRef<(() => Promise<void>) | null>(null);
   const loadedOwnerRef = React.useRef('');
   const ownerKey = session?.userId && selectedPet?.id ? `${session.userId}:${selectedPet.id}` : '';
@@ -113,28 +116,33 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
   );
   const withAIConsent = useCallback(
     async (action: () => Promise<void>) => {
-      if (!session?.userId || !selectedPet?.id) return;
-      let granted = consentGranted;
-      if (!consentLoaded || consentOwnerId !== session.userId) {
-        try {
-          granted = (await getAIDataConsent(session.userId)).accepted;
-          setConsentGranted(granted);
-          setConsentLoaded(true);
-          setConsentOwnerId(session.userId);
-        } catch {
-          granted = false;
+      if (!session?.userId || !selectedPet?.id || openingLock.current) return;
+      openingLock.current = true;
+      try {
+        let granted = consentGranted;
+        if (!consentLoaded || consentOwnerId !== session.userId) {
+          try {
+            granted = (await getAIDataConsent(session.userId)).accepted;
+            setConsentGranted(granted);
+            setConsentLoaded(true);
+            setConsentOwnerId(session.userId);
+          } catch {
+            granted = false;
+          }
         }
-      }
-      if (granted) {
-        try {
-          await action();
-        } catch (error) {
-          Alert.alert('無法開啟對話', (error as Error).message || '請重新載入後再試。');
+        if (granted) {
+          try {
+            await action();
+          } catch (error) {
+            Alert.alert('無法開啟對話', (error as Error).message || '請重新載入後再試。');
+          }
+          return;
         }
-        return;
+        pendingAIAction.current = action;
+        setConsentVisible(true);
+      } finally {
+        openingLock.current = false;
       }
-      pendingAIAction.current = action;
-      setConsentVisible(true);
     },
     [consentGranted, consentLoaded, consentOwnerId, selectedPet?.id, session?.userId],
   );
@@ -143,11 +151,15 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
       withAIConsent(async () => {
         if (!session?.userId || !selectedPet?.id) return;
         const begin = async () => {
+          if (sessionStartLock.current) return;
+          sessionStartLock.current = true;
           try {
             await activateEmptyAISession(session.userId, selectedPet.id);
             openChat();
           } catch (error) {
             Alert.alert('無法建立對話', (error as Error).message || '請重新載入後再試。');
+          } finally {
+            sessionStartLock.current = false;
           }
         };
         if (sessions.length < 5) return begin();
@@ -172,7 +184,8 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
     [openChat, selectedPet?.id, session?.userId, sessions, withAIConsent],
   );
   const confirmAIDataConsent = async () => {
-    if (!session?.userId || consentSaving) return;
+    if (!session?.userId || consentLock.current) return;
+    consentLock.current = true;
     setConsentSaving(true);
     try {
       await acceptAIDataConsent(session.userId);
@@ -186,6 +199,7 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
     } catch (error) {
       Alert.alert('暫時無法記錄確認', (error as Error).message || '請確認網路連線後再試。');
     } finally {
+      consentLock.current = false;
       setConsentSaving(false);
     }
   };

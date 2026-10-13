@@ -1,3 +1,4 @@
+import { CardSurface } from '../constants/Layout';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：呈現由日常紀錄推算出的近期健康趨勢，不混入健康異常事件。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -47,7 +48,11 @@ export default function HealthObservationScreen() {
   const { session } = useAuth();
   const { selectedPet } = usePet();
   const { settings } = useSettings();
-  const [result, setResult] = useState<HealthTrendResult | null>(null);
+  const [storedResult, setResult] = useState<HealthTrendResult | null>(null);
+  const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const requestedOwner = useRef('');
+  const [loadedOwner, setLoadedOwner] = useState('');
+  const result = loadedOwner === ownerKey ? storedResult : null;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -59,15 +64,24 @@ export default function HealthObservationScreen() {
       const requestId = ++requestRef.current;
       if (!session?.userId || !selectedPet?.id) {
         setResult(null);
+        setLoadedOwner(ownerKey);
         setLoading(false);
         setRefreshing(false);
         return;
+      }
+      if (requestedOwner.current !== ownerKey) {
+        requestedOwner.current = ownerKey;
+        setResult(null);
+        setLoadedOwner(ownerKey);
+        setLoading(true);
+        setError('');
       }
       try {
         setError('');
         const dashboard = await getHealthDashboard(session.userId, selectedPet.id, 30, signal);
         if (requestId !== requestRef.current) return;
         setResult(analyzeHealthTrend(dashboard.dailyRecords || []));
+        setLoadedOwner(ownerKey);
       } catch (requestError) {
         if (requestId !== requestRef.current) return;
         setError((requestError as Error).message || '暫時無法載入健康觀察');
@@ -78,7 +92,7 @@ export default function HealthObservationScreen() {
         }
       }
     },
-    [selectedPet?.id, session?.userId],
+    [selectedPet?.id, session?.userId, ownerKey],
   );
 
   useFocusEffect(
@@ -289,13 +303,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   criteriaToggleText: { color: Colors.success, fontSize: Type.footnote, fontWeight: '700' },
-  criteriaDetails: {
-    marginTop: 2,
-    paddingHorizontal: 13,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: Colors.successSoft,
-  },
+  criteriaDetails: { ...CardSurface.hint, marginTop: 2 },
   criteriaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -348,14 +356,11 @@ const styles = StyleSheet.create({
   sectionTitle: { color: Colors.text, fontSize: Type.headline, lineHeight: 21, fontWeight: '800' },
   sectionSubtitle: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 1 },
   card: {
+    ...CardSurface.hint,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 15,
-    borderRadius: 18,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+
     marginBottom: 10,
   },
   cardIcon: {

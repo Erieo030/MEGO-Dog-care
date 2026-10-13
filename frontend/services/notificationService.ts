@@ -9,6 +9,57 @@ import { localNotificationsEnabled } from './settingsService';
 const CHANNEL_ID = 'mego-reminders';
 const OWNER_KEY = 'mego-local-reminder';
 
+const queues = new Map<string, Promise<unknown>>();
+const generations = new Map<string, number>();
+const blocked = new Set<string>();
+const pendingCancellations = new Set<string>();
+let activeAccountId: string | null | undefined;
+const generationOf = (userId: string) => generations.get(userId) ?? 0;
+export function invalidateAccountNotifications(userId: string) {
+  generations.set(userId, generationOf(userId) + 1);
+}
+export function invalidateAllNotificationSchedules() {
+  for (const userId of new Set([...generations.keys(), ...queues.keys()]))
+    invalidateAccountNotifications(userId);
+}
+export function activateAccountNotifications(userId: string | null) {
+  if (activeAccountId && activeAccountId !== userId) {
+    invalidateAccountNotifications(activeAccountId);
+    blocked.add(activeAccountId);
+    pendingCancellations.add(activeAccountId);
+  }
+  activeAccountId = userId;
+  if (userId) blocked.delete(userId);
+}
+function serialize<T>(userId: string, operation: () => Promise<T>): Promise<T> {
+  const next = (queues.get(userId) ?? Promise.resolve()).catch(() => undefined).then(operation);
+  queues.set(userId, next);
+  void next
+    .finally(() => {
+      if (queues.get(userId) === next) queues.delete(userId);
+    })
+    .catch(() => undefined);
+  return next;
+}
+export async function retryNotificationCancellations() {
+  // The OS inventory survives app restarts, unlike the in-memory retry set.
+  if (activeAccountId !== undefined) {
+    for (const request of await getMegoScheduledNotifications()) {
+      const userId = dataOf(request).userId;
+      if (typeof userId === 'string' && userId !== activeAccountId)
+        pendingCancellations.add(userId);
+    }
+  }
+  await Promise.all(
+    [...pendingCancellations].map((userId) =>
+      serialize(userId, async () => {
+        await cancelAccountInternal(userId);
+        pendingCancellations.delete(userId);
+      }),
+    ),
+  );
+}
+
 export type NotificationPermissionState = 'granted' | 'denied' | 'undetermined';
 export type ScheduleResult =
   | { status: 'scheduled'; identifier: string }
@@ -68,13 +119,20 @@ export async function getMegoScheduledNotifications(userId?: string) {
   return scheduled.filter((item) => (userId ? isForUser(item, userId) : isMegoReminder(item)));
 }
 
-export async function scheduleReminderNotification(
+async function scheduleInternal(
   userId: string,
   reminder: Reminder,
   petName: string,
   requestPermission = true,
+  generation = generationOf(userId),
 ): Promise<ScheduleResult> {
-  if (!(await localNotificationsEnabled())) return { status: 'disabled' };
+  if (
+    (activeAccountId !== undefined && activeAccountId !== userId) ||
+    blocked.has(userId) ||
+    generation !== generationOf(userId) ||
+    !(await localNotificationsEnabled())
+  )
+    return { status: 'disabled' };
   const date = new Date(reminder.scheduledAt);
   if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now())
     return { status: 'expired' };
@@ -107,7 +165,20 @@ export async function scheduleReminderNotification(
       channelId: Platform.OS === 'android' ? CHANNEL_ID : undefined,
     },
   });
-  return { status: 'scheduled', identifier };
+  let valid = false;
+  try {
+    valid =
+      (activeAccountId === undefined || activeAccountId === userId) &&
+      !blocked.has(userId) &&
+      generation === generationOf(userId) &&
+      (await localNotificationsEnabled());
+  } finally {
+    if (!valid) {
+      pendingCancellations.add(userId);
+      await Notifications.cancelScheduledNotificationAsync(identifier);
+    }
+  }
+  return valid ? { status: 'scheduled', identifier } : { status: 'disabled' };
 }
 
 export async function cancelReminderNotifications(reminderId: string) {
@@ -119,31 +190,60 @@ export async function cancelReminderNotifications(reminderId: string) {
   );
 }
 
-export async function replaceReminderNotification(
-  userId: string,
-  reminder: Reminder,
-  petName: string,
-) {
+async function replaceInternal(userId: string, reminder: Reminder, petName: string) {
   await cancelReminderNotifications(reminder.id);
-  return scheduleReminderNotification(userId, reminder, petName);
+  return scheduleInternal(userId, reminder, petName);
 }
 
-export async function cancelAccountNotifications(userId: string) {
+async function cancelAccountInternal(userId: string) {
   const scheduled = await getMegoScheduledNotifications(userId);
   await Promise.all(
     scheduled.map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)),
   );
 }
 
-export async function reconcileAccountNotifications(userId: string, pets: Pet[]) {
-  if (!(await localNotificationsEnabled())) {
+export function scheduleReminderNotification(
+  userId: string,
+  reminder: Reminder,
+  petName: string,
+  requestPermission = true,
+) {
+  const generation = generationOf(userId);
+  return serialize(userId, () =>
+    scheduleInternal(userId, reminder, petName, requestPermission, generation),
+  );
+}
+export function replaceReminderNotification(userId: string, reminder: Reminder, petName: string) {
+  return serialize(userId, () => replaceInternal(userId, reminder, petName));
+}
+export function cancelAccountNotifications(userId: string) {
+  if (activeAccountId === userId) activeAccountId = null;
+  blocked.add(userId);
+  invalidateAccountNotifications(userId);
+  pendingCancellations.add(userId);
+  return serialize(userId, async () => {
+    await cancelAccountInternal(userId);
+    pendingCancellations.delete(userId);
+  });
+}
+export function reconcileAccountNotifications(userId: string, pets: Pet[]) {
+  const generation = generationOf(userId);
+  return serialize(userId, () => reconcileInternal(userId, pets, generation));
+}
+async function reconcileInternal(userId: string, pets: Pet[], generation: number) {
+  if (
+    (activeAccountId !== undefined && activeAccountId !== userId) ||
+    blocked.has(userId) ||
+    generation !== generationOf(userId) ||
+    !(await localNotificationsEnabled())
+  ) {
     const scheduled = await getMegoScheduledNotifications(userId);
     await Promise.all(
       scheduled.map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)),
     );
     return { scheduled: 0, cancelled: scheduled.length, permission: 'undetermined' as const };
   }
-  if (!pets.length) return { scheduled: 0, cancelled: 0, permission: 'undetermined' as const };
+
   const remindersByPet = await Promise.all(
     // 回憶中的毛孩不再排定通知；後端也會把它的未完成提醒改為略過。
     pets
@@ -198,7 +298,7 @@ export async function reconcileAccountNotifications(userId: string, pets: Pet[])
     );
     cancelled += stale.length;
     if (!exact.length) {
-      const result = await scheduleReminderNotification(userId, reminder, petName, false);
+      const result = await scheduleInternal(userId, reminder, petName, false, generation);
       if (result.status === 'scheduled') created += 1;
     }
   }

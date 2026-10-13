@@ -80,7 +80,7 @@ test('invalid reason displays an inline error and scrolls to that field without 
       )
       .map((node) => node.props.children),
   ).toContain('請填寫看診原因');
-  expect(mockScrollTo).toHaveBeenCalledWith({ y: 164, animated: true });
+  expect(mockScrollTo).toHaveBeenCalledWith({ y: 164, animated: false });
   expect(createMedicalVisit).not.toHaveBeenCalled();
 });
 test('correcting the reason clears validation errors and saves', async () => {

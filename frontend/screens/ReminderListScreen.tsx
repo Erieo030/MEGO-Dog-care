@@ -52,7 +52,14 @@ export default function ReminderListScreen({ navigation, route }: Props) {
   const { session } = useAuth();
   const { pets, selectedPet } = usePet();
   const { settings } = useSettings();
-  const [items, setItems] = useState<Reminder[]>([]);
+  const [storedItems, setItems] = useState<Reminder[]>([]);
+  const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const requestedOwner = useRef('');
+  const [loadedOwner, setLoadedOwner] = useState('');
+  const items = useMemo(
+    () => (loadedOwner === ownerKey ? storedItems : []),
+    [loadedOwner, ownerKey, storedItems],
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -60,15 +67,32 @@ export default function ReminderListScreen({ navigation, route }: Props) {
   const [moreItem, setMoreItem] = useState<Reminder | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const requestId = useRef(0);
+  const mutationLock = useRef(false);
 
   const load = useCallback(
     async (signal?: AbortSignal) => {
       const current = ++requestId.current;
-      if (!selectedPet || !session?.userId) return;
+      if (!selectedPet || !session?.userId) {
+        setItems([]);
+        setLoadedOwner(ownerKey);
+        setLoading(false);
+        return;
+      }
       setError('');
+      setLoading(true);
+      if (requestedOwner.current !== ownerKey) {
+        requestedOwner.current = ownerKey;
+        setItems([]);
+        setLoadedOwner(ownerKey);
+        setLoading(true);
+        setError('');
+      }
       try {
         const reminders = await service.getReminders(session.userId, selectedPet.id, signal);
-        if (current === requestId.current) setItems(reminders);
+        if (current === requestId.current) {
+          setItems(reminders);
+          setLoadedOwner(ownerKey);
+        }
       } catch (requestError) {
         if (current === requestId.current && !signal?.aborted)
           setError((requestError as Error).message);
@@ -79,7 +103,7 @@ export default function ReminderListScreen({ navigation, route }: Props) {
         }
       }
     },
-    [selectedPet, session?.userId],
+    [selectedPet, session?.userId, ownerKey],
   );
   useFocusEffect(
     useCallback(() => {
@@ -102,7 +126,8 @@ export default function ReminderListScreen({ navigation, route }: Props) {
   };
 
   const run = async (id: string, task: () => Promise<unknown>) => {
-    if (busyId) return;
+    if (mutationLock.current || loadedOwner !== ownerKey) return;
+    mutationLock.current = true;
     setBusyId(id);
     try {
       await task();
@@ -111,6 +136,7 @@ export default function ReminderListScreen({ navigation, route }: Props) {
     } catch (requestError) {
       Alert.alert('操作失敗', (requestError as Error).message);
     } finally {
+      mutationLock.current = false;
       setBusyId(null);
     }
   };
@@ -177,7 +203,7 @@ export default function ReminderListScreen({ navigation, route }: Props) {
     setMoreItem(null);
     requestAnimationFrame(() => requestAnimationFrame(action));
   };
-  if (loading)
+  if (loading || loadedOwner !== ownerKey)
     return (
       <ScreenPageState title="提醒" description="管理待辦與通知時間" icon="notifications">
         <ReminderListLoadingState />

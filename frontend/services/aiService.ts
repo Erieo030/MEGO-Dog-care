@@ -59,6 +59,8 @@ export interface ChatSource {
   occurredAt?: string | null;
 }
 export interface ChatKnowledgeSource {
+  sourceId?: string;
+  kind?: 'internal';
   title: string;
   documentTitle: string;
   section: string;

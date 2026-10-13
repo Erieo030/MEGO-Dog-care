@@ -61,8 +61,13 @@ const validUsage = (value: unknown) =>
   (value.unlimited === undefined || typeof value.unlimited === 'boolean');
 const invalidStorage = () => new Error('本機對話資料無法讀取，請重新載入；原資料尚未變更。');
 const queues = new Map<string, Promise<unknown>>();
+const deletedSessions = new Set<string>();
+const accountGenerations = new Map<string, number>();
+export const captureAISessionGeneration = (userId: string) => accountGenerations.get(userId) ?? 0;
+const sessionIdentity = (userId: string, petId: string, sessionId: string) =>
+  `${key(userId, petId)}:${sessionId}`;
 function mutate<T>(userId: string, petId: string, action: () => Promise<T>): Promise<T> {
-  const owner = key(userId, petId);
+  const owner = `account:${userId}`;
   const next = (queues.get(owner) ?? Promise.resolve()).catch(() => undefined).then(action);
   queues.set(owner, next);
   void next
@@ -128,8 +133,12 @@ export async function loadAISessions(userId: string, petId: string): Promise<AIS
 }
 
 export async function deleteAISession(userId: string, petId: string, sessionId: string) {
+  deletedSessions.add(sessionIdentity(userId, petId, sessionId));
   return mutate(userId, petId, async () => {
+    const active = await loadAISession(userId, petId);
     const sessions = await loadAISessions(userId, petId);
+    if (active.sessionId === sessionId)
+      await writeSession(userId, petId, { messages: [], usage: active.usage });
     await AsyncStorage.setItem(
       historyKey(userId, petId),
       JSON.stringify(sessions.filter((item) => item.id !== sessionId)),
@@ -138,12 +147,29 @@ export async function deleteAISession(userId: string, petId: string, sessionId: 
 }
 
 export async function clearAccountAISessions(userId: string) {
-  const prefixes = [`mego:ai-session:${userId}:`, `mego:ai-sessions:${userId}:`];
-  const keys = await AsyncStorage.getAllKeys();
-  const ownedKeys = keys.filter((storedKey) =>
-    prefixes.some((prefix) => storedKey.startsWith(prefix)),
-  );
-  if (ownedKeys.length) await AsyncStorage.multiRemove(ownedKeys);
+  accountGenerations.set(userId, captureAISessionGeneration(userId) + 1);
+  return mutate(userId, '', async () => {
+    const prefixes = [`mego:ai-session:${userId}:`, `mego:ai-sessions:${userId}:`];
+    const keys = await AsyncStorage.getAllKeys();
+    const ownedKeys = keys.filter((storedKey) =>
+      prefixes.some((prefix) => storedKey.startsWith(prefix)),
+    );
+    for (const storedKey of ownedKeys) {
+      const raw = await AsyncStorage.getItem(storedKey);
+      if (!raw) continue;
+      try {
+        const stored = JSON.parse(raw);
+        const petId = storedKey.slice(
+          storedKey.startsWith(prefixes[0]) ? prefixes[0].length : prefixes[1].length,
+        );
+        for (const id of Array.isArray(stored) ? stored.map((item) => item.id) : [stored.sessionId])
+          if (typeof id === 'string') deletedSessions.add(sessionIdentity(userId, petId, id));
+      } catch {
+        /* Clearing corrupted data remains safe; generation already invalidates pending requests. */
+      }
+    }
+    if (ownedKeys.length) await AsyncStorage.multiRemove(ownedKeys);
+  });
 }
 
 export async function activateAISession(userId: string, petId: string, session: AISessionRecord) {
@@ -172,9 +198,15 @@ export async function saveActiveAISession(
   sessionId: string,
   messages: StoredMessage[],
   usage?: AIUsage,
+  generation = captureAISessionGeneration(userId),
 ) {
   if (!sessionId || !validMessages(messages)) throw invalidStorage();
   return mutate(userId, petId, async () => {
+    if (
+      generation !== captureAISessionGeneration(userId) ||
+      deletedSessions.has(sessionIdentity(userId, petId, sessionId))
+    )
+      return;
     // Read before either write: corrupt storage must never be replaced by an empty history.
     const current = await loadAISession(userId, petId);
     const sessions = await loadAISessions(userId, petId);

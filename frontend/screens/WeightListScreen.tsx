@@ -34,10 +34,18 @@ export default function WeightListScreen({ navigation, route }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { session } = useAuth();
   const { selectedPet, refreshPets } = usePet();
-  const [items, setItems] = useState<WeightRecord[]>([]);
-  const [summary, setSummary] = useState<WeightSummary>(EMPTY_WEIGHT_SUMMARY);
+  const [storedItems, setItems] = useState<WeightRecord[]>([]);
+  const [storedSummary, setSummary] = useState<WeightSummary>(EMPTY_WEIGHT_SUMMARY);
   const [period, setPeriod] = useState<WeightPeriod>(route.params?.focusRecordId ? 'all' : 7);
   const [historyExpanded, setHistoryExpanded] = useState(Boolean(route.params?.focusRecordId));
+  const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const requestedOwner = useRef('');
+  const [loadedOwner, setLoadedOwner] = useState('');
+  const summary = loadedOwner === ownerKey ? storedSummary : EMPTY_WEIGHT_SUMMARY;
+  const items = useMemo(
+    () => (loadedOwner === ownerKey ? storedItems : []),
+    [loadedOwner, ownerKey, storedItems],
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -51,17 +59,27 @@ export default function WeightListScreen({ navigation, route }: Props) {
       const current = ++requestId.current;
       if (!selectedPet || !session?.userId) {
         setItems([]);
+        setLoadedOwner(ownerKey);
         setSummary(EMPTY_WEIGHT_SUMMARY);
         hasLoadedRef.current = true;
         setLoading(false);
         setRefreshing(false);
         return;
       }
+      if (requestedOwner.current !== ownerKey) {
+        requestedOwner.current = ownerKey;
+        setItems([]);
+        setSummary(EMPTY_WEIGHT_SUMMARY);
+        setLoadedOwner(ownerKey);
+        setLoading(true);
+        setError('');
+      }
       try {
         setError('');
         const result = await service.getWeights(session.userId, selectedPet.id, signal);
         if (current !== requestId.current) return;
         setItems(result.records);
+        setLoadedOwner(ownerKey);
         setSummary(result.summary);
       } catch (requestError) {
         if (current === requestId.current && !signal?.aborted)
@@ -74,7 +92,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
         }
       }
     },
-    [selectedPet, session?.userId],
+    [selectedPet, session?.userId, ownerKey],
   );
 
   useFocusEffect(
@@ -121,7 +139,7 @@ export default function WeightListScreen({ navigation, route }: Props) {
       },
     ]);
 
-  if (loading)
+  if (loading || loadedOwner !== ownerKey)
     return (
       <ScreenPageState title="體重紀錄" description="查看體重變化與歷史" icon="scale-outline">
         <ScreenState loading text="正在載入體重紀錄…" />

@@ -1,3 +1,4 @@
+import { syncCareNotifications } from '../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示就醫完整內容，提供編輯、連動刪除與規則式文字分享。 */
@@ -30,7 +31,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'MedicalVisitDetail'>;
 export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const { selectedPet, pets } = usePet();
   const [item, setItem] = useState<MedicalVisit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -92,6 +93,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
             setDeleting(true);
             try {
               await service.deleteMedicalVisit(session.userId, item.id);
+              await syncCareNotifications(session.userId, pets);
               navigation.goBack();
             } catch (e) {
               Alert.alert('刪除失敗', (e as Error).message || '請稍後再試');
