@@ -2,12 +2,6 @@ import { apiData } from './api';
 import { DailyLog } from '../types';
 import { taipeiDateKey } from '../utils/taipeiDate';
 const q = (u: string) => `userId=${encodeURIComponent(u)}`;
-export const getDailyLogs = (u: string, p: string, signal?: AbortSignal) => {
-  const path = `/api/pets/${p}/daily-logs?${q(u)}`;
-  return signal
-    ? apiData<{ records: DailyLog[] }>(path, { signal })
-    : apiData<{ records: DailyLog[] }>(path);
-};
 export const getDailyLog = (u: string, id: string, signal?: AbortSignal) => {
   const path = `/api/daily-logs/${id}?${q(u)}`;
   return signal

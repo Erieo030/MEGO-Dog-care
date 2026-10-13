@@ -27,7 +27,7 @@ export const validDewormingDate = (value: unknown): Date | undefined => {
   return Number.isNaN(date.getTime()) || date.getFullYear() < 2000 ? undefined : date;
 };
 
-export const createBlankDewormingDraft = (): DewormingDraft => ({
+const createBlankDewormingDraft = (): DewormingDraft => ({
   type: 'internal',
   productName: '',
   administeredAt: new Date().toISOString(),

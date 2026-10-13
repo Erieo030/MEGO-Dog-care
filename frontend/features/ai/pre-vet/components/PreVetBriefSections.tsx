@@ -1,5 +1,4 @@
 import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 
 import WeightTrendChart from '../../../../components/dashboard/WeightTrendChart';
@@ -7,7 +6,6 @@ import type { DashboardWeightPoint } from '../../../../types';
 import type { VetVisitBrief } from '../../../../services/aiService';
 import { DAILY_LABELS, EVENT_LABELS, preVetDateLabel, SEVERITY_LABELS } from '../preVetContent';
 import { preVetStyles as styles } from '../preVetStyles';
-import { Colors } from '../../../../constants/Colors';
 
 export function PreVetSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -177,27 +175,6 @@ export function PreVetWeightSummary({
   );
 }
 
-export function PreVetQuestions({ items }: { items: string[] }) {
-  return items.length ? (
-    <>
-      {items.map((item, index) => (
-        <View key={`${item}-${index}`} style={styles.questionRow}>
-          <View style={styles.questionIcon}>
-            <Ionicons
-              name="chatbubble-ellipses-outline"
-              size={15}
-              color={Colors.successDecoration}
-            />
-          </View>
-          <Text style={styles.questionText}>{item}</Text>
-        </View>
-      ))}
-    </>
-  ) : (
-    <PreVetEmpty text="看診時可向獸醫確認毛孩接下來的觀察重點。" />
-  );
-}
-
-export function PreVetEmpty({ text }: { text: string }) {
+function PreVetEmpty({ text }: { text: string }) {
   return <Text style={styles.empty}>{text}</Text>;
 }

@@ -32,7 +32,7 @@ const getErrorMessage = (body: unknown, fallback: string) => {
   return result?.message ?? fallback;
 };
 
-export function unwrapApiEnvelope<T>(body: T | ApiEnvelope<T>): T {
+function unwrapApiEnvelope<T>(body: T | ApiEnvelope<T>): T {
   if (body && typeof body === 'object' && 'data' in body) {
     return (body as ApiEnvelope<T>).data;
   }

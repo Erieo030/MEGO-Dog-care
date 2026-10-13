@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
 
 /** Form state only: dates serialize consistently; UI loading/expanded flags stay outside. */
-export function formSnapshot(value: unknown) {
+function formSnapshot(value: unknown) {
   return JSON.stringify(value);
 }
 

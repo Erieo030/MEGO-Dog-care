@@ -15,7 +15,7 @@ const blocked = new Set<string>();
 const pendingCancellations = new Set<string>();
 let activeAccountId: string | null | undefined;
 const generationOf = (userId: string) => generations.get(userId) ?? 0;
-export function invalidateAccountNotifications(userId: string) {
+function invalidateAccountNotifications(userId: string) {
   generations.set(userId, generationOf(userId) + 1);
 }
 export function invalidateAllNotificationSchedules() {

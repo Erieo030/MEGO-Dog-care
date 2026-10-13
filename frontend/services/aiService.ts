@@ -10,7 +10,7 @@ const AI_REQUEST_TIMEOUT_MS = boundedTimeout(configuredRequestTimeoutMs, 45000);
 const AI_CHAT_TIMEOUT_MS = boundedTimeout(configuredChatTimeoutMs, 75000);
 const AI_VET_BRIEF_TIMEOUT_MS = boundedTimeout(configuredVetBriefTimeoutMs, 20000);
 import { apiData } from './api';
-export interface HealthMonitorAlert {
+interface HealthMonitorAlert {
   id: string;
   type: string;
   severity: 'info' | 'attention' | 'urgent';
@@ -18,39 +18,6 @@ export interface HealthMonitorAlert {
   message: string;
   evidence: Record<string, unknown>;
 }
-export interface HealthMonitorResult {
-  period: { days: number; startAt: string; endAt: string };
-  alerts: HealthMonitorAlert[];
-  summary: { total: number; info: number; attention: number; urgent: number };
-}
-export const getHealthMonitor = (userId: string, petId: string, range = 30) =>
-  apiData<HealthMonitorResult>(
-    `/api/pets/${petId}/ai/health-monitor?userId=${encodeURIComponent(userId)}&range=${range}`,
-    {},
-    AI_REQUEST_TIMEOUT_MS,
-  );
-
-export interface HealthSummaryResponse {
-  periodDays: number;
-  headline: string;
-  summary: string;
-  highlights: string[];
-  attentionItems: string[];
-  upcomingCare: string[];
-  dataCoverage: string;
-  disclaimer: string;
-  provider: string;
-  model?: string | null;
-  actualModel?: string | null;
-  generatedAt: string;
-  fallbackUsed: boolean;
-}
-export const getHealthSummary = (userId: string, petId: string, range = 30) =>
-  apiData<HealthSummaryResponse>(
-    `/api/pets/${petId}/ai/summary?userId=${encodeURIComponent(userId)}&range=${range}`,
-    {},
-    AI_REQUEST_TIMEOUT_MS,
-  );
 
 export interface ChatSource {
   type: string;

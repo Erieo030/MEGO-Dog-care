@@ -3,7 +3,7 @@ import { HealthEventType, ObservationHealthEventType, Severity } from '../types'
 
 export type Option = [string, string];
 export type ObservationValues = Record<string, string | string[]>;
-export const OBSERVATION_TYPES: ObservationHealthEventType[] = [
+const OBSERVATION_TYPES: ObservationHealthEventType[] = [
   'low_appetite',
   'low_energy',
   'abnormal_drinking',

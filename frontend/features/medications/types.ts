@@ -28,7 +28,7 @@ export const mealTimingLabels: Record<MedicationMealTiming, string> = {
   anytime: '不限',
 };
 
-export const createBlankMedicationDraft = (): MedicationDraft => ({
+const createBlankMedicationDraft = (): MedicationDraft => ({
   name: '',
   instructions: '',
   timesPerDay: 1,

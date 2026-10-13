@@ -13,29 +13,6 @@ import {
 } from '../../../constants/FormTokens';
 import { Type } from '../../../constants/Typography';
 
-export function IdentityHeader({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <View style={identityStyles.headerRow}>
-      <View style={identityStyles.iconBadge}>
-        <Ionicons name="qr-code-outline" size={24} color={Colors.primaryDecoration} />
-      </View>
-      <View style={identityStyles.headerCopy}>
-        <Text style={identityStyles.eyebrow}>{eyebrow}</Text>
-        <Text style={identityStyles.title}>{title}</Text>
-        <Text style={identityStyles.subtitle}>{subtitle}</Text>
-      </View>
-    </View>
-  );
-}
-
 export function IdentityInfoBox({
   icon,
   text,

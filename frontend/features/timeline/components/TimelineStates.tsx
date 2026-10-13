@@ -1,29 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../constants/Colors';
 import { AppButton } from '../../../components/AppButton';
 import { Type } from '../../../constants/Typography';
-
-export function TimelineSwitchingState() {
-  return (
-    <View style={styles.inline}>
-      <ActivityIndicator color={Colors.primary} />
-      <Text style={styles.stateText}>切換篩選中…</Text>
-    </View>
-  );
-}
-
-export function TimelineErrorState({ text, onRetry }: { text: string; onRetry: () => void }) {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.stateText}>{text}</Text>
-      <TouchableOpacity style={styles.retry} onPress={onRetry}>
-        <Text style={styles.retryText}>重新載入</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
 
 export function TimelineEmptyState({ onCreate }: { onCreate?: () => void }) {
   return (
@@ -41,21 +21,6 @@ export function TimelineEmptyState({ onCreate }: { onCreate?: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
-    padding: 30,
-  },
-  inline: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    padding: 15,
-  },
-  stateText: { color: Colors.subtext, textAlign: 'center', marginTop: 8 },
   emptyBox: { alignItems: 'center', paddingVertical: 38 },
   emptyIcon: {
     width: 52,
@@ -68,13 +33,4 @@ const styles = StyleSheet.create({
   },
   emptyHint: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 8, textAlign: 'center' },
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
-  retry: {
-    marginTop: 14,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    borderRadius: 13,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-  },
-  retryText: { color: Colors.text, fontWeight: '700' },
 });

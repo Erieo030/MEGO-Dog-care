@@ -17,7 +17,7 @@ export const validVaccinationDate = (value: unknown): Date | undefined => {
   return Number.isNaN(date.getTime()) || date.getFullYear() < 2000 ? undefined : date;
 };
 
-export const createBlankVaccinationDraft = (): VaccinationDraft => ({
+const createBlankVaccinationDraft = (): VaccinationDraft => ({
   vaccineName: '',
   administeredAt: new Date().toISOString(),
   hospitalName: '',

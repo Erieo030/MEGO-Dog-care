@@ -10,7 +10,7 @@ const dateTimeFormat: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
 };
 
-export const formatMedicalVisitDateTime = (value?: string | null, fallback = '未提供') =>
+const formatMedicalVisitDateTime = (value?: string | null, fallback = '未提供') =>
   value ? formatTaipeiDateTime(value, dateTimeFormat) : fallback;
 
 export const formatMedicalVisitDate = (value: string) => formatTaipeiDate(value);
