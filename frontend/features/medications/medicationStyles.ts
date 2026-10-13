@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 /** 用途：用藥列表、表單、詳細頁共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
@@ -60,11 +61,8 @@ export const medicationStyles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
+    ...CardSurface.record,
+
     marginTop: 10,
     gap: 5,
   },
@@ -156,13 +154,11 @@ export const medicationStyles = StyleSheet.create({
   secondaryText: { color: Colors.success, fontWeight: '700' },
   delete: { color: Colors.dangerText, textAlign: 'center' },
   reminderRow: {
+    ...CardSurface.hint,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginBottom: 8,
-    backgroundColor: Colors.surfaceSoft,
-    borderRadius: 14,
-    paddingHorizontal: 10,
   },
   reminderAction: {
     minWidth: 76,

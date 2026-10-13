@@ -1,3 +1,4 @@
+import { CardSurface } from '../../../constants/Layout';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -87,16 +88,12 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   todayOverlay: {
-    backgroundColor: Colors.surfaceWarm,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    ...CardSurface.summary,
+
     marginTop: 9,
     marginBottom: 14,
   },
-  todayOverlayCompact: { paddingVertical: 8, marginTop: 7, marginBottom: 12 },
+  todayOverlayCompact: { marginTop: 7, marginBottom: 12 },
   overlayTitle: { color: Colors.text, fontSize: Type.headline, lineHeight: 25, fontWeight: '800' },
   summaryAction: {
     minHeight: 54,

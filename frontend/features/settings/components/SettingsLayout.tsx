@@ -209,7 +209,13 @@ export function SettingsRow({
           style={styles.rowIcon}
         />
       ) : null}
-      <Text style={[styles.rowTitle, danger && styles.danger]}>{title}</Text>
+      <Text
+        numberOfLines={2}
+        ellipsizeMode="tail"
+        style={[styles.rowTitle, danger && styles.danger]}
+      >
+        {title}
+      </Text>
       <View style={styles.accessory}>
         {value ? (
           <Text

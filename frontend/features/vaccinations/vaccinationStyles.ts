@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 /** 用途：疫苗功能共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
@@ -47,11 +48,8 @@ export const vaccinationStyles = StyleSheet.create({
   formEyebrow: { color: Colors.success, fontSize: Type.caption, fontWeight: '800' },
   formHint: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 2 },
   card: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
+    ...CardSurface.record,
+
     marginTop: 12,
     gap: 5,
   },
@@ -98,16 +96,7 @@ export const vaccinationStyles = StyleSheet.create({
     marginVertical: 10,
   },
   primaryText: { color: Colors.onPrimary, fontWeight: '700' },
-  detailHero: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-  },
+  detailHero: { ...CardSurface.record, flexDirection: 'row', alignItems: 'center', gap: 10 },
   detailHeroIcon: {
     width: 44,
     height: 44,

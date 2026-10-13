@@ -182,7 +182,7 @@ export function PetIdentityCarousel({
                   </View>
                 )}
                 <View style={styles.petInfo}>
-                  <Text style={styles.idPetName} numberOfLines={1}>
+                  <Text style={styles.idPetName} numberOfLines={2} ellipsizeMode="tail">
                     {pet.name}
                   </Text>
                   <View style={styles.petTraits}>
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
 function Trait({ label }: { label: string }) {
   return (
     <View style={styles.trait}>
-      <Text style={styles.traitText} numberOfLines={1}>
+      <Text style={styles.traitText} numberOfLines={2} ellipsizeMode="tail">
         {label}
       </Text>
     </View>

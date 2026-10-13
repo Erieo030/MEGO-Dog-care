@@ -79,7 +79,7 @@ export const AIConversationSessionRow = React.memo(function AIConversationSessio
           <Ionicons name="chatbubble-ellipses-outline" size={19} color={Colors.successDecoration} />
         </View>
         <View style={styles.sessionBody}>
-          <Text style={styles.sessionTitle} numberOfLines={1}>
+          <Text style={styles.sessionTitle} numberOfLines={2} ellipsizeMode="tail">
             {item.title}
           </Text>
           <Text style={styles.sessionMeta}>
@@ -95,7 +95,7 @@ export const AIConversationSessionRow = React.memo(function AIConversationSessio
 
 const styles = StyleSheet.create({
   sessionWrap: {
-    height: 68,
+    minHeight: 68,
     overflow: 'hidden',
     borderRadius: 18,
     marginBottom: 8,
@@ -109,20 +109,21 @@ const styles = StyleSheet.create({
   },
   deleteActionWrap: {
     width: DELETE_WIDTH,
-    height: 68,
+    minHeight: 68,
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: DELETE_SURFACE,
   },
   deleteAction: {
     width: DELETE_WIDTH,
-    height: 68,
+    minHeight: 68,
     borderRadius: 0,
     borderWidth: 0,
     backgroundColor: DELETE_SURFACE,
   },
   session: {
-    flex: 1,
+    flexGrow: 1,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,

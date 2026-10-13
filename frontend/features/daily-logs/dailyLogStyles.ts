@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
@@ -90,7 +91,7 @@ export const dailyLogStyles = StyleSheet.create({
     alignItems: 'center',
   },
   saveText: { color: Colors.onPrimary, fontWeight: '700' },
-  error: { color: Colors.danger, marginBottom: 8 },
+  error: { ...CardSurface.hint, color: Colors.danger, marginBottom: 8 },
   deleteAction: {
     alignSelf: 'center',
     marginTop: 8,

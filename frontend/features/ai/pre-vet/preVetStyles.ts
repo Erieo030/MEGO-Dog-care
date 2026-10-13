@@ -1,3 +1,4 @@
+import { CardSurface } from '../../../constants/Layout';
 /** 用途：就醫前摘要頁與表格共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../../constants/Colors';
@@ -177,11 +178,8 @@ export const preVetStyles = StyleSheet.create({
   shareButtonText: { color: Colors.surface, fontWeight: '800', fontSize: Type.callout },
   disclaimer: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 18 },
   onePageCard: {
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 17,
+    ...CardSurface.summary,
+
     gap: 13,
   },
   onePageHeader: { flexDirection: 'row', alignItems: 'center', gap: 11 },

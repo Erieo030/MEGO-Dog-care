@@ -17,10 +17,17 @@ interface Props {
   brief: VetVisitBrief;
   sections: VetBriefSection[];
   visitConcern: string;
+  concernReady?: boolean;
   onChangeVisitConcern: (value: string) => void;
 }
 
-export function PreVetOnePageCard({ brief, sections, visitConcern, onChangeVisitConcern }: Props) {
+export function PreVetOnePageCard({
+  brief,
+  sections,
+  visitConcern,
+  onChangeVisitConcern,
+  concernReady = true,
+}: Props) {
   const rows = buildPreVetOnePageRows(brief, sections);
   const petName = brief.pet.name || '毛孩';
 
@@ -63,6 +70,7 @@ export function PreVetOnePageCard({ brief, sections, visitConcern, onChangeVisit
         <Text style={styles.onePageSectionTitle}>這次想詢問獸醫（選填）</Text>
         <TextInput
           accessibilityLabel="這次想詢問獸醫"
+          editable={concernReady}
           value={visitConcern}
           onChangeText={onChangeVisitConcern}
           placeholder="例如：最近食慾變差，想確認是否需要檢查"

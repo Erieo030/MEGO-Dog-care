@@ -74,7 +74,13 @@ export function SettingsHomeRow({
           )}
         </View>
         <View style={styles.copy}>
-          <Text style={[styles.title, danger && styles.danger]}>{title}</Text>
+          <Text
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            style={[styles.title, danger && styles.danger]}
+          >
+            {title}
+          </Text>
           {description ? <Text style={styles.description}>{description}</Text> : null}
         </View>
         <View style={styles.accessory}>

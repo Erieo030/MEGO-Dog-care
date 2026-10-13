@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 /** 用途：驅蟲列表、表單與詳細頁共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
@@ -60,11 +61,8 @@ export const dewormingStyles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    borderRadius: 18,
+    ...CardSurface.record,
+
     marginTop: 12,
     gap: 5,
   },

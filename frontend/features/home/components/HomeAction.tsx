@@ -56,7 +56,7 @@ export const HomeAction = React.memo(function HomeAction({
       >
         <Ionicons name={icon} size={23} color={RECORD_CATEGORY_COLORS[category]} />
       </View>
-      <Text style={styles.shortcutLabel} numberOfLines={1}>
+      <Text style={styles.shortcutLabel} numberOfLines={2} ellipsizeMode="tail">
         {label}
       </Text>
     </SoftButton>
@@ -83,6 +83,7 @@ const styles = StyleSheet.create({
   primaryIconCompact: { width: 48, height: 48, borderRadius: 24 },
   careIcon: { borderRadius: 17, borderWidth: 1.5 },
   shortcutLabel: {
+    minHeight: 40,
     overflow: 'hidden',
     paddingHorizontal: 8,
     paddingVertical: 2,

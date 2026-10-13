@@ -1,3 +1,4 @@
+import { CardSurface } from '../../../constants/Layout';
 import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -92,11 +93,8 @@ function Action({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-    padding: 16,
+    ...CardSurface.record,
+
     marginBottom: 12,
   },
   focusCard: { borderColor: Colors.primary, borderWidth: 2 },

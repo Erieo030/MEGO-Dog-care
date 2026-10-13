@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
@@ -52,14 +53,7 @@ export const aiHubStyles = StyleSheet.create({
   retryText: { color: Colors.primary, fontWeight: '700' },
   loadingRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14 },
   loadingText: { color: Colors.subtext, marginLeft: 8 },
-  emptyState: {
-    alignItems: 'center',
-    padding: 18,
-    backgroundColor: Colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-  },
+  emptyState: { ...CardSurface.hint, alignItems: 'center' },
   emptyIcon: {
     width: 48,
     height: 48,
@@ -174,9 +168,8 @@ export const aiHubStyles = StyleSheet.create({
   consentTitle: { color: Colors.text, fontSize: Type.title3, fontWeight: '800', marginBottom: 8 },
   consentIntro: { color: Colors.text, fontSize: Type.subhead, lineHeight: 22, marginBottom: 12 },
   consentInfoBlock: {
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
+    ...CardSurface.hint,
+
     marginBottom: 8,
   },
   consentInfoHeading: {

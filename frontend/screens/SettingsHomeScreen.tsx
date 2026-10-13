@@ -23,7 +23,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileOverview'>;
 export default function SettingsHomeScreen({ navigation }: Props) {
   const { session, logout } = useAuth();
   const { selectedPet } = usePet();
-  const { settings } = useSettings();
+  const { settings, error: settingsError, reload } = useSettings();
   const [loggingOut, setLoggingOut] = useState(false);
   const [aiUsageText, setAiUsageText] = useState('正在載入…');
   const bottomContentPadding = useTabContentBottomPadding();
@@ -57,7 +57,7 @@ export default function SettingsHomeScreen({ navigation }: Props) {
     }, [session?.userId]),
   );
   const confirmLogout = () =>
-    Alert.alert('登出帳號', '登出只會清除登入狀態；已排程的 MEGO 通知與照護資料會保留。', [
+    Alert.alert('登出帳號', '登出只會清除登入狀態；會取消此帳號的手機通知，照護資料會保留。', [
       { text: '取消', style: 'cancel' },
       {
         text: '登出',
@@ -76,6 +76,13 @@ export default function SettingsHomeScreen({ navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.safe}>
       <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}>
+        {!!settingsError && (
+          <Row
+            title="設定讀取失敗，點選重試"
+            icon="refresh-outline"
+            onPress={() => void reload()}
+          />
+        )}
         <View style={s.profileBrand}>
           <Image source={require('../assets/home-scene/logo.webp')} style={s.profileLogo} />
           <Text style={s.hero}>設定</Text>

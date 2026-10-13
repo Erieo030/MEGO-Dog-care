@@ -1,3 +1,4 @@
+import { CardSurface } from '../../constants/Layout';
 import { StyleSheet } from 'react-native';
 
 import { Colors } from '../../constants/Colors';
@@ -36,11 +37,8 @@ export const weightListStyles = StyleSheet.create({
   contextTitle: { color: Colors.text, fontSize: Type.body, fontWeight: '800' },
   contextHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2 },
   summary: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-    padding: 18,
+    ...CardSurface.record,
+
     marginTop: 14,
   },
   caption: { color: Colors.subtext },
@@ -81,13 +79,7 @@ export const weightListStyles = StyleSheet.create({
   filterActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterText: { color: Colors.text, fontSize: Type.caption, fontWeight: '600' },
   filterTextActive: { color: Colors.onPrimary },
-  chartCard: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-    padding: 12,
-  },
+  chartCard: { ...CardSurface.record },
   chartCanvas: { height: 165, position: 'relative' },
   axisLabel: {
     position: 'absolute',
@@ -119,11 +111,8 @@ export const weightListStyles = StyleSheet.create({
     padding: 25,
   },
   card: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 16,
-    padding: 16,
+    ...CardSurface.record,
+
     marginBottom: 10,
     flexDirection: 'column',
   },

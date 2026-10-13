@@ -171,6 +171,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 <Ionicons name="mail-outline" size={21} color={Colors.subtext} />
                 <TextInput
                   style={styles.input}
+                  accessibilityLabel="登入電子郵件"
                   placeholder="你的電子郵件"
                   placeholderTextColor={Colors.subtext}
                   value={email}
@@ -190,6 +191,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 <TextInput
                   ref={passwordInputRef}
                   style={styles.input}
+                  accessibilityLabel="登入密碼"
                   placeholder="你的密碼"
                   placeholderTextColor={Colors.subtext}
                   value={password}
@@ -203,6 +205,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel={showPassword ? '隱藏密碼' : '顯示密碼'}
+                  accessibilityState={{ checked: showPassword }}
                   style={styles.visibilityButton}
                   onPress={() => setShowPassword((visible) => !visible)}
                   disabled={isSubmitting}

@@ -27,3 +27,30 @@ export const CardShadow = {
   shadowOffset: { width: 0, height: 4 },
   elevation: 2,
 } as const;
+
+export const CardSurface = {
+  summary: {
+    backgroundColor: Colors.surfaceWarm,
+    borderRadius: Radius.xl,
+    borderWidth: 0,
+    padding: Spacing.xl,
+    ...CardShadow,
+  },
+  record: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.lg,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  hint: {
+    backgroundColor: Colors.surfaceSoft,
+    borderRadius: Radius.sm,
+    borderWidth: 0,
+    padding: Spacing.md,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+} as const;

@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   subtitle: { color: Colors.subtext, fontSize: Type.body, lineHeight: 23, marginTop: 8 },
   list: { gap: 15, marginTop: 24 },
   themeCard: {
-    height: 172,
+    minHeight: 172,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 2,

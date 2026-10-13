@@ -93,24 +93,31 @@ export function AIChatMessageBubble({ item }: { item: AIChatMessage }) {
             <Text style={styles.knowledgeHeadingText}>{AI_KNOWLEDGE_SOURCE_HEADING}</Text>
           </View>
           <Text style={styles.sourceHint}>{AI_KNOWLEDGE_SOURCE_HINT}</Text>
-          {item.knowledgeSources.map((source) => (
-            <TouchableOpacity
-              key={source.url}
-              accessibilityRole="link"
-              accessibilityLabel={`開啟參考資料：${source.title}`}
-              style={styles.knowledgeLink}
-              onPress={() => {
-                void Linking.openURL(source.url).catch(() =>
-                  Alert.alert('無法開啟參考資料', '請稍後再試。'),
-                );
-              }}
-            >
-              <Text style={styles.knowledgeLinkText}>
-                {source.title} · {source.section || source.documentTitle}
-              </Text>
-              <Ionicons name="open-outline" size={12} color={Colors.primaryDecoration} />
-            </TouchableOpacity>
-          ))}
+          {item.knowledgeSources.map((source) =>
+            source.kind === 'internal' ? (
+              <View key={source.sourceId} style={styles.knowledgeLink}>
+                <Text style={styles.knowledgeLinkText}>MEGO 內部功能文件 · {source.title}</Text>
+                <Text style={styles.sourceHint}>{source.documentTitle}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                key={source.url}
+                accessibilityRole="link"
+                accessibilityLabel={`開啟參考資料：${source.title}`}
+                style={styles.knowledgeLink}
+                onPress={() => {
+                  void Linking.openURL(source.url).catch(() =>
+                    Alert.alert('無法開啟參考資料', '請稍後再試。'),
+                  );
+                }}
+              >
+                <Text style={styles.knowledgeLinkText}>
+                  {source.title} · {source.section || source.documentTitle}
+                </Text>
+                <Ionicons name="open-outline" size={12} color={Colors.primaryDecoration} />
+              </TouchableOpacity>
+            ),
+          )}
         </View>
       )}
       {!isUser &&

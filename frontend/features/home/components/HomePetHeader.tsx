@@ -65,10 +65,10 @@ export function HomePetHeader({
           </View>
         )}
         <View style={styles.flex}>
-          <Text style={styles.petNameSmall} numberOfLines={1}>
+          <Text style={styles.petNameSmall} numberOfLines={2} ellipsizeMode="tail">
             {selectedPet.name}
           </Text>
-          <Text style={styles.mutedSmall} numberOfLines={1}>
+          <Text style={styles.mutedSmall} numberOfLines={2} ellipsizeMode="tail">
             {selectedPet.breed || '品種未設定'} ·{' '}
             {memorial
               ? memorialPeriodText(selectedPet) || '在回憶中'
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   petNameSmall: { fontSize: Type.headline, fontWeight: '800', color: Colors.text },
-  mutedSmall: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
+  mutedSmall: { minHeight: 38, color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
   editIcon: {
     width: 44,
     height: 44,
