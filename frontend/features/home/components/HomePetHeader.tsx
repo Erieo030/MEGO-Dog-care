@@ -158,7 +158,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   petNameSmall: { fontSize: Type.headline, fontWeight: '800', color: Colors.text },
-  mutedSmall: { minHeight: 38, color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
+  // 不預留兩行高度，折行時自然撐開，才能與頭像、編輯鍵對齊。
+  mutedSmall: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
   editIcon: {
     width: 44,
     height: 44,

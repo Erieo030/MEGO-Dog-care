@@ -1,4 +1,4 @@
-import { CardSurface } from '../../../constants/Layout';
+import { CardSurface, Spacing } from '../../../constants/Layout';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,7 +86,7 @@ export function HomeTodayOverview({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: Spacing.sm },
   todayOverlay: {
     ...CardSurface.summary,
 

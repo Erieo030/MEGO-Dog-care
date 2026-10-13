@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   primaryIconCompact: { width: 48, height: 48, borderRadius: 24 },
   careIcon: { borderRadius: 17, borderWidth: 1.5 },
   shortcutLabel: {
-    minHeight: 40,
+    // 底色貼合文字；八格等高交給外層 SoftButton 的 minHeight 與列的 stretch。
     overflow: 'hidden',
     paddingHorizontal: 8,
     paddingVertical: 2,
