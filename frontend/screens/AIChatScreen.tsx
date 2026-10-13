@@ -47,6 +47,7 @@ export default function AIChatScreen() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionLoadError, setSessionLoadError] = useState('');
   const [error, setError] = useState('');
+  const sendLock = useRef<symbol | null>(null);
   const listRef = useRef<FlatList<AIChatMessage>>(null);
   const shouldScrollToEndRef = useRef(false);
   const isNearEndRef = useRef(true);
@@ -95,6 +96,8 @@ export default function AIChatScreen() {
   useFocusEffect(
     React.useCallback(() => {
       let active = true;
+      sendLock.current = null;
+      setLoading(false);
       const requestId = ++sessionRequestId.current;
       void loadSession(() => active && requestId === sessionRequestId.current);
       return () => {
@@ -112,7 +115,6 @@ export default function AIChatScreen() {
       message.role === 'assistant' &&
       (message.contextTokens ?? message.result?.contextTokens ?? 0) >= CONTEXT_WARNING_TOKENS,
   );
-  const sendLock = useRef(false);
   const send = async (value = input) => {
     const text = value.trim();
     if (
@@ -125,7 +127,8 @@ export default function AIChatScreen() {
       !activeSessionId
     )
       return;
-    sendLock.current = true;
+    const sendToken = Symbol('AI request');
+    sendLock.current = sendToken;
     const requestGeneration = sessionRequestId.current;
     const requestSessionId = activeSessionId;
     const isCurrent = () => requestGeneration === sessionRequestId.current;
@@ -213,8 +216,10 @@ export default function AIChatScreen() {
       setInput(text);
       setError((e as Error).message || '目前無法取得回覆');
     } finally {
-      sendLock.current = false;
-      setLoading(false);
+      if (sendLock.current === sendToken) {
+        sendLock.current = null;
+        setLoading(false);
+      }
     }
   };
   return (
@@ -293,7 +298,7 @@ export default function AIChatScreen() {
                   </Text>
                 </View>
               )}
-              <Text style={s.subtitle}>查詢照護紀錄，也能協助一般生活與知識問題</Text>
+              <Text style={s.subtitle}>查詢照護紀錄，也能整理與毛孩生活相關的問題</Text>
               {sessionLoading && (
                 <View style={s.sessionState}>
                   <ActivityIndicator size="small" color={Colors.primary} />

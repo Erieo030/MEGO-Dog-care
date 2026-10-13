@@ -335,3 +335,45 @@ def test_context_free_chat_rejects_pet_not_owned_by_user(monkeypatch):
         asyncio.run(ai_route.chat("someone-elses-pet", ChatRequest(message="幫我整理旅行清單"), "user-1"))
 
     assert error.value.status_code == 404
+
+
+@pytest.mark.parametrize("instant, expected", [
+    (datetime(2026, 10, 13, 15, 59, tzinfo=timezone.utc), "2026-10-13"),
+    (datetime(2026, 10, 13, 16, 0, tzinfo=timezone.utc), "2026-10-14"),
+])
+def test_general_chat_injects_current_taiwan_date_for_each_request(monkeypatch, instant, expected):
+    from app.services.ai import chat_service
+    from app.timezone import TAIPEI
+    monkeypatch.setattr(chat_service, "now_taipei", lambda: instant.astimezone(TAIPEI))
+    class Provider:
+        available = True
+        model = "test-model"
+        async def generate_structured(self, messages):
+            assert expected in messages[0]["content"]
+            assert "Asia/Taipei" in messages[0]["content"]
+            assert "毛孩紀錄日期" in messages[0]["content"]
+            return {"answer": expected}, self.model
+    result = asyncio.run(ChatService(Provider()).answer_general("今天是幾年幾月幾號？"))
+    assert result["answer"] == expected
+    assert result["generationMode"] == "llm"
+
+
+def test_scope_prompt_keeps_colloquial_care_questions_and_defines_three_tiers():
+    from app.services.ai.chat_service import GENERAL_SYSTEM_PROMPT
+    assert "不以關鍵字清單拒絕" in GENERAL_SYSTEM_PROMPT
+    assert "牠一直抓耳朵" in GENERAL_SYSTEM_PROMPT
+    assert all(tier in GENERAL_SYSTEM_PROMPT for tier in ("1. 寵物照護", "2. 周邊生活", "3. 即時資訊與無關問題"))
+    assert "沒有即時搜尋能力" in GENERAL_SYSTEM_PROMPT
+    assert "沒有功能資料時說明無法確認" in GENERAL_SYSTEM_PROMPT
+
+
+def test_unknown_care_wording_still_reaches_provider_with_scope_guidance():
+    class Provider:
+        available = True
+        model = "test-model"
+        async def generate_structured(self, messages):
+            assert "牠一直抓耳朵" == messages[-1]["content"]
+            assert "1. 寵物照護" in messages[0]["content"]
+            return {"answer": "請觀察抓耳頻率，並向獸醫描述觀察狀況。"}, self.model
+    result = asyncio.run(ChatService(Provider()).answer_general("牠一直抓耳朵"))
+    assert not result["fallbackUsed"]
