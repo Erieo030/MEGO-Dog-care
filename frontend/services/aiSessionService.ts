@@ -48,6 +48,17 @@ const validMessages = (value: unknown) =>
         (typeof item.contextTokens === 'number' && Number.isFinite(item.contextTokens))) &&
       (item.generationMode === undefined || typeof item.generationMode === 'string'),
   );
+const validCounter = (value: unknown) =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0;
+const validUsage = (value: unknown) =>
+  isObject(value) &&
+  validCounter(value.used) &&
+  validCounter(value.tokensUsed) &&
+  (value.dailyLimit === null || validCounter(value.dailyLimit)) &&
+  (value.remaining === null || validCounter(value.remaining)) &&
+  typeof value.date === 'string' &&
+  /^\d{4}-\d{2}-\d{2}$/.test(value.date) &&
+  (value.unlimited === undefined || typeof value.unlimited === 'boolean');
 const invalidStorage = () => new Error('本機對話資料無法讀取，請重新載入；原資料尚未變更。');
 const queues = new Map<string, Promise<unknown>>();
 function mutate<T>(userId: string, petId: string, action: () => Promise<T>): Promise<T> {
@@ -67,9 +78,10 @@ export async function loadAISession(userId: string, petId: string): Promise<AISe
   const value: unknown = JSON.parse(stored);
   if (
     !isObject(value) ||
+    Object.keys(value).some((field) => !['sessionId', 'messages', 'usage'].includes(field)) ||
     (value.sessionId !== undefined && (typeof value.sessionId !== 'string' || !value.sessionId)) ||
     (value.messages !== undefined && !validMessages(value.messages)) ||
-    (value.usage !== undefined && (!isObject(value.usage) || typeof value.usage.used !== 'number'))
+    (value.usage !== undefined && !validUsage(value.usage))
   )
     throw invalidStorage();
   return value as AISession;

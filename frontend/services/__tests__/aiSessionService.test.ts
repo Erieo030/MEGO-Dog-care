@@ -119,14 +119,17 @@ test('a late A reply stays in A and leaves the active B untouched', async () => 
   expect(await loadAISession('u1', 'p1')).toMatchObject({ sessionId: b, messages: [] });
   expect((await loadAISessions('u1', 'p1'))[0]).toMatchObject({ id: a });
 });
-test.each(['null', '[]', '{"messages":[{"role":"wrong","text":"x"}]}'])(
-  'invalid active shape %s blocks all writes',
-  async (stored) => {
-    storedValues.set('mego:ai-session:u1:p1', stored);
-    await expect(saveActiveAISession('u1', 'p1', 'a', [])).rejects.toThrow();
-    expect(storage.setItem).not.toHaveBeenCalled();
-  },
-);
+test.each([
+  'null',
+  '[]',
+  '{"messages":[{"role":"wrong","text":"x"}]}',
+  '{"unknown":true}',
+  '{"usage":{"used":0}}',
+])('invalid active shape %s blocks all writes', async (stored) => {
+  storedValues.set('mego:ai-session:u1:p1', stored);
+  await expect(saveActiveAISession('u1', 'p1', 'a', [])).rejects.toThrow();
+  expect(storage.setItem).not.toHaveBeenCalled();
+});
 test('storage read failures do not erase a conversation', async () => {
   storage.getItem.mockRejectedValue(new Error('offline storage'));
   await expect(activateEmptyAISession('u1', 'p1')).rejects.toThrow('offline storage');

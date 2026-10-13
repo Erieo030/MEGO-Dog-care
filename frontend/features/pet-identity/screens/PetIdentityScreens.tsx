@@ -5,7 +5,7 @@ import {
 } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：毛孩資訊公開範圍設定與資訊 QR；保留既有 route。 */
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Alert, ScrollView, Share, Switch, Text, TextInput, View } from 'react-native';
@@ -53,6 +53,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  const saveLock = useRef(false);
   const userId = session?.userId;
   const petId = selectedPet?.id;
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -101,7 +102,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
     setProfile({ ...data, [key]: value });
 
   const save = async () => {
-    if (!session?.userId || !selectedPet || saving) return;
+    if (!session?.userId || !selectedPet || saveLock.current) return;
     const hasPublicContact =
       (data.showContactPhone && Boolean(data.contactPhone?.trim())) ||
       (data.showAlternatePhone && Boolean(data.alternatePhone?.trim())) ||
@@ -111,6 +112,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       return;
     }
     const submitted = { ...data, enabled: true };
+    saveLock.current = true;
     setSaving(true);
     try {
       const result = await saveLostProfile(session.userId, selectedPet.id, {
@@ -125,6 +127,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
