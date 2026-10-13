@@ -8,6 +8,8 @@ from typing import Any
 
 from rag_experiment.query_mongo_index import retrieve
 
+from .app_knowledge import trusted_internal_sources, is_app_function_question
+
 logger = logging.getLogger(__name__)
 DEFAULT_RAG_TOP_K = 3
 MIN_RAG_TOP_K = 1
@@ -39,10 +41,20 @@ def build_knowledge_bundle(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Create model-safe evidence and an allowlisted URL map from retrieved chunks."""
     source_by_url: dict[str, dict[str, str]] = {}
     evidence: list[dict[str, Any]] = []
+    trusted = trusted_internal_sources()
     for item in results:
         source_ids: list[str] = []
         for citation in item.get("citations", []):
             url = str(citation.get("url", "")).strip()
+            internal_id = str(citation.get("sourceId", ""))
+            if internal_id in trusted and str(item.get("text", "")).strip() == trusted[internal_id][1]:
+                source_by_url[internal_id] = {
+                    "sourceId": internal_id, "title": trusted[internal_id][0],
+                    "documentTitle": str(item.get("document_title") or "MEGO 內部功能文件"),
+                    "section": str(item.get("section") or ""), "url": "", "kind": "internal",
+                }
+                source_ids.append(internal_id)
+                continue
             if not url.startswith(("https://", "http://")):
                 continue
             if url not in source_by_url:
@@ -72,6 +84,8 @@ def build_knowledge_bundle(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 async def retrieve_canine_knowledge(question: str) -> list[dict[str, Any]]:
     """Retrieve public references with bounded waits; failures leave normal chat available."""
+    if is_app_function_question(question):
+        return []
     enabled = os.getenv("MEGO_RAG_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
     if not enabled or not is_canine_knowledge_question(question):
         return []
