@@ -13,7 +13,9 @@ export async function readAuthTokens(): Promise<AuthTokens | null> {
     SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
     SecureStore.getItemAsync(ACCESS_EXPIRES_AT_KEY),
   ]);
-  return accessToken && refreshToken ? { accessToken, refreshToken, expiresAt: Number(expiresAt) || 0 } : null;
+  return accessToken && refreshToken
+    ? { accessToken, refreshToken, expiresAt: Number(expiresAt) || 0 }
+    : null;
 }
 
 export async function saveAuthTokens(tokens: AuthTokens & { expiresIn?: number }): Promise<void> {
@@ -21,7 +23,11 @@ export async function saveAuthTokens(tokens: AuthTokens & { expiresIn?: number }
   await Promise.all([
     SecureStore.setItemAsync(ACCESS_TOKEN_KEY, tokens.accessToken, options),
     SecureStore.setItemAsync(REFRESH_TOKEN_KEY, tokens.refreshToken, options),
-    SecureStore.setItemAsync(ACCESS_EXPIRES_AT_KEY, String(Date.now() + (tokens.expiresIn ?? 900) * 1000), options),
+    SecureStore.setItemAsync(
+      ACCESS_EXPIRES_AT_KEY,
+      String(Date.now() + (tokens.expiresIn ?? 900) * 1000),
+      options,
+    ),
   ]);
 }
 

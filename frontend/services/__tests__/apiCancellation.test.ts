@@ -46,12 +46,13 @@ test('apiRequest forwards caller cancellation and identifies it separately from 
 });
 
 test('apiRequest keeps its timeout error distinct from caller cancellation', async () => {
-  global.fetch = jest.fn((_url, init) =>
-    new Promise((_resolve, reject) => {
-      init?.signal?.addEventListener('abort', () => {
-        reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-      });
-    }),
+  global.fetch = jest.fn(
+    (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        });
+      }),
   ) as jest.Mock;
 
   const { apiRequest } = require('../api') as typeof import('../api');

@@ -126,7 +126,11 @@ export function PetProvider({ children }: PropsWithChildren) {
         let avatarAttachmentId = data.avatarAttachmentId;
         let uploadedAvatar: Awaited<ReturnType<typeof uploadPetAvatarImage>> | null = null;
         if (data.avatarUri) {
-          uploadedAvatar = await uploadPetAvatarImage(session.userId, selectedPet.id, data.avatarUri);
+          uploadedAvatar = await uploadPetAvatarImage(
+            session.userId,
+            selectedPet.id,
+            data.avatarUri,
+          );
           avatarAttachmentId = uploadedAvatar.id;
         }
         let updated: Pet;
@@ -137,7 +141,8 @@ export function PetProvider({ children }: PropsWithChildren) {
             avatarAttachmentId,
           });
         } catch (error) {
-          if (uploadedAvatar) await deleteAttachment(session.userId, uploadedAvatar).catch(() => undefined);
+          if (uploadedAvatar)
+            await deleteAttachment(session.userId, uploadedAvatar).catch(() => undefined);
           throw error;
         }
         setPets((current) => current.map((pet) => (pet.id === updated.id ? updated : pet)));

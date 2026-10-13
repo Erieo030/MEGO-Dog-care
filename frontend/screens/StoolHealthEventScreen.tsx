@@ -80,6 +80,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(Boolean(eventId));
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const requestId = useRef(0);
   const formValues = { details, occurredAt, severity, notes, images };
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -148,7 +149,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
   );
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting) return;
+    if (!selectedPet || !session?.userId || submitting || attachmentsBusy) return;
     if (!details.stoolConsistency) return Alert.alert('尚未完成', '請選擇排便形狀');
     if (!details.stoolColor) return Alert.alert('尚未完成', '請選擇排便顏色');
     if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now()) {
@@ -271,7 +272,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
           value={occurredAt}
           mode="date"
           maximumDate={new Date()}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
           onChange={setOccurredAt}
         />
 
@@ -279,13 +280,14 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
         <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />
 
         <AttachmentPicker
+          onBusyChange={setAttachmentsBusy}
           userId={session!.userId}
           petId={selectedPet!.id}
           sourceType="health_event"
           limit={ATTACHMENT_LIMITS.health_event}
           value={images}
           onChange={setImages}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
         />
 
         <SupplementalNotesField
@@ -305,8 +307,8 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
         <AppButton
           title={submitting ? '儲存中…' : '儲存紀錄'}
           variant="primary"
-          disabled={submitting}
-          busy={submitting}
+          disabled={submitting || attachmentsBusy}
+          busy={submitting || attachmentsBusy}
           style={[styles.submit, submitting && styles.disabled]}
           textStyle={styles.submitText}
           onPress={submit}

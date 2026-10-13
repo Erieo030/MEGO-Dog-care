@@ -110,14 +110,17 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       Alert.alert('請設定公開聯絡方式', '請填寫並公開電話、備用電話或 Email，掃描者才能聯絡到你。');
       return;
     }
+    const submitted = { ...data, enabled: true };
     setSaving(true);
     try {
       const result = await saveLostProfile(session.userId, selectedPet.id, {
         ...data,
         enabled: true,
       });
-      setProfile(result.profile);
-      markSaved(result.profile);
+      setProfile((current) =>
+        JSON.stringify(current) === JSON.stringify(data) ? result.profile : current,
+      );
+      markSaved(submitted);
       Alert.alert('已儲存', '毛孩資訊 QR 已更新');
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);

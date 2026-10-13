@@ -62,6 +62,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
   const [attachments, setAttachments] = useState<Attachment[]>(existing?.attachments || []);
   const [medications, setMedications] = useState<Medication[]>(existing?.medications || []);
   const [submitting, setSubmitting] = useState(false);
+  const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const [errors, setErrors] = useState<VisitErrors>({});
   const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
   const fieldPositions = useRef<Record<string, number>>({});
@@ -135,7 +136,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
     return true;
   };
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting || !validate()) return;
+    if (!selectedPet || !session?.userId || submitting || attachmentsBusy || !validate()) return;
     setSubmitting(true);
     try {
       const data = {
@@ -303,7 +304,7 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           </View>
         ))}
         <TouchableOpacity
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
           style={s.outline}
           onPress={() => setMedications((v) => [...v, emptyMedication()])}
         >
@@ -312,19 +313,20 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         <Text style={s.sectionHeading}>附件與補充</Text>
         <SupplementalNotesField value={notes} onChange={setNotes} />
         <AttachmentPicker
+          onBusyChange={setAttachmentsBusy}
           userId={session!.userId}
           petId={existing?.petId || selectedPet!.id}
           sourceType="medical_visit"
           limit={ATTACHMENT_LIMITS.medical_visit}
           value={attachments}
           onChange={setAttachments}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
         />
         <AppButton
           title={submitting ? '儲存中…' : '儲存就醫紀錄'}
           variant="primary"
-          disabled={submitting}
-          busy={submitting}
+          disabled={submitting || attachmentsBusy}
+          busy={submitting || attachmentsBusy}
           style={[s.submit, submitting && s.disabled]}
           textStyle={s.submitText}
           onPress={submit}

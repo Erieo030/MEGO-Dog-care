@@ -2,7 +2,9 @@ import { parseAIAnswer } from '../aiMarkdown';
 
 describe('parseAIAnswer', () => {
   it('converts paragraphs, headings, bullets, and numbered items to blocks', () => {
-    expect(parseAIAnswer('## 飲食\n最近食量正常。\n\n- 留意喝水\n- 持續觀察\n\n1. 記錄變化')).toEqual([
+    expect(
+      parseAIAnswer('## 飲食\n最近食量正常。\n\n- 留意喝水\n- 持續觀察\n\n1. 記錄變化'),
+    ).toEqual([
       { type: 'heading', text: '飲食' },
       { type: 'paragraph', text: '最近食量正常。' },
       { type: 'bullet', text: '留意喝水' },

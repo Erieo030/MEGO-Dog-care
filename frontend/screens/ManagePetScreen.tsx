@@ -8,6 +8,7 @@ import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
 import PetFormScreen from './PetFormScreen';
 import { PetData } from '../types';
+import { toPetFormData } from '../utils/petFormMapping';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { Colors } from '../constants/Colors';
 import { Radius, Spacing } from '../constants/Layout';
@@ -16,29 +17,12 @@ import { Type } from '../constants/Typography';
 type AddProps = NativeStackScreenProps<HomeStackParamList, 'AddPet'>;
 type EditProps = { navigation: { goBack: () => void; navigate: (route: 'PetMemorial') => void } };
 
-const toFormData = (data: PetData) => ({
-  name: data.name,
-  gender: data.gender,
-  breed: data.breed,
-  breedType: data.breedType,
-  birthDate: data.birthday,
-  adoptionDate: data.arrivalDate,
-  avatarUri: data.avatarUri,
-  avatarAttachmentId: data.avatarAttachmentId,
-  neutered: data.neutered,
-  allergies: data.allergies,
-  chronicDiseases: data.chronicDiseases,
-  microchipNumber: data.microchipNumber,
-  coatColor: data.coatColor,
-  distinctiveFeatures: data.distinctiveFeatures,
-});
-
 export function AddPetScreen({ navigation }: AddProps) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { createPet } = usePet();
   const submit = async (data: PetData) => {
     try {
-      await createPet(toFormData(data));
+      await createPet(toPetFormData(data));
       return true;
     } catch (error) {
       Alert.alert('新增失敗', (error as Error).message);
@@ -80,7 +64,7 @@ export function EditPetScreen({ navigation }: EditProps) {
   };
   const submit = async (data: PetData) => {
     try {
-      await updateSelectedPet(toFormData(data));
+      await updateSelectedPet(toPetFormData(data));
       return true;
     } catch (error) {
       Alert.alert('更新失敗', (error as Error).message);

@@ -46,6 +46,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const [date, setDate] = useState(Number.isNaN(initialDate.getTime()) ? new Date() : initialDate);
   const [notes, setNotes] = useState(record?.notes || '');
   const [submitting, setSubmitting] = useState(false);
+  const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const [attachments, setAttachments] = useState(record?.attachments ?? []);
 
   const formValues = { weight, date, notes, attachments };
@@ -57,7 +58,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   });
 
   const submit = async () => {
-    if (submitting) return;
+    if (submitting || attachmentsBusy) return;
     const normalizedWeight = weight.trim();
     const value = Number(normalizedWeight);
     if (
@@ -134,7 +135,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
           label="測量日期（必填）"
           value={date}
           maximumDate={new Date()}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
           onChange={setDate}
         />
 
@@ -142,21 +143,22 @@ export default function WeightFormScreen({ route, navigation }: Props) {
 
         {session?.userId && (selectedPet || record) && (
           <AttachmentPicker
+            onBusyChange={setAttachmentsBusy}
             userId={session.userId}
             petId={record?.petId || selectedPet!.id}
             sourceType="weight"
             limit={ATTACHMENT_LIMITS.weight}
             value={attachments}
             onChange={setAttachments}
-            disabled={submitting}
+            disabled={submitting || attachmentsBusy}
           />
         )}
 
         <AppButton
           title={submitting ? '儲存中…' : '儲存體重'}
           variant="primary"
-          disabled={submitting}
-          busy={submitting}
+          disabled={submitting || attachmentsBusy}
+          busy={submitting || attachmentsBusy}
           style={[styles.submit, submitting && styles.disabled]}
           textStyle={styles.submitText}
           onPress={submit}

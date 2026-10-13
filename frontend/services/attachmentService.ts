@@ -3,7 +3,11 @@ import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
-import { ATTACHMENT_ALLOWED_MIME, ATTACHMENT_MAX_BYTES, MEGO_UPLOAD_MAX_MB } from '../constants/Attachments';
+import {
+  ATTACHMENT_ALLOWED_MIME,
+  ATTACHMENT_MAX_BYTES,
+  MEGO_UPLOAD_MAX_MB,
+} from '../constants/Attachments';
 import { Attachment, AttachmentSourceType } from '../types';
 import { API_BASE_URL, apiData, apiRequest, ApiError } from './api';
 import { requestMediaPermission } from './mediaPermissionService';
@@ -97,7 +101,8 @@ export async function uploadPetAvatarImage(
   }
   const file = new FileSystem.File(processed.uri);
   if (!file.exists || file.size == null) throw new ApiError('無法讀取處理後的頭像');
-  if (file.size > ATTACHMENT_MAX_BYTES) throw new ApiError(`頭像壓縮後仍超過 ${MEGO_UPLOAD_MAX_MB} MB，請選擇較小的圖片`);
+  if (file.size > ATTACHMENT_MAX_BYTES)
+    throw new ApiError(`頭像壓縮後仍超過 ${MEGO_UPLOAD_MAX_MB} MB，請選擇較小的圖片`);
 
   const form = new FormData();
   form.append('file', file, `mego-avatar-${Date.now()}.jpg`);
@@ -117,7 +122,9 @@ export const attachmentUri = (item: Attachment, userId: string, retry = 0) => {
 
 export async function deleteAttachment(userId: string, item: Attachment) {
   try {
-    await apiData(`/api/attachments/${item.id}?userId=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    await apiData(`/api/attachments/${item.id}?userId=${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    });
   } catch (error) {
     if ((error as ApiError).status !== 404) throw error;
   }

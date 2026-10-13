@@ -39,9 +39,6 @@ import {
 import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
 import { Type } from '../constants/Typography';
 
-const eventTypes = (Object.keys(HEALTH_EVENT_LABELS) as HealthEventType[]).filter(
-  (value) => value !== 'vomiting' && value !== 'abnormal_stool',
-);
 const severities = Object.keys(SEVERITY_LABELS) as Severity[];
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthEventEdit'>;
@@ -60,6 +57,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const requestId = useRef(0);
   const formValues = { type, summary, occurredAt, severity, notes, attachments };
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
@@ -129,14 +127,14 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   );
 
   const submit = async () => {
-    if (!item || !session?.userId || submitting) return;
+    if (!item || !session?.userId || submitting || attachmentsBusy) return;
     if (!summary.trim()) return Alert.alert('請填寫摘要', '摘要不可留白');
     if (Number.isNaN(occurredAt.getTime())) return Alert.alert('日期錯誤', '請選擇有效日期');
     if (occurredAt.getTime() > Date.now()) return Alert.alert('日期錯誤', '發生時間不可晚於現在');
     setSubmitting(true);
     try {
       await service.updateHealthEvent(session.userId, item.id, {
-        type,
+        type: item.type,
         summary: summary.trim(),
         occurredAt: occurredAt.toISOString(),
         severity,
@@ -186,16 +184,9 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
         />
         <Text style={styles.sectionHeading}>這次觀察</Text>
         <Text style={styles.label}>異常類型（必填）</Text>
-        <View style={styles.chips}>
-          {eventTypes.map((value) => (
-            <Chip
-              key={value}
-              text={HEALTH_EVENT_LABELS[value]}
-              active={type === value}
-              onPress={() => setType(value)}
-            />
-          ))}
-        </View>
+        <Text style={styles.label}>{HEALTH_EVENT_LABELS[item.type]}</Text>
+        <Text style={styles.label}>編輯保留原類型；不同狀況請另建紀錄，以填寫對應欄位。</Text>
+        <AppButton title="新增其他健康異常" onPress={() => navigation.navigate('AbnormalType')} />
         <Text style={styles.label}>摘要（必填）</Text>
         <TextInput
           value={summary}
@@ -221,7 +212,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
           value={occurredAt}
           mode="date"
           maximumDate={new Date()}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
           onChange={setOccurredAt}
         />
         <Text style={styles.sectionHeading}>補充資訊</Text>
@@ -232,19 +223,20 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
           placeholder="補充重要資訊"
         />
         <AttachmentPicker
+          onBusyChange={setAttachmentsBusy}
           userId={session.userId}
           petId={item.petId}
           sourceType="health_event"
           limit={ATTACHMENT_LIMITS.health_event}
           value={attachments}
           onChange={setAttachments}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
         />
         <AppButton
           title={submitting ? '更新中…' : '儲存修改'}
           variant="primary"
-          disabled={submitting}
-          busy={submitting}
+          disabled={submitting || attachmentsBusy}
+          busy={submitting || attachmentsBusy}
           style={[styles.submit, submitting && styles.disabled]}
           textStyle={styles.submitText}
           onPress={submit}

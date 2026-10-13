@@ -54,11 +54,7 @@ export const HomeAction = React.memo(function HomeAction({
           },
         ]}
       >
-        <Ionicons
-          name={icon}
-          size={23}
-          color={RECORD_CATEGORY_COLORS[category]}
-        />
+        <Ionicons name={icon} size={23} color={RECORD_CATEGORY_COLORS[category]} />
       </View>
       <Text style={styles.shortcutLabel} numberOfLines={1}>
         {label}

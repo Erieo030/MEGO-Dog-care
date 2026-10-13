@@ -17,7 +17,6 @@ import { Attachment, AttachmentSourceType } from '../types';
 import { getValidAccessToken } from '../services/api';
 import {
   attachmentUri,
-  deleteAttachment,
   pickAndUploadAttachments,
   AttachmentPickSource,
 } from '../services/attachmentService';
@@ -31,6 +30,7 @@ interface Props {
   value: Attachment[];
   onChange: (items: Attachment[]) => void;
   disabled?: boolean;
+  onBusyChange?: (busy: boolean) => void;
 }
 export default function AttachmentPicker({
   userId,
@@ -40,6 +40,7 @@ export default function AttachmentPicker({
   value,
   onChange,
   disabled,
+  onBusyChange,
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -48,9 +49,13 @@ export default function AttachmentPicker({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    void getValidAccessToken().then((token) => {
-      if (active) setAccessToken(token);
-    });
+    void getValidAccessToken()
+      .then((token) => {
+        if (active) setAccessToken(token);
+      })
+      .catch(() => {
+        if (active) setError('無法取得照片授權，請重新載入。');
+      });
     return () => {
       active = false;
     };
@@ -58,6 +63,7 @@ export default function AttachmentPicker({
   const pick = async (source: AttachmentPickSource) => {
     if (busy || disabled) return;
     setBusy(true);
+    onBusyChange?.(true);
     setError('');
     setLast(source);
     try {
@@ -73,25 +79,16 @@ export default function AttachmentPicker({
       setError((e as Error).message);
     } finally {
       setBusy(false);
+      onBusyChange?.(false);
     }
   };
   const remove = (item: Attachment) =>
-    Alert.alert('刪除照片', '確定刪除這張照片？', [
+    Alert.alert('刪除照片', '儲存紀錄後才會移除照片；放棄編輯會保留原照片。', [
       { text: '取消', style: 'cancel' },
       {
         text: '刪除',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            setBusy(true);
-            await deleteAttachment(userId, item);
-            onChange(value.filter((x) => x.id !== item.id));
-          } catch (e) {
-            Alert.alert('刪除失敗', (e as Error).message);
-          } finally {
-            setBusy(false);
-          }
-        },
+        onPress: () => onChange(value.filter((x) => x.id !== item.id)),
       },
     ]);
   return (

@@ -1,7 +1,7 @@
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -20,7 +20,7 @@ import { createDeworming, updateDeworming } from '../../../services/dewormingSer
 import type { Deworming, DewormingType } from '../../../types';
 import { dewormingStyles as styles } from '../dewormingStyles';
 import {
-  createBlankDewormingDraft,
+  createDewormingDraft,
   dewormingTypeLabels,
   validDewormingDate,
   type DewormingDraft,
@@ -44,17 +44,17 @@ export function DewormingFormScreen() {
   const existing = route.params?.record as Deworming | undefined;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
-  const [draft, setDraft] = useState<DewormingDraft>({
-    ...createBlankDewormingDraft(),
-    ...(existing || {}),
-  });
+  const [draft, setDraft] = useState<DewormingDraft>(() =>
+    createDewormingDraft(existing, duplicate),
+  );
+  const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const setField = <Key extends keyof DewormingDraft>(key: Key, value: DewormingDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
   const save = async () => {
-    if (!session?.userId || !selectedPet || saving) return;
+    if (!session?.userId || !selectedPet || saveLock.current) return;
     if (!draft.productName.trim()) return Alert.alert('請填寫產品名稱');
     const administered = validDewormingDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validDewormingDate(draft.nextDueAt) : undefined;
@@ -62,6 +62,7 @@ export function DewormingFormScreen() {
       return Alert.alert('日期錯誤', '請選擇有效的使用日期。');
     if (nextDue && nextDue < administered)
       return Alert.alert('日期順序錯誤', '下次日期不能早於使用日期。');
+    saveLock.current = true;
     setSaving(true);
     try {
       const payload = {
@@ -86,7 +87,7 @@ export function DewormingFormScreen() {
           onAddAnother: () => navigation.replace('DewormingForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', '驅蟲紀錄已更新');
+        Alert.alert('已儲存', existing && !duplicate ? '驅蟲紀錄已更新' : '驅蟲紀錄已新增');
         markSaved(draft, () =>
           navigation.replace('DewormingDetail', { recordId: response.record.id }),
         );
@@ -94,6 +95,7 @@ export function DewormingFormScreen() {
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
@@ -105,7 +107,7 @@ export function DewormingFormScreen() {
       >
         <ScreenPageHeader
           style={styles.formIntro}
-          title={existing ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}
+          title={existing && !duplicate ? '編輯驅蟲紀錄' : '新增驅蟲紀錄'}
           description="記下產品與下次日期"
           icon="shield-checkmark-outline"
         />

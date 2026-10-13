@@ -1,3 +1,4 @@
+import type { Vaccination } from '../../types';
 /** 用途：疫苗表單型別、預設值與日期防呆。 */
 export type VaccinationDraft = {
   vaccineName: string;
@@ -24,3 +25,18 @@ export const createBlankVaccinationDraft = (): VaccinationDraft => ({
   notes: '',
   createReminder: false,
 });
+
+export function createVaccinationDraft(
+  existing?: Vaccination,
+  duplicate = false,
+): VaccinationDraft {
+  const blank = createBlankVaccinationDraft();
+  if (!existing) return blank;
+  if (!duplicate) return { ...blank, ...existing };
+  return {
+    ...blank,
+    vaccineName: existing.vaccineName,
+    hospitalName: existing.hospitalName,
+    notes: existing.notes,
+  };
+}

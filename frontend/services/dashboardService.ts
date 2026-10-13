@@ -12,7 +12,5 @@ export const getHealthDashboard = async (
     timezoneOffsetMinutes: String(new Date().getTimezoneOffset()),
   });
   const path = `/api/pets/${petId}/dashboard?${query.toString()}&range=${range}&_=${Date.now()}`;
-  return signal
-    ? apiData<HealthDashboard>(path, { signal })
-    : apiData<HealthDashboard>(path);
+  return signal ? apiData<HealthDashboard>(path, { signal }) : apiData<HealthDashboard>(path);
 };

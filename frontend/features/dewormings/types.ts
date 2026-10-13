@@ -1,3 +1,4 @@
+import type { Deworming } from '../../types';
 /** 用途：驅蟲表單型別、顯示文字與日期防呆。 */
 import type { DewormingType } from '../../types';
 
@@ -35,3 +36,16 @@ export const createBlankDewormingDraft = (): DewormingDraft => ({
   dosageText: '',
   createReminder: false,
 });
+
+export function createDewormingDraft(existing?: Deworming, duplicate = false): DewormingDraft {
+  const blank = createBlankDewormingDraft();
+  if (!existing) return blank;
+  if (!duplicate) return { ...blank, ...existing };
+  return {
+    ...blank,
+    type: existing.type,
+    productName: existing.productName,
+    dosageText: existing.dosageText,
+    notes: existing.notes,
+  };
+}

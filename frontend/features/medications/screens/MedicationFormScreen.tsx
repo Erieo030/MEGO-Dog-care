@@ -5,7 +5,7 @@ import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChanges
  * 表單型別：../types.ts
  * API：../../../services/medicationService.ts
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -24,12 +24,7 @@ import type { HomeStackParamList } from '../../../navigation/types';
 import { createMedication, updateMedication } from '../../../services/medicationService';
 import type { MedicationCourse, MedicationMealTiming } from '../../../types';
 import { medicationStyles as styles } from '../medicationStyles';
-import {
-  createBlankMedicationDraft,
-  mealTimingLabels,
-  timeValue,
-  type MedicationDraft,
-} from '../types';
+import { createMedicationDraft, mealTimingLabels, timeValue, type MedicationDraft } from '../types';
 import { taipeiDateKey, taipeiDateFromKey, formatTaipeiTime } from '../../../utils/taipeiDate';
 
 const fields = [
@@ -50,10 +45,10 @@ export function MedicationFormScreen() {
   const existing = route.params?.record as MedicationCourse | undefined;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
-  const [draft, setDraft] = useState<MedicationDraft>({
-    ...createBlankMedicationDraft(),
-    ...(existing || {}),
-  });
+  const [draft, setDraft] = useState<MedicationDraft>(() =>
+    createMedicationDraft(existing, duplicate),
+  );
+  const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const [editingReminderTime, setEditingReminderTime] = useState<string | null>(null);
@@ -61,7 +56,7 @@ export function MedicationFormScreen() {
     setDraft((current) => ({ ...current, [key]: value }));
 
   const save = async () => {
-    if (!session?.userId || !selectedPet || saving) return;
+    if (!session?.userId || !selectedPet || saveLock.current) return;
     if (!draft.name.trim()) {
       Alert.alert('請填寫藥名');
       return;
@@ -71,22 +66,12 @@ export function MedicationFormScreen() {
       return;
     }
 
-    const reminderTime = draft.reminderTimeDraft.trim();
-    if (reminderTime && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reminderTime)) {
-      Alert.alert('提醒時間格式錯誤', '請使用 HH:MM，例如 08:00');
+    if (!Number.isInteger(draft.timesPerDay) || draft.timesPerDay < 1 || draft.timesPerDay > 6) {
+      Alert.alert('每日次數須為 1–6 次');
       return;
     }
-
-    let reminderTimes = draft.reminderTimes;
-    if (reminderTime) {
-      reminderTimes = editingReminderTime
-        ? reminderTimes.map((item) => (item === editingReminderTime ? reminderTime : item))
-        : reminderTimes.includes(reminderTime)
-          ? reminderTimes
-          : [...reminderTimes, reminderTime];
-    }
-    reminderTimes = [...new Set(reminderTimes)];
-
+    const reminderTimes = [...new Set(draft.reminderTimes)];
+    saveLock.current = true;
     setSaving(true);
     try {
       const payload = {
@@ -114,7 +99,7 @@ export function MedicationFormScreen() {
           onAddAnother: () => navigation.replace('MedicationForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', '用藥紀錄已更新');
+        Alert.alert('已儲存', existing && !duplicate ? '用藥紀錄已更新' : '用藥紀錄已新增');
         markSaved(draft, () =>
           navigation.replace('MedicationDetail', { recordId: response.record.id }),
         );
@@ -122,6 +107,7 @@ export function MedicationFormScreen() {
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
@@ -133,7 +119,7 @@ export function MedicationFormScreen() {
       >
         <ScreenPageHeader
           style={styles.formIntro}
-          title={existing ? '編輯用藥' : '新增用藥療程'}
+          title={existing && !duplicate ? '編輯用藥' : '新增用藥療程'}
           description="依獸醫指示記下療程"
           icon="medical-outline"
         />
@@ -159,6 +145,26 @@ export function MedicationFormScreen() {
                 />
               );
             }
+            if (key === 'timesPerDay')
+              return (
+                <View key={key}>
+                  <Text style={styles.label}>{label}：1–6 次</Text>
+                  <View style={styles.options}>
+                    {[1, 2, 3, 4, 5, 6].map((count) => (
+                      <TouchableOpacity
+                        key={count}
+                        accessibilityRole="radio"
+                        accessibilityLabel={`每日 ${count} 次`}
+                        accessibilityState={{ selected: draft.timesPerDay === count }}
+                        style={[styles.chip, draft.timesPerDay === count && styles.selected]}
+                        onPress={() => setField('timesPerDay', count)}
+                      >
+                        <Text>{count} 次</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              );
             return (
               <View key={key}>
                 <Text style={styles.label}>{label}</Text>
@@ -167,10 +173,8 @@ export function MedicationFormScreen() {
                   placeholder={`請輸入${label.replace('（必填）', '')}`}
                   placeholderTextColor={Colors.subtext}
                   value={String(draft[key] ?? '')}
-                  keyboardType={key === 'timesPerDay' ? 'numeric' : 'default'}
-                  onChangeText={(value) =>
-                    setField(key, key === 'timesPerDay' ? Number(value) : value)
-                  }
+                  accessibilityLabel={label}
+                  onChangeText={(value) => setField(key, value)}
                 />
               </View>
             );
@@ -199,14 +203,20 @@ export function MedicationFormScreen() {
           value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
           onChange={(date) => {
             const next = formatTaipeiTime(date);
-            setField('reminderTimeDraft', next);
-            if (editingReminderTime) {
-              setField(
-                'reminderTimes',
-                draft.reminderTimes.map((item) => (item === editingReminderTime ? next : item)),
-              );
-              setEditingReminderTime(null);
-            }
+            setDraft((current) => ({
+              ...current,
+              reminderTimes: [
+                ...new Set(
+                  editingReminderTime
+                    ? current.reminderTimes.map((item) =>
+                        item === editingReminderTime ? next : item,
+                      )
+                    : [...current.reminderTimes, next],
+                ),
+              ],
+              reminderTimeDraft: '',
+            }));
+            setEditingReminderTime(null);
           }}
         />
         {draft.reminderTimes.map((time) => (
@@ -225,12 +235,14 @@ export function MedicationFormScreen() {
               kind="delete"
               label="刪除"
               style={styles.reminderAction}
-              onPress={() =>
-                setField(
-                  'reminderTimes',
-                  draft.reminderTimes.filter((item) => item !== time),
-                )
-              }
+              onPress={() => {
+                setDraft((current) => ({
+                  ...current,
+                  reminderTimes: current.reminderTimes.filter((item) => item !== time),
+                  reminderTimeDraft: '',
+                }));
+                setEditingReminderTime(null);
+              }}
             />
           </View>
         ))}

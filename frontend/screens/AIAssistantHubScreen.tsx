@@ -126,7 +126,11 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
         }
       }
       if (granted) {
-        await action();
+        try {
+          await action();
+        } catch (error) {
+          Alert.alert('無法開啟對話', (error as Error).message || '請重新載入後再試。');
+        }
         return;
       }
       pendingAIAction.current = action;
@@ -139,8 +143,12 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
       withAIConsent(async () => {
         if (!session?.userId || !selectedPet?.id) return;
         const begin = async () => {
-          await activateEmptyAISession(session.userId, selectedPet.id);
-          openChat();
+          try {
+            await activateEmptyAISession(session.userId, selectedPet.id);
+            openChat();
+          } catch (error) {
+            Alert.alert('無法建立對話', (error as Error).message || '請重新載入後再試。');
+          }
         };
         if (sessions.length < 5) return begin();
         const oldest = [...sessions].sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))[0];
@@ -150,9 +158,13 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
             text: '刪除並建立',
             style: 'destructive',
             onPress: async () => {
-              await deleteAISession(session.userId, selectedPet.id, oldest.id);
-              setSessions((items) => items.filter((item) => item.id !== oldest.id));
-              await begin();
+              try {
+                await deleteAISession(session.userId, selectedPet.id, oldest.id);
+                setSessions((items) => items.filter((item) => item.id !== oldest.id));
+                await begin();
+              } catch (error) {
+                Alert.alert('無法刪除對話', (error as Error).message);
+              }
             },
           },
         ]);
@@ -304,8 +316,12 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
                     style: 'destructive',
                     onPress: async () => {
                       if (!session?.userId || !selectedPet?.id) return;
-                      await deleteAISession(session.userId, selectedPet.id, item.id);
-                      setSessions((items) => items.filter((entry) => entry.id !== item.id));
+                      try {
+                        await deleteAISession(session.userId, selectedPet.id, item.id);
+                        setSessions((items) => items.filter((entry) => entry.id !== item.id));
+                      } catch (error) {
+                        Alert.alert('無法刪除對話', (error as Error).message);
+                      }
                     },
                   },
                 ])

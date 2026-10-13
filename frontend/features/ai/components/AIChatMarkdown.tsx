@@ -7,11 +7,22 @@ import { Type } from '../../../constants/Typography';
 function inlineMarkdown(text: string) {
   const tokens = text.split(/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`)/g);
   return tokens.map((token, index) => {
-    if ((token.startsWith('**') && token.endsWith('**')) || (token.startsWith('__') && token.endsWith('__'))) {
-      return <Text key={index} style={styles.bold}>{token.slice(2, -2)}</Text>;
+    if (
+      (token.startsWith('**') && token.endsWith('**')) ||
+      (token.startsWith('__') && token.endsWith('__'))
+    ) {
+      return (
+        <Text key={index} style={styles.bold}>
+          {token.slice(2, -2)}
+        </Text>
+      );
     }
     if (token.startsWith('`') && token.endsWith('`')) {
-      return <Text key={index} style={styles.code}>{token.slice(1, -1)}</Text>;
+      return (
+        <Text key={index} style={styles.code}>
+          {token.slice(1, -1)}
+        </Text>
+      );
     }
     return <Text key={index}>{token}</Text>;
   });

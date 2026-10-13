@@ -40,7 +40,11 @@ export const logout = (refreshToken: string) =>
   });
 
 export const deleteAccount = (password: string) =>
-  apiData<{ success: boolean }>('/api/account/delete', {
-    method: 'POST',
-    body: JSON.stringify({ password }),
-  }, 30000);
+  apiData<{ success: boolean }>(
+    '/api/account/delete',
+    {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    },
+    30000,
+  );

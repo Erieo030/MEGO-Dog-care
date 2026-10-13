@@ -53,6 +53,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   const [notes, setNotes] = useState('');
   const [images, setImages] = useState<Attachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const formValues = { occurredAt, severity, details, notes, images };
@@ -65,7 +66,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   });
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || submitting) return;
+    if (!selectedPet || !session?.userId || submitting || attachmentsBusy) return;
     setSubmitting(true);
     try {
       await createHealthEvent(session.userId, selectedPet.id, {
@@ -147,24 +148,25 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
           value={occurredAt}
           mode="date"
           maximumDate={new Date()}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
           onChange={setOccurredAt}
         />
         <AttachmentPicker
+          onBusyChange={setAttachmentsBusy}
           userId={session!.userId}
           petId={selectedPet!.id}
           sourceType="health_event"
           limit={ATTACHMENT_LIMITS.health_event}
           value={images}
           onChange={setImages}
-          disabled={submitting}
+          disabled={submitting || attachmentsBusy}
         />
         <SupplementalNotesField value={notes} onChange={setNotes} placeholder="只需補充重要資訊" />
         <AppButton
           title={submitting ? '儲存中…' : '儲存紀錄'}
           variant="primary"
-          disabled={submitting}
-          busy={submitting}
+          disabled={submitting || attachmentsBusy}
+          busy={submitting || attachmentsBusy}
           style={[styles.submit, submitting && styles.disabled]}
           textStyle={styles.submitText}
           onPress={submit}

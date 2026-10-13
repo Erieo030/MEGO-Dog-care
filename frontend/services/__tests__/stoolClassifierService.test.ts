@@ -55,8 +55,13 @@ test('classifies a selected image through MEGO API and returns the suggestion en
 });
 
 test('returns null when the user cancels photo selection without calling the API', async () => {
-  (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: true, assets: [] });
-  await expect(classifyStoolPhoto({ source: 'library', userId: 'u1', petId: 'p1' })).resolves.toBeNull();
+  (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+    canceled: true,
+    assets: [],
+  });
+  await expect(
+    classifyStoolPhoto({ source: 'library', userId: 'u1', petId: 'p1' }),
+  ).resolves.toBeNull();
   expect(apiRequest).not.toHaveBeenCalled();
 });
 
@@ -65,6 +70,8 @@ test('does not open the picker when media permission is denied', async () => {
     requestMediaPermission: jest.Mock;
   };
   requestMediaPermission.mockResolvedValueOnce({ granted: false });
-  await expect(classifyStoolPhoto({ source: 'camera', userId: 'u1', petId: 'p1' })).rejects.toThrow('相機權限');
+  await expect(classifyStoolPhoto({ source: 'camera', userId: 'u1', petId: 'p1' })).rejects.toThrow(
+    '相機權限',
+  );
   expect(ImagePicker.launchCameraAsync).not.toHaveBeenCalled();
 });

@@ -67,14 +67,25 @@ export async function refreshStoredTokens(): Promise<boolean> {
       });
       const envelope = await response.json();
       if (response.status === 401) return false;
-      if (!response.ok) throw new ApiError('暫時無法更新登入狀態，請確認網路後重試', response.status);
-      const data = unwrapApiEnvelope(envelope) as { accessToken?: string; refreshToken?: string; expiresIn?: number };
+      if (!response.ok)
+        throw new ApiError('暫時無法更新登入狀態，請確認網路後重試', response.status);
+      const data = unwrapApiEnvelope(envelope) as {
+        accessToken?: string;
+        refreshToken?: string;
+        expiresIn?: number;
+      };
       if (!data.accessToken || !data.refreshToken) return false;
-      await saveAuthTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken, expiresIn: data.expiresIn });
+      await saveAuthTokens({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresIn: data.expiresIn,
+      });
       return true;
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      throw new ApiError((error as Error).name === 'AbortError' ? '更新登入狀態逾時' : '暫時無法連線確認登入狀態');
+      throw new ApiError(
+        (error as Error).name === 'AbortError' ? '更新登入狀態逾時' : '暫時無法連線確認登入狀態',
+      );
     } finally {
       clearTimeout(timeout);
       refreshInFlight = null;
@@ -134,7 +145,10 @@ export async function apiRequest<T>(
     }
     const headers = new Headers(options.headers);
     headers.set('Accept', 'application/json');
-    if (!(typeof FormData !== 'undefined' && options.body instanceof FormData) && !headers.has('Content-Type')) {
+    if (
+      !(typeof FormData !== 'undefined' && options.body instanceof FormData) &&
+      !headers.has('Content-Type')
+    ) {
       headers.set('Content-Type', 'application/json');
     }
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);

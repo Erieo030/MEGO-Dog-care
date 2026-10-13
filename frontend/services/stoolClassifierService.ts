@@ -28,8 +28,7 @@ async function preparePhoto(asset: ImagePicker.ImagePickerAsset) {
     Math.max(asset.width, asset.height) > 1024
       ? [
           {
-            resize:
-              asset.width >= asset.height ? { width: 1024 } : { height: 1024 },
+            resize: asset.width >= asset.height ? { width: 1024 } : { height: 1024 },
           },
         ]
       : [];
@@ -55,7 +54,9 @@ export async function classifyStoolPhoto(input: {
 }): Promise<StoolClassification | null> {
   const permission = await requestMediaPermission(input.source);
   if (!permission.granted) {
-    throw new ApiError(input.source === 'camera' ? '請允許相機權限後再拍照' : '請允許相簿權限後再選擇照片');
+    throw new ApiError(
+      input.source === 'camera' ? '請允許相機權限後再拍照' : '請允許相簿權限後再選擇照片',
+    );
   }
 
   const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9 };

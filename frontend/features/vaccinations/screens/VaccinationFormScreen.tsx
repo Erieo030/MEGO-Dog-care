@@ -1,7 +1,7 @@
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製疫苗紀錄。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -19,7 +19,7 @@ import type { HomeStackParamList } from '../../../navigation/types';
 import { createVaccination, updateVaccination } from '../../../services/vaccinationService';
 import type { Vaccination } from '../../../types';
 import { vaccinationStyles as styles } from '../vaccinationStyles';
-import { createBlankVaccinationDraft, validVaccinationDate, type VaccinationDraft } from '../types';
+import { createVaccinationDraft, validVaccinationDate, type VaccinationDraft } from '../types';
 import { toTaipeiDateValue } from '../../../utils/taipeiDate';
 const fields = [
   ['vaccineName', '疫苗名稱（必填）'],
@@ -37,16 +37,16 @@ export function VaccinationFormScreen() {
   const existing = route.params?.record as Vaccination | undefined;
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
-  const [draft, setDraft] = useState<VaccinationDraft>({
-    ...createBlankVaccinationDraft(),
-    ...(existing || {}),
-  });
+  const [draft, setDraft] = useState<VaccinationDraft>(() =>
+    createVaccinationDraft(existing, duplicate),
+  );
+  const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
   const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
   const save = async () => {
-    if (!session?.userId || !selectedPet || saving) return;
+    if (!session?.userId || !selectedPet || saveLock.current) return;
     if (!draft.vaccineName.trim()) return Alert.alert('請填寫疫苗名稱');
     const administered = validVaccinationDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validVaccinationDate(draft.nextDueAt) : undefined;
@@ -54,6 +54,7 @@ export function VaccinationFormScreen() {
       return Alert.alert('日期錯誤', '請選擇有效的接種日期。');
     if (nextDue && nextDue < administered)
       return Alert.alert('日期順序錯誤', '下次接種日期不能早於接種日期。');
+    saveLock.current = true;
     setSaving(true);
     try {
       const payload = {
@@ -77,7 +78,7 @@ export function VaccinationFormScreen() {
           onAddAnother: () => navigation.replace('VaccinationForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', '疫苗紀錄已更新');
+        Alert.alert('已儲存', existing && !duplicate ? '疫苗紀錄已更新' : '疫苗紀錄已新增');
         markSaved(draft, () =>
           navigation.replace('VaccinationDetail', { recordId: response.record.id }),
         );
@@ -85,6 +86,7 @@ export function VaccinationFormScreen() {
     } catch (caught) {
       Alert.alert('儲存失敗', (caught as Error).message);
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
@@ -95,7 +97,7 @@ export function VaccinationFormScreen() {
       >
         <ScreenPageHeader
           style={styles.formIntro}
-          title={existing ? '編輯疫苗' : '新增疫苗'}
+          title={existing && !duplicate ? '編輯疫苗' : '新增疫苗'}
           description="記下接種日期與下次安排"
           icon="medkit-outline"
         />

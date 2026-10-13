@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { usePet } from '../contexts/PetContext';
 import CreatePetScreen from '../screens/CreatePetScreen';
 import { PetData } from '../types';
+import { toPetFormData } from '../utils/petFormMapping';
 import { PetSetupStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<PetSetupStackParamList>();
@@ -15,19 +16,8 @@ export default function PetSetupStack() {
 
   const handleCreate = async (data: PetData) => {
     try {
-      await createPet({
-        name: data.name,
-        gender: data.gender,
-        breed: data.breed,
-        breedType: data.breedType,
-        birthDate: data.birthday,
-        adoptionDate: data.arrivalDate,
-        avatarUri: data.avatarUri,
-        avatarAttachmentId: data.avatarAttachmentId,
-        neutered: data.neutered,
-        allergies: data.allergies,
-        chronicDiseases: data.chronicDiseases,
-      });
+      await createPet(toPetFormData(data));
+      return true;
     } catch (error) {
       Alert.alert('新增失敗', (error as Error).message);
       return false;

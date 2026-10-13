@@ -14,7 +14,11 @@ import type { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../contexts/AuthContext';
 import { usePet } from '../contexts/PetContext';
 import { sendAIChat, AIUsage } from '../services/aiService';
-import { loadAISession, saveActiveAISession } from '../services/aiSessionService';
+import {
+  activateEmptyAISession,
+  loadAISession,
+  saveActiveAISession,
+} from '../services/aiSessionService';
 import { Colors } from '../constants/Colors';
 import AuthenticatedPetAvatar from '../components/AuthenticatedPetAvatar';
 import {
@@ -71,6 +75,9 @@ export default function AIChatScreen() {
       try {
         const saved = await loadAISession(session.userId, selectedPet.id);
         if (!isCurrent()) return;
+        if (!saved.sessionId)
+          saved.sessionId = await activateEmptyAISession(session.userId, selectedPet.id);
+        if (!isCurrent()) return;
         shouldScrollToEndRef.current = true;
         setActiveSessionId(saved.sessionId);
         setMessages(saved.messages || []);
@@ -105,10 +112,23 @@ export default function AIChatScreen() {
       message.role === 'assistant' &&
       (message.contextTokens ?? message.result?.contextTokens ?? 0) >= CONTEXT_WARNING_TOKENS,
   );
+  const sendLock = useRef(false);
   const send = async (value = input) => {
     const text = value.trim();
-    if (!text || !session?.userId || !selectedPet || loading || sessionLoading || sessionLoadError)
+    if (
+      !text ||
+      !session?.userId ||
+      !selectedPet ||
+      sendLock.current ||
+      sessionLoading ||
+      sessionLoadError ||
+      !activeSessionId
+    )
       return;
+    sendLock.current = true;
+    const requestGeneration = sessionRequestId.current;
+    const requestSessionId = activeSessionId;
+    const isCurrent = () => requestGeneration === sessionRequestId.current;
     setInput('');
     setError('');
     shouldScrollToEndRef.current = true;
@@ -126,6 +146,7 @@ export default function AIChatScreen() {
         history,
       );
       if (result.errorCode) {
+        if (!isCurrent()) return;
         setMessages((items) => {
           const last = items[items.length - 1];
           return last?.role === 'user' && last.text === text ? items.slice(0, -1) : items;
@@ -151,13 +172,16 @@ export default function AIChatScreen() {
           generationMode: result.generationMode,
         },
       ];
-      shouldScrollToEndRef.current = isNearEndRef.current;
-      setMessages(nextMessages);
-      if (result.usage) setUsage(result.usage);
+      if (isCurrent()) {
+        shouldScrollToEndRef.current = isNearEndRef.current;
+        setMessages(nextMessages);
+        if (result.usage) setUsage(result.usage);
+      }
       try {
         await saveActiveAISession(
           session.userId,
           selectedPet.id,
+          requestSessionId,
           nextMessages.map(
             ({
               role,
@@ -178,9 +202,10 @@ export default function AIChatScreen() {
           result.usage,
         );
       } catch {
-        setError('回覆已收到，但無法儲存到本機對話紀錄。');
+        if (isCurrent()) setError('回覆已收到，但無法儲存到本機對話紀錄。');
       }
     } catch (e) {
+      if (!isCurrent()) return;
       setMessages((items) => {
         const last = items[items.length - 1];
         return last?.role === 'user' && last.text === text ? items.slice(0, -1) : items;
@@ -188,6 +213,7 @@ export default function AIChatScreen() {
       setInput(text);
       setError((e as Error).message || '目前無法取得回覆');
     } finally {
+      sendLock.current = false;
       setLoading(false);
     }
   };

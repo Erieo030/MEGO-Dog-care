@@ -47,3 +47,20 @@ export const timeValue = (value?: string) => {
   const time = `${String(Number.isFinite(hour) ? hour : 8).padStart(2, '0')}:${String(Number.isFinite(minute) ? minute : 0).padStart(2, '0')}`;
   return taipeiDateFromKey(taipeiDateKey(), time);
 };
+
+export function createMedicationDraft(
+  existing?: MedicationCourse,
+  duplicate = false,
+): MedicationDraft {
+  const blank = createBlankMedicationDraft();
+  if (!existing) return blank;
+  if (!duplicate) return { ...blank, ...existing };
+  return {
+    ...blank,
+    name: existing.name,
+    instructions: existing.instructions,
+    timesPerDay: existing.timesPerDay,
+    mealTiming: existing.mealTiming,
+    notes: existing.notes,
+  };
+}
