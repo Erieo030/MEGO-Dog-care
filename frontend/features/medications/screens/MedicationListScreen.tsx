@@ -1,3 +1,9 @@
+import Animated from 'react-native-reanimated';
+import {
+  RecordListItem,
+  RecordListScope,
+  useRecordListMotion,
+} from '../../../components/RecordListMotion';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -9,7 +15,7 @@ import {
  * 表單：MedicationFormScreen.tsx
  */
 import React, { useCallback, useRef, useState } from 'react';
-import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +50,7 @@ export function MedicationListScreen() {
   const [error, setError] = useState('');
   const requestId = useRef(0);
   const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const listMotion = useRecordListMotion(ownerKey);
   const [dataOwner, setDataOwner] = useState('');
   const data = dataOwner === ownerKey ? storedRecords : [];
   const cacheOwner = useRef('');
@@ -115,87 +122,94 @@ export function MedicationListScreen() {
 
   return (
     <ScreenPageFrame>
-      <FlatList
-        data={listData}
-        keyExtractor={(entry) => entry.id}
-        removeClippedSubviews
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
-        ListHeaderComponent={
-          <>
-            <ScreenPageHeader
-              style={styles.listHeader}
-              title="用藥紀錄"
-              description="查看療程與用藥提醒"
-              icon="medical-outline"
-            />
-            {error ? (
-              <TouchableOpacity onPress={() => void load()}>
-                <Text style={styles.error}>{error}（重試）</Text>
-              </TouchableOpacity>
-            ) : null}
-            {selectedPet?.memorial ? (
-              <MemorialReadOnlyNotice petName={selectedPet.name} />
-            ) : (
-              <AppButton
-                variant="primary"
-                style={styles.primary}
-                onPress={() => navigation.navigate('MedicationForm')}
-                accessibilityLabel="新增用藥療程"
-              >
-                <Ionicons name="add" size={20} color={Colors.onPrimary} />
-                <Text style={styles.primaryText}>新增用藥療程</Text>
-              </AppButton>
-            )}
-            {!error && !data.length ? (
-              <View style={styles.emptyBox}>
-                <SoftEntrance>
-                  <Image
-                    accessible={false}
-                    resizeMode="contain"
-                    source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                    style={styles.emptyArtwork}
-                  />
-                </SoftEntrance>
-                <Text style={styles.empty}>目前沒有用藥紀錄</Text>
-                <Text style={styles.emptyHint}>需要時再新增，讓 MEGO 幫你整理療程。</Text>
-              </View>
-            ) : null}
-          </>
-        }
-        renderItem={({ item: entry }) => {
-          if (entry.kind === 'section') return <Text style={styles.section}>{entry.title}</Text>;
-          const medication = entry.item;
-          return (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={`查看用藥：${medication.name}`}
-              style={styles.card}
-              onPress={() => navigation.navigate('MedicationDetail', { recordId: medication.id })}
-            >
-              <View style={styles.cardTitleRow}>
-                <View style={styles.cardIcon}>
-                  <Ionicons name="medical-outline" size={18} color={Colors.successDecoration} />
+      <RecordListScope motion={listMotion}>
+        <Animated.FlatList
+          itemLayoutAnimation={listMotion.layout}
+          data={listData}
+          keyExtractor={(entry) => entry.id}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+          ListHeaderComponent={
+            <>
+              <ScreenPageHeader
+                style={styles.listHeader}
+                title="用藥紀錄"
+                description="查看療程與用藥提醒"
+                icon="medical-outline"
+              />
+              {error ? (
+                <TouchableOpacity onPress={() => void load()}>
+                  <Text style={styles.error}>{error}（重試）</Text>
+                </TouchableOpacity>
+              ) : null}
+              {selectedPet?.memorial ? (
+                <MemorialReadOnlyNotice petName={selectedPet.name} />
+              ) : (
+                <AppButton
+                  variant="primary"
+                  style={styles.primary}
+                  onPress={() => navigation.navigate('MedicationForm')}
+                  accessibilityLabel="新增用藥療程"
+                >
+                  <Ionicons name="add" size={20} color={Colors.onPrimary} />
+                  <Text style={styles.primaryText}>新增用藥療程</Text>
+                </AppButton>
+              )}
+              {!error && !data.length ? (
+                <View style={styles.emptyBox}>
+                  <SoftEntrance>
+                    <Image
+                      accessible={false}
+                      resizeMode="contain"
+                      source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
+                      style={styles.emptyArtwork}
+                    />
+                  </SoftEntrance>
+                  <Text style={styles.empty}>目前沒有用藥紀錄</Text>
+                  <Text style={styles.emptyHint}>需要時再新增，讓 MEGO 幫你整理療程。</Text>
                 </View>
-                <Text style={styles.name}>{medication.name}</Text>
-                <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
-              </View>
-              <Text style={styles.cardText}>
-                {medication.startDate}
-                {medication.endDate ? ` ～ ${medication.endDate}` : ''}
-              </Text>
-              <Text style={styles.cardText}>
-                每日 {medication.timesPerDay} 次 · {mealTimingLabels[medication.mealTiming]}
-              </Text>
-              <Text style={styles.cardHint}>
-                {medication.reminderEnabled ? '已設定提醒' : '尚未設定提醒'}
-              </Text>
-            </TouchableOpacity>
-          );
-        }}
-      />
+              ) : null}
+            </>
+          }
+          renderItem={({ item: entry, index }) => {
+            if (entry.kind === 'section') return <Text style={styles.section}>{entry.title}</Text>;
+            const medication = entry.item;
+            return (
+              <RecordListItem motion={listMotion} id={entry.id} index={index}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={`查看用藥：${medication.name}`}
+                  style={styles.card}
+                  onPress={() =>
+                    navigation.navigate('MedicationDetail', { recordId: medication.id })
+                  }
+                >
+                  <View style={styles.cardTitleRow}>
+                    <View style={styles.cardIcon}>
+                      <Ionicons name="medical-outline" size={18} color={Colors.successDecoration} />
+                    </View>
+                    <Text style={styles.name}>{medication.name}</Text>
+                    <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
+                  </View>
+                  <Text style={styles.cardText}>
+                    {medication.startDate}
+                    {medication.endDate ? ` ～ ${medication.endDate}` : ''}
+                  </Text>
+                  <Text style={styles.cardText}>
+                    每日 {medication.timesPerDay} 次 · {mealTimingLabels[medication.mealTiming]}
+                  </Text>
+                  <Text style={styles.cardHint}>
+                    {medication.reminderEnabled ? '已設定提醒' : '尚未設定提醒'}
+                  </Text>
+                </TouchableOpacity>
+              </RecordListItem>
+            );
+          }}
+        />
+      </RecordListScope>
     </ScreenPageFrame>
   );
 }

@@ -1,16 +1,13 @@
+import Animated from 'react-native-reanimated';
+import {
+  RecordListItem,
+  RecordListScope,
+  useRecordListMotion,
+} from '../components/RecordListMotion';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：顯示毛孩提醒，提供編輯、完成、略過、延後、刪除與通知同步。 */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -54,6 +51,7 @@ export default function ReminderListScreen({ navigation, route }: Props) {
   const { settings } = useSettings();
   const [storedItems, setItems] = useState<Reminder[]>([]);
   const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const listMotion = useRecordListMotion(ownerKey);
   const requestedOwner = useRef('');
   const [loadedOwner, setLoadedOwner] = useState('');
   const items = useMemo(
@@ -217,82 +215,87 @@ export default function ReminderListScreen({ navigation, route }: Props) {
     );
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
-      <FlatList
-        data={listEntries}
-        keyExtractor={(item) => item.id}
-        removeClippedSubviews
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              load();
-              reconcile();
-            }}
-          />
-        }
-        ListHeaderComponent={
-          <>
-            <ScreenPageHeader
-              title="提醒"
-              description="管理待辦與通知時間"
-              icon="notifications"
-              iconColor={Colors.primaryDecoration}
-              iconBackground={Colors.primarySoft}
-              style={{ marginBottom: 12 }}
+      <RecordListScope motion={listMotion}>
+        <Animated.FlatList
+          itemLayoutAnimation={listMotion.layout}
+          data={listEntries}
+          keyExtractor={(item) => item.id}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                load();
+                reconcile();
+              }}
             />
-            {customItem && (
-              <DatePickerField
-                label="自訂延後時間"
-                mode="datetime"
-                minimumDate={new Date()}
-                onChange={(date) => {
-                  const item = customItem;
-                  setCustomSnoozeId(null);
-                  runSnooze(item, date);
-                }}
+          }
+          ListHeaderComponent={
+            <>
+              <ScreenPageHeader
+                title="提醒"
+                description="管理待辦與通知時間"
+                icon="notifications"
+                iconColor={Colors.primaryDecoration}
+                iconBackground={Colors.primarySoft}
+                style={{ marginBottom: 12 }}
               />
-            )}
-            <ReminderListHeader
-              upcomingDays={upcomingDays}
-              scheduledDate={scheduledDate}
-              count={visibleItems.length}
-              showMissingSource={Boolean(
-                route.params?.focusReminderId &&
-                  !items.some((item) => item.id === route.params?.focusReminderId),
+              {customItem && (
+                <DatePickerField
+                  label="自訂延後時間"
+                  mode="datetime"
+                  minimumDate={new Date()}
+                  onChange={(date) => {
+                    const item = customItem;
+                    setCustomSnoozeId(null);
+                    runSnooze(item, date);
+                  }}
+                />
               )}
-              onCreate={
-                selectedPet?.memorial ? undefined : () => navigation.navigate('CreateReminder')
-              }
+              <ReminderListHeader
+                upcomingDays={upcomingDays}
+                scheduledDate={scheduledDate}
+                count={visibleItems.length}
+                showMissingSource={Boolean(
+                  route.params?.focusReminderId &&
+                    !items.some((item) => item.id === route.params?.focusReminderId),
+                )}
+                onCreate={
+                  selectedPet?.memorial ? undefined : () => navigation.navigate('CreateReminder')
+                }
+              />
+            </>
+          }
+          ListEmptyComponent={
+            <ReminderListState
+              text={scheduledDate ? '這一天沒有安排提醒' : '尚未建立提醒'}
+              artwork={REMINDER_ARTWORKS[settings.homeTheme]}
             />
-          </>
-        }
-        ListEmptyComponent={
-          <ReminderListState
-            text={scheduledDate ? '這一天沒有安排提醒' : '尚未建立提醒'}
-            artwork={REMINDER_ARTWORKS[settings.homeTheme]}
-          />
-        }
-        renderItem={({ item: entry }) => {
-          if (entry.kind === 'heading')
-            return <Text style={styles.sectionHeading}>{entry.title}</Text>;
-          const item = entry.item;
-          return (
-            <ReminderListCard
-              item={item}
-              focused={route.params?.focusReminderId === item.id}
-              busyId={busyId}
-              onComplete={() => complete(item.id)}
-              onSnooze={() => snooze(item)}
-              onMore={() => setMoreItem(item)}
-            />
-          );
-        }}
-      />
+          }
+          renderItem={({ item: entry, index }) => {
+            if (entry.kind === 'heading')
+              return <Text style={styles.sectionHeading}>{entry.title}</Text>;
+            const item = entry.item;
+            return (
+              <RecordListItem motion={listMotion} id={entry.id} index={index}>
+                <ReminderListCard
+                  item={item}
+                  focused={route.params?.focusReminderId === item.id}
+                  busyId={busyId}
+                  onComplete={() => complete(item.id)}
+                  onSnooze={() => snooze(item)}
+                  onMore={() => setMoreItem(item)}
+                />
+              </RecordListItem>
+            );
+          }}
+        />
+      </RecordListScope>
       <Modal
         visible={Boolean(moreItem)}
         transparent

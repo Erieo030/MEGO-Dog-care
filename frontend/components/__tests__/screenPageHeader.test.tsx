@@ -24,7 +24,10 @@ test('page header exposes a labeled 44-unit back button and delegates navigation
   const back = screen.root.findByType('Button' as never);
   expect(back.props.accessibilityRole).toBe('button');
   expect(back.props.accessibilityLabel).toBe('返回上一頁');
-  const style = back.props.style({ pressed: false });
+  const style =
+    typeof back.props.style === 'function'
+      ? back.props.style({ pressed: false })
+      : back.props.style;
   expect(style).toEqual(
     expect.arrayContaining([
       expect.objectContaining({

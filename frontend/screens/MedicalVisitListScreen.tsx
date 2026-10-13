@@ -1,3 +1,9 @@
+import Animated from 'react-native-reanimated';
+import {
+  RecordListItem,
+  RecordListScope,
+  useRecordListMotion,
+} from '../components/RecordListMotion';
 import { CardSurface } from '../constants/Layout';
 import { TAIPEI_TIME_ZONE } from '../utils/taipeiDate';
 import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
@@ -7,7 +13,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
-  FlatList,
   Image,
   StyleSheet,
   Text,
@@ -36,6 +41,7 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { session } = useAuth();
   const { selectedPet } = usePet();
+  const listMotion = useRecordListMotion(`${session?.userId ?? ''}:${selectedPet?.id ?? ''}`);
   const { settings } = useSettings();
   const [items, setItems] = useState<MedicalVisit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,109 +91,114 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
     );
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.container}>
-      <FlatList
-        data={error ? [] : items}
-        keyExtractor={(item) => item.id}
-        removeClippedSubviews
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => {
-              setRefreshing(true);
-              load();
-            }}
-          />
-        }
-        ListHeaderComponent={
-          <>
-            <ScreenPageHeader
-              style={s.listHeader}
-              title="就醫紀錄"
-              description="回顧每次看診重點"
-              icon="business-outline"
+      <RecordListScope motion={listMotion}>
+        <Animated.FlatList
+          itemLayoutAnimation={listMotion.layout}
+          data={error ? [] : items}
+          keyExtractor={(item) => item.id}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                load();
+              }}
             />
-            {selectedPet?.memorial ? (
-              <MemorialReadOnlyNotice petName={selectedPet.name} />
-            ) : (
-              <AppButton
-                variant="primary"
-                style={s.primary}
-                onPress={() => navigation.navigate('MedicalVisitForm', {})}
-                accessibilityLabel="新增就醫紀錄"
+          }
+          ListHeaderComponent={
+            <>
+              <ScreenPageHeader
+                style={s.listHeader}
+                title="就醫紀錄"
+                description="回顧每次看診重點"
+                icon="business-outline"
+              />
+              {selectedPet?.memorial ? (
+                <MemorialReadOnlyNotice petName={selectedPet.name} />
+              ) : (
+                <AppButton
+                  variant="primary"
+                  style={s.primary}
+                  onPress={() => navigation.navigate('MedicalVisitForm', {})}
+                  accessibilityLabel="新增就醫紀錄"
+                >
+                  <Ionicons name="add" size={20} color={Colors.onPrimary} />
+                  <Text style={s.primaryText}>新增就醫紀錄</Text>
+                </AppButton>
+              )}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="尋找附近動物醫院"
+                style={s.mapLink}
+                onPress={() => navigation.navigate('VetMap')}
               >
-                <Ionicons name="add" size={20} color={Colors.onPrimary} />
-                <Text style={s.primaryText}>新增就醫紀錄</Text>
-              </AppButton>
-            )}
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="尋找附近動物醫院"
-              style={s.mapLink}
-              onPress={() => navigation.navigate('VetMap')}
-            >
-              <Ionicons name="map-outline" size={19} color={Colors.successDecoration} />
-              <Text style={s.mapLinkText}>尋找附近動物醫院</Text>
-              <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
-            </TouchableOpacity>
-            {!!error && <Center text={error} action={load} />}
-          </>
-        }
-        ListEmptyComponent={
-          !error ? (
-            <View style={s.emptyBox}>
-              <SoftEntrance>
-                <Image
-                  accessible={false}
-                  resizeMode="contain"
-                  source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                  style={s.emptyArtwork}
-                />
-              </SoftEntrance>
-              <Text style={s.emptyTitle}>目前沒有就醫紀錄</Text>
-              <Text style={s.emptyHint}>下次看診後，再把重要內容留在這裡。</Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`查看就醫紀錄：${item.clinicName || '未填寫醫院'}`}
-            style={s.card}
-            onPress={() => navigation.navigate('MedicalVisitDetail', { visitId: item.id })}
-          >
-            <View style={s.cardTitleRow}>
-              <View style={s.cardIcon}>
-                <Ionicons name="business-outline" size={18} color={Colors.successDecoration} />
+                <Ionicons name="map-outline" size={19} color={Colors.successDecoration} />
+                <Text style={s.mapLinkText}>尋找附近動物醫院</Text>
+                <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
+              </TouchableOpacity>
+              {!!error && <Center text={error} action={load} />}
+            </>
+          }
+          ListEmptyComponent={
+            !error ? (
+              <View style={s.emptyBox}>
+                <SoftEntrance>
+                  <Image
+                    accessible={false}
+                    resizeMode="contain"
+                    source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
+                    style={s.emptyArtwork}
+                  />
+                </SoftEntrance>
+                <Text style={s.emptyTitle}>目前沒有就醫紀錄</Text>
+                <Text style={s.emptyHint}>下次看診後，再把重要內容留在這裡。</Text>
               </View>
-              <View style={s.cardTitleBody}>
-                <Text style={s.clinic}>{item.clinicName || '未填寫醫院'}</Text>
-                <Text style={s.date}>
-                  {new Date(item.visitedAt).toLocaleDateString('zh-TW', {
-                    timeZone: TAIPEI_TIME_ZONE,
-                  })}
+            ) : null
+          }
+          renderItem={({ item, index }) => (
+            <RecordListItem motion={listMotion} id={item.id} index={index}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`查看就醫紀錄：${item.clinicName || '未填寫醫院'}`}
+                style={s.card}
+                onPress={() => navigation.navigate('MedicalVisitDetail', { visitId: item.id })}
+              >
+                <View style={s.cardTitleRow}>
+                  <View style={s.cardIcon}>
+                    <Ionicons name="business-outline" size={18} color={Colors.successDecoration} />
+                  </View>
+                  <View style={s.cardTitleBody}>
+                    <Text style={s.clinic}>{item.clinicName || '未填寫醫院'}</Text>
+                    <Text style={s.date}>
+                      {new Date(item.visitedAt).toLocaleDateString('zh-TW', {
+                        timeZone: TAIPEI_TIME_ZONE,
+                      })}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
+                </View>
+                <Text style={s.reason}>看診原因：{item.reason}</Text>
+                <Text style={s.meta}>
+                  附件 {item.attachments?.length || 0} 份 藥物 {item.medications?.length || 0} 筆
                 </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
-            </View>
-            <Text style={s.reason}>看診原因：{item.reason}</Text>
-            <Text style={s.meta}>
-              附件 {item.attachments?.length || 0} 份 藥物 {item.medications?.length || 0} 筆
-            </Text>
-            <Text style={s.meta}>
-              下次回診：
-              {item.followUpAt
-                ? new Date(item.followUpAt).toLocaleDateString('zh-TW', {
-                    timeZone: TAIPEI_TIME_ZONE,
-                  })
-                : '未安排'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+                <Text style={s.meta}>
+                  下次回診：
+                  {item.followUpAt
+                    ? new Date(item.followUpAt).toLocaleDateString('zh-TW', {
+                        timeZone: TAIPEI_TIME_ZONE,
+                      })
+                    : '未安排'}
+                </Text>
+              </TouchableOpacity>
+            </RecordListItem>
+          )}
+        />
+      </RecordListScope>
     </SafeAreaView>
   );
 }

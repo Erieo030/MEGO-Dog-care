@@ -1,5 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
+  setupFiles: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^expo/virtual/env$': '<rootDir>/__mocks__/expoVirtualEnv.js',
   },

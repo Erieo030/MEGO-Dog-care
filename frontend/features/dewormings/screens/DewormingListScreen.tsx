@@ -1,3 +1,9 @@
+import Animated from 'react-native-reanimated';
+import {
+  RecordListItem,
+  RecordListScope,
+  useRecordListMotion,
+} from '../../../components/RecordListMotion';
 import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
@@ -6,7 +12,7 @@ import {
 } from '../../../components/ScreenPageHeader';
 /** 用途：顯示毛孩的驅蟲紀錄列表。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +43,7 @@ export function DewormingListScreen() {
   const [error, setError] = useState('');
   const requestId = useRef(0);
   const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const listMotion = useRecordListMotion(ownerKey);
   const [dataOwner, setDataOwner] = useState('');
   const records = dataOwner === ownerKey ? storedRecords : [];
   const cacheOwner = useRef('');
@@ -91,93 +98,100 @@ export function DewormingListScreen() {
     );
   return (
     <ScreenPageFrame>
-      <FlatList
-        data={records}
-        keyExtractor={(record) => record.id}
-        removeClippedSubviews
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
-        ListHeaderComponent={
-          <>
-            <ScreenPageHeader
-              style={styles.listHeader}
-              title="驅蟲紀錄"
-              description="查看使用與下次日期"
-              icon="shield-checkmark-outline"
-            />
-            {error ? (
-              <TouchableOpacity onPress={() => void load()}>
-                <Text style={styles.error}>{error}（重試）</Text>
-              </TouchableOpacity>
-            ) : null}
-            {selectedPet?.memorial ? (
-              <MemorialReadOnlyNotice petName={selectedPet.name} />
-            ) : (
-              <AppButton
-                variant="primary"
-                style={styles.primary}
-                onPress={() => navigation.navigate('DewormingForm')}
-                accessibilityLabel="新增驅蟲紀錄"
+      <RecordListScope motion={listMotion}>
+        <Animated.FlatList
+          itemLayoutAnimation={listMotion.layout}
+          data={records}
+          keyExtractor={(record) => record.id}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+          ListHeaderComponent={
+            <>
+              <ScreenPageHeader
+                style={styles.listHeader}
+                title="驅蟲紀錄"
+                description="查看使用與下次日期"
+                icon="shield-checkmark-outline"
+              />
+              {error ? (
+                <TouchableOpacity onPress={() => void load()}>
+                  <Text style={styles.error}>{error}（重試）</Text>
+                </TouchableOpacity>
+              ) : null}
+              {selectedPet?.memorial ? (
+                <MemorialReadOnlyNotice petName={selectedPet.name} />
+              ) : (
+                <AppButton
+                  variant="primary"
+                  style={styles.primary}
+                  onPress={() => navigation.navigate('DewormingForm')}
+                  accessibilityLabel="新增驅蟲紀錄"
+                >
+                  <Ionicons name="add" size={20} color={Colors.onPrimary} />
+                  <Text style={styles.primaryText}>新增驅蟲紀錄</Text>
+                </AppButton>
+              )}
+              {!error && !records.length ? (
+                <View style={styles.emptyBox}>
+                  <SoftEntrance>
+                    <Image
+                      accessible={false}
+                      resizeMode="contain"
+                      source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
+                      style={styles.emptyArtwork}
+                    />
+                  </SoftEntrance>
+                  <Text style={styles.empty}>目前沒有驅蟲紀錄</Text>
+                  <Text style={styles.emptyHint}>記下每次預防，照護就不容易忘記。</Text>
+                </View>
+              ) : null}
+            </>
+          }
+          renderItem={({ item: record, index }) => (
+            <RecordListItem motion={listMotion} id={record.id} index={index}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`查看驅蟲紀錄：${record.productName || '未填寫'}`}
+                style={styles.card}
+                onPress={() => navigation.navigate('DewormingDetail', { recordId: record.id })}
               >
-                <Ionicons name="add" size={20} color={Colors.onPrimary} />
-                <Text style={styles.primaryText}>新增驅蟲紀錄</Text>
-              </AppButton>
-            )}
-            {!error && !records.length ? (
-              <View style={styles.emptyBox}>
-                <SoftEntrance>
-                  <Image
-                    accessible={false}
-                    resizeMode="contain"
-                    source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                    style={styles.emptyArtwork}
-                  />
-                </SoftEntrance>
-                <Text style={styles.empty}>目前沒有驅蟲紀錄</Text>
-                <Text style={styles.emptyHint}>記下每次預防，照護就不容易忘記。</Text>
-              </View>
-            ) : null}
-          </>
-        }
-        renderItem={({ item: record }) => (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`查看驅蟲紀錄：${record.productName || '未填寫'}`}
-            style={styles.card}
-            onPress={() => navigation.navigate('DewormingDetail', { recordId: record.id })}
-          >
-            <View style={styles.cardTitleRow}>
-              <View style={styles.cardIcon}>
-                <Ionicons
-                  name="shield-checkmark-outline"
-                  size={18}
-                  color={Colors.successDecoration}
-                />
-              </View>
-              <Text style={styles.name}>{dewormingTypeLabels[record.type]}</Text>
-              <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
-            </View>
-            <Text style={styles.cardText}>{record.productName}</Text>
-            <Text style={styles.cardText}>
-              使用日期：
-              {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
-                timeZone: TAIPEI_TIME_ZONE,
-              })}
-            </Text>
-            {record.nextDueAt ? (
-              <Text style={styles.cardMeta}>
-                下次：
-                {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
-                  timeZone: TAIPEI_TIME_ZONE,
-                })}
-              </Text>
-            ) : null}
-            <Text style={styles.cardHint}>{record.reminderId ? '已建立提醒' : '尚未建立提醒'}</Text>
-          </TouchableOpacity>
-        )}
-      />
+                <View style={styles.cardTitleRow}>
+                  <View style={styles.cardIcon}>
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={18}
+                      color={Colors.successDecoration}
+                    />
+                  </View>
+                  <Text style={styles.name}>{dewormingTypeLabels[record.type]}</Text>
+                  <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
+                </View>
+                <Text style={styles.cardText}>{record.productName}</Text>
+                <Text style={styles.cardText}>
+                  使用日期：
+                  {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })}
+                </Text>
+                {record.nextDueAt ? (
+                  <Text style={styles.cardMeta}>
+                    下次：
+                    {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                      timeZone: TAIPEI_TIME_ZONE,
+                    })}
+                  </Text>
+                ) : null}
+                <Text style={styles.cardHint}>
+                  {record.reminderId ? '已建立提醒' : '尚未建立提醒'}
+                </Text>
+              </TouchableOpacity>
+            </RecordListItem>
+          )}
+        />
+      </RecordListScope>
     </ScreenPageFrame>
   );
 }

@@ -33,14 +33,12 @@ const components = [
 ] as const;
 let screen: ReactTestRenderer;
 function style() {
-  return Object.assign(
-    {},
-    ...screen.root
-      .findByType('Button' as never)
-      .props.style({ pressed: true })
-      .flat()
-      .filter(Boolean),
-  );
+  const button = screen.root.findByType('Button' as never);
+  const styles =
+    typeof button.props.style === 'function'
+      ? button.props.style({ pressed: true })
+      : button.props.style;
+  return Object.assign({}, ...styles.flat().filter(Boolean));
 }
 afterEach(async () => {
   if (screen) await act(async () => screen.unmount());
@@ -53,6 +51,7 @@ test.each(components)(
     await act(async () => {
       screen = create(element);
     });
+    await act(async () => screen.root.findByType('Button' as never).props.onPressIn?.({}));
     expect(style().opacity).toBe(0.82);
     expect(style().transform).toBeUndefined();
   },
@@ -62,6 +61,7 @@ test.each(components)('%s uses the same normal press scale', async (_name, eleme
   await act(async () => {
     screen = create(element);
   });
+  await act(async () => screen.root.findByType('Button' as never).props.onPressIn?.({}));
   expect(style().transform).toEqual([{ scale: 0.98 }]);
   expect(style().opacity).toBe(0.82);
 });

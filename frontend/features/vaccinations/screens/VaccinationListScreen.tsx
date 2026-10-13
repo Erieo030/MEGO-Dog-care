@@ -1,3 +1,9 @@
+import Animated from 'react-native-reanimated';
+import {
+  RecordListItem,
+  RecordListScope,
+  useRecordListMotion,
+} from '../../../components/RecordListMotion';
 import { TAIPEI_TIME_ZONE } from '../../../utils/taipeiDate';
 import {
   ScreenPageHeader,
@@ -6,7 +12,7 @@ import {
 } from '../../../components/ScreenPageHeader';
 /** 用途：顯示毛孩疫苗紀錄列表。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +42,7 @@ export function VaccinationListScreen() {
   const [error, setError] = useState('');
   const requestId = useRef(0);
   const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const listMotion = useRecordListMotion(ownerKey);
   const [dataOwner, setDataOwner] = useState('');
   const records = dataOwner === ownerKey ? storedRecords : [];
   const cacheOwner = useRef('');
@@ -86,88 +93,93 @@ export function VaccinationListScreen() {
     );
   return (
     <ScreenPageFrame>
-      <FlatList
-        data={records}
-        keyExtractor={(record) => record.id}
-        removeClippedSubviews
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
-        ListHeaderComponent={
-          <>
-            <ScreenPageHeader
-              style={styles.listHeader}
-              title="疫苗紀錄"
-              description="查看接種與下次日期"
-              icon="medkit-outline"
-            />
-            {error ? (
-              <TouchableOpacity onPress={() => void load()}>
-                <Text style={styles.error}>{error}（重試）</Text>
-              </TouchableOpacity>
-            ) : null}
-            {selectedPet?.memorial ? (
-              <MemorialReadOnlyNotice petName={selectedPet.name} />
-            ) : (
-              <AppButton
-                variant="primary"
-                style={styles.primary}
-                onPress={() => navigation.navigate('VaccinationForm')}
-                accessibilityLabel="新增疫苗紀錄"
+      <RecordListScope motion={listMotion}>
+        <Animated.FlatList
+          itemLayoutAnimation={listMotion.layout}
+          data={records}
+          keyExtractor={(record) => record.id}
+          removeClippedSubviews
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+          ListHeaderComponent={
+            <>
+              <ScreenPageHeader
+                style={styles.listHeader}
+                title="疫苗紀錄"
+                description="查看接種與下次日期"
+                icon="medkit-outline"
+              />
+              {error ? (
+                <TouchableOpacity onPress={() => void load()}>
+                  <Text style={styles.error}>{error}（重試）</Text>
+                </TouchableOpacity>
+              ) : null}
+              {selectedPet?.memorial ? (
+                <MemorialReadOnlyNotice petName={selectedPet.name} />
+              ) : (
+                <AppButton
+                  variant="primary"
+                  style={styles.primary}
+                  onPress={() => navigation.navigate('VaccinationForm')}
+                  accessibilityLabel="新增疫苗紀錄"
+                >
+                  <Ionicons name="add" size={20} color={Colors.onPrimary} />
+                  <Text style={styles.primaryText}>新增疫苗紀錄</Text>
+                </AppButton>
+              )}
+              {!error && !records.length ? (
+                <View style={styles.emptyBox}>
+                  <SoftEntrance>
+                    <Image
+                      accessible={false}
+                      resizeMode="contain"
+                      source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
+                      style={styles.emptyArtwork}
+                    />
+                  </SoftEntrance>
+                  <Text style={styles.empty}>目前沒有疫苗紀錄</Text>
+                  <Text style={styles.emptyHint}>完成接種後，在這裡留下日期與下次提醒。</Text>
+                </View>
+              ) : null}
+            </>
+          }
+          renderItem={({ item: record, index }) => (
+            <RecordListItem motion={listMotion} id={record.id} index={index}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`查看疫苗紀錄：${record.vaccineName || '未填寫'}`}
+                style={styles.card}
+                onPress={() => navigation.navigate('VaccinationDetail', { recordId: record.id })}
               >
-                <Ionicons name="add" size={20} color={Colors.onPrimary} />
-                <Text style={styles.primaryText}>新增疫苗紀錄</Text>
-              </AppButton>
-            )}
-            {!error && !records.length ? (
-              <View style={styles.emptyBox}>
-                <SoftEntrance>
-                  <Image
-                    accessible={false}
-                    resizeMode="contain"
-                    source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                    style={styles.emptyArtwork}
-                  />
-                </SoftEntrance>
-                <Text style={styles.empty}>目前沒有疫苗紀錄</Text>
-                <Text style={styles.emptyHint}>完成接種後，在這裡留下日期與下次提醒。</Text>
-              </View>
-            ) : null}
-          </>
-        }
-        renderItem={({ item: record }) => (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={`查看疫苗紀錄：${record.vaccineName || '未填寫'}`}
-            style={styles.card}
-            onPress={() => navigation.navigate('VaccinationDetail', { recordId: record.id })}
-          >
-            <View style={styles.cardTitleRow}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="medkit-outline" size={18} color={Colors.successDecoration} />
-              </View>
-              <Text style={styles.name}>{record.vaccineName}</Text>
-              <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
-            </View>
-            <Text style={styles.cardText}>
-              接種日期：
-              {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
-                timeZone: TAIPEI_TIME_ZONE,
-              })}
-            </Text>
-            <Text style={styles.cardText}>醫院：{record.hospitalName || '未填寫醫院'}</Text>
-            {record.nextDueAt ? (
-              <Text style={styles.cardMeta}>
-                下次接種：
-                {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
-                  timeZone: TAIPEI_TIME_ZONE,
-                })}
-              </Text>
-            ) : null}
-          </TouchableOpacity>
-        )}
-      />
+                <View style={styles.cardTitleRow}>
+                  <View style={styles.cardIcon}>
+                    <Ionicons name="medkit-outline" size={18} color={Colors.successDecoration} />
+                  </View>
+                  <Text style={styles.name}>{record.vaccineName}</Text>
+                  <Ionicons name="chevron-forward" size={17} color={Colors.subtext} />
+                </View>
+                <Text style={styles.cardText}>
+                  接種日期：
+                  {new Date(record.administeredAt).toLocaleDateString('zh-TW', {
+                    timeZone: TAIPEI_TIME_ZONE,
+                  })}
+                </Text>
+                <Text style={styles.cardText}>醫院：{record.hospitalName || '未填寫醫院'}</Text>
+                {record.nextDueAt ? (
+                  <Text style={styles.cardMeta}>
+                    下次接種：
+                    {new Date(record.nextDueAt).toLocaleDateString('zh-TW', {
+                      timeZone: TAIPEI_TIME_ZONE,
+                    })}
+                  </Text>
+                ) : null}
+              </TouchableOpacity>
+            </RecordListItem>
+          )}
+        />
+      </RecordListScope>
     </ScreenPageFrame>
   );
 }
