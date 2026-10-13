@@ -1,5 +1,5 @@
 from app.timezone import now_taipei, TAIPEI
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import HTTPException
 from app.db import db
 from app.schemas.medication import MedicationRequest
@@ -21,13 +21,22 @@ def sync_timeline(x,event="start"):
  title={"start":f"開始{x['name']}用藥療程","completed":f"完成{x['name']}用藥療程","stopped":f"停止{x['name']}用藥療程"}[event]
  upsert_timeline_item(x["petId"],"medication",now_taipei(),title,str(x["_id"]),x.get("instructions", ""))
 def reminder_date(item,time):
- return datetime.fromisoformat(f"{item['startDate']}T{time}:00").replace(tzinfo=TAIPEI)
+ start = datetime.fromisoformat(f"{item['startDate']}T{time}:00").replace(tzinfo=TAIPEI)
+ now = now_taipei()
+ candidate = start if start > now else datetime.combine(now.date(), start.timetz())
+ if candidate <= now: candidate += timedelta(days=1)
+ if item.get("endDate") and candidate.date() > datetime.fromisoformat(item["endDate"]).date(): return None
+ return candidate
 def sync_reminders(item,uid):
  existing=list(db.reminders.find({"petId":item["petId"],"sourceType":"medication","sourceId":str(item["_id"])}))
  desired=set(item.get("reminderTimes",[])) if item.get("reminderEnabled") and item.get("status")=="active" else set()
  by_slot={r.get("sourceSlot"):r for r in existing}
- for slot in desired:
-  payload={"type":"medication","title":f"{item['name']}服藥提醒","scheduledAt":reminder_date(item,slot),"recurrenceRule":"daily","notes":item.get("instructions", ""),"sourceType":"medication","sourceId":str(item["_id"]),"sourceSlot":slot}
+ for slot in list(desired):
+  scheduled = reminder_date(item, slot)
+  if scheduled is None:
+   desired.discard(slot)
+   continue
+  payload={"type":"medication","title":f"{item['name']}服藥提醒","scheduledAt":scheduled,"recurrenceRule":"daily","notes":item.get("instructions", ""),"sourceType":"medication","sourceId":str(item["_id"]),"sourceSlot":slot}
   old=by_slot.get(slot)
   if old:
    db.reminders.update_one({"_id":old["_id"]},{"$set":payload})

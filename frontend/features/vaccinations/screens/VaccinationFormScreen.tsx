@@ -1,8 +1,10 @@
+import { useFormPet } from '../../../hooks/useFormPet';
+import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製疫苗紀錄。 */
 import React, { useRef, useState } from 'react';
-import { Alert, Text, TextInput, View } from 'react-native';
+import { Alert, Switch, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -31,11 +33,11 @@ const fields = [
 export function VaccinationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet, pets } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'VaccinationForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as Vaccination | undefined;
-  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
+  const ownerPet = useFormPet(existing?.petId);
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<VaccinationDraft>(() =>
@@ -43,7 +45,7 @@ export function VaccinationFormScreen() {
   );
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
-  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
   const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
   const save = async () => {
@@ -71,15 +73,20 @@ export function VaccinationFormScreen() {
         existing && !duplicate
           ? await updateVaccination(session.userId, existing.id, payload)
           : await createVaccination(session.userId, ownerPet.id, payload);
+      const notificationWarning = await syncCareNotifications(session.userId, pets);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
-          message: '疫苗紀錄已儲存，完整內容可到「紀錄」查看。',
+          message: '疫苗紀錄已儲存，完整內容可到「紀錄」查看。' + (notificationWarning ?? ''),
           onDone: () => navigation.popToTop(),
           onAddAnother: () => navigation.replace('VaccinationForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', existing && !duplicate ? '疫苗紀錄已更新' : '疫苗紀錄已新增');
+        Alert.alert(
+          '已儲存',
+          (existing && !duplicate ? '疫苗紀錄已更新' : '疫苗紀錄已新增') +
+            (notificationWarning ? '\n' + notificationWarning : ''),
+        );
         markSaved(draft, () =>
           navigation.replace('VaccinationDetail', { recordId: response.record.id }),
         );
@@ -115,6 +122,14 @@ export function VaccinationFormScreen() {
                   key={`${key}-${String(draft[key])}`}
                   label={label}
                   value={validVaccinationDate(draft[key])}
+                  onClear={
+                    key === 'nextDueAt'
+                      ? () => {
+                          setField('nextDueAt', '');
+                          setField('createReminder', false);
+                        }
+                      : undefined
+                  }
                   onChange={(date) => setField(key, toTaipeiDateValue(date))}
                   minimumDate={
                     key === 'nextDueAt'
@@ -129,6 +144,7 @@ export function VaccinationFormScreen() {
                 <Text style={styles.label}>{label}</Text>
                 <TextInput
                   style={styles.input}
+                  accessibilityLabel={label}
                   placeholder={`請輸入${label.replace('（必填）', '')}`}
                   placeholderTextColor={Colors.subtext}
                   value={typeof draft[key] === 'string' ? draft[key] : ''}
@@ -137,6 +153,24 @@ export function VaccinationFormScreen() {
               </View>
             );
           })}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={styles.label}>建立 App 內提醒</Text>
+          <Switch
+            accessibilityLabel="建立 App 內提醒"
+            accessibilityState={{
+              checked: draft.createReminder,
+              disabled: !draft.nextDueAt || saving,
+            }}
+            value={Boolean(draft.createReminder && draft.nextDueAt)}
+            disabled={!draft.nextDueAt || saving}
+            onValueChange={(value) => setField('createReminder', value)}
+          />
+        </View>
+        <Text style={styles.label}>
+          {draft.nextDueAt
+            ? '此開關建立 App 內提醒；手機通知另依設定與系統權限排定。'
+            : '請先選擇下次日期，才能建立 App 內提醒。'}
+        </Text>
         <SupplementalNotesField
           value={String(draft.notes ?? '')}
           onChange={(value) => setField('notes', value)}

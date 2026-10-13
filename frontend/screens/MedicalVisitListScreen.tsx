@@ -1,3 +1,4 @@
+import { CardSurface } from '../constants/Layout';
 import { TAIPEI_TIME_ZONE } from '../utils/taipeiDate';
 import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -282,11 +283,8 @@ const s = StyleSheet.create({
   },
   retryText: { color: Colors.text, fontWeight: '700' },
   card: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-    padding: 17,
+    ...CardSurface.record,
+
     marginBottom: 11,
   },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center' },

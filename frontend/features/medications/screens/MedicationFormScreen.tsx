@@ -1,3 +1,5 @@
+import { useFormPet } from '../../../hooks/useFormPet';
+import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /**
@@ -39,11 +41,11 @@ const fields = [
 export function MedicationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet, pets } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'MedicationForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as MedicationCourse | undefined;
-  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
+  const ownerPet = useFormPet(existing?.petId);
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<MedicationDraft>(() =>
@@ -51,7 +53,7 @@ export function MedicationFormScreen() {
   );
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
-  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
   const [editingReminderTime, setEditingReminderTime] = useState<string | null>(null);
   const setField = <Key extends keyof MedicationDraft>(key: Key, value: MedicationDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -72,6 +74,8 @@ export function MedicationFormScreen() {
       return;
     }
     const reminderTimes = [...new Set(draft.reminderTimes)];
+    if (reminderTimes.length > 6)
+      return Alert.alert('提醒時間最多 6 筆', '請刪除多出的時間後再儲存。');
     saveLock.current = true;
     setSaving(true);
     try {
@@ -80,7 +84,7 @@ export function MedicationFormScreen() {
         instructions: draft.instructions.trim(),
         timesPerDay: draft.timesPerDay,
         startDate: draft.startDate,
-        endDate: draft.endDate || '',
+        endDate: draft.endDate || null,
         mealTiming: draft.mealTiming,
         notes: draft.notes.trim(),
         status: draft.status,
@@ -92,15 +96,20 @@ export function MedicationFormScreen() {
         existing && !duplicate
           ? await updateMedication(session.userId, existing.id, payload)
           : await createMedication(session.userId, ownerPet.id, payload);
+      const notificationWarning = await syncCareNotifications(session.userId, pets);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
-          message: '用藥紀錄已儲存，完整內容可到「紀錄」查看。',
+          message: '用藥紀錄已儲存，完整內容可到「紀錄」查看。' + (notificationWarning ?? ''),
           onDone: () => navigation.popToTop(),
           onAddAnother: () => navigation.replace('MedicationForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', existing && !duplicate ? '用藥紀錄已更新' : '用藥紀錄已新增');
+        Alert.alert(
+          '已儲存',
+          (existing && !duplicate ? '用藥紀錄已更新' : '用藥紀錄已新增') +
+            (notificationWarning ? '\n' + notificationWarning : ''),
+        );
         markSaved(draft, () =>
           navigation.replace('MedicationDetail', { recordId: response.record.id }),
         );
@@ -139,6 +148,7 @@ export function MedicationFormScreen() {
                   key={key}
                   label={label}
                   value={value ? taipeiDateFromKey(value) : undefined}
+                  onClear={key === 'endDate' ? () => setField('endDate', '') : undefined}
                   onChange={(date) => setField(key, taipeiDateKey(date))}
                   minimumDate={
                     key === 'endDate' && draft.startDate
@@ -193,6 +203,9 @@ export function MedicationFormScreen() {
           {(Object.keys(mealTimingLabels) as MedicationMealTiming[]).map((key) => (
             <TouchableOpacity
               key={key}
+              accessibilityRole="radio"
+              accessibilityLabel={mealTimingLabels[key]}
+              accessibilityState={{ selected: draft.mealTiming === key }}
               style={[styles.chip, draft.mealTiming === key && styles.selected]}
               onPress={() => setField('mealTiming', key)}
             >
@@ -202,10 +215,12 @@ export function MedicationFormScreen() {
         </View>
 
         <DatePickerField
-          label="每天提醒時間（選填）"
+          label="每天提醒時間（選填，最多 6 筆）"
+          disabled={!editingReminderTime && draft.reminderTimes.length >= 6}
           mode="time"
           value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
           onChange={(date) => {
+            if (!editingReminderTime && draft.reminderTimes.length >= 6) return;
             const next = formatTaipeiTime(date);
             setDraft((current) => ({
               ...current,
@@ -223,6 +238,9 @@ export function MedicationFormScreen() {
             setEditingReminderTime(null);
           }}
         />
+        {draft.reminderTimes.length >= 6 && (
+          <Text style={styles.reminderHint}>已達 6 筆上限；仍可編輯或刪除既有時間。</Text>
+        )}
         {draft.reminderTimes.map((time) => (
           <View key={time} style={styles.reminderRow}>
             <Text style={styles.reminderHint}>每天 {time}</Text>

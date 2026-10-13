@@ -48,3 +48,19 @@ export const contactVisibilityFields = [
 export type VisibilityKey =
   | (typeof petVisibilityFields)[number][0]
   | (typeof contactVisibilityFields)[number][0];
+
+export function editableLostProfile(
+  profile: Partial<LostProfile> | null,
+): Partial<LostProfile> | null {
+  if (!profile) return null;
+  const fields = [...Object.keys(DEFAULT_PROFILE), 'alternatePhone', 'contactMessage'];
+  return Object.fromEntries(
+    fields.map((field) => [
+      field,
+      profile[field as keyof LostProfile] ??
+        (field.startsWith('show') || field === 'enabled' || field === 'lostMode'
+          ? (DEFAULT_PROFILE[field as keyof typeof DEFAULT_PROFILE] ?? false)
+          : ''),
+    ]),
+  );
+}

@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：以單一共用流程新增及編輯食慾、精神與喝水異常快速紀錄。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -43,7 +44,6 @@ import {
   shouldShowObservationSafety,
 } from '../constants/ObservationHealthEvents';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import type { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/healthEventService';
 import { Attachment, ObservationHealthEventType, Severity } from '../types';
@@ -64,7 +64,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
   const quickEntry = route.params.quickEntry === true;
   const config = OBSERVATION_CONFIG[type];
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const [values, setValues] = useState(() => emptyObservationValues(type));
   const [occurredAt, setOccurredAt] = useState(new Date());
   const [severity, setSeverity] = useState<Severity>('mild');
@@ -88,6 +88,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
       setImages(value.images);
     },
     !loading && !error,
+    submitting,
   );
 
   const load = useCallback(

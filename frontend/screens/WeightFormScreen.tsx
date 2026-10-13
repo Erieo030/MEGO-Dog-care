@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：新增或編輯體重，驗證公斤數與有效測量日期並防止重複提交。 */
@@ -40,7 +41,8 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const record = route.params?.record;
   const quickEntry = route.params?.quickEntry === true;
   const { session } = useAuth();
-  const { selectedPet, refreshPets } = usePet();
+  const { refreshPets } = usePet();
+  const selectedPet = useFormPet(record?.petId);
   const initialDate = record ? new Date(record.measuredAt) : new Date();
   const [weight, setWeight] = useState(record ? String(record.weightKg) : '');
   const [date, setDate] = useState(Number.isNaN(initialDate.getTime()) ? new Date() : initialDate);
@@ -52,12 +54,17 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const [attachments, setAttachments] = useState(record?.attachments ?? []);
 
   const formValues = { weight, date, notes, attachments };
-  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
-    setWeight(value.weight);
-    setDate(value.date);
-    setNotes(value.notes);
-    setAttachments(value.attachments);
-  });
+  const { markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setWeight(value.weight);
+      setDate(value.date);
+      setNotes(value.notes);
+      setAttachments(value.attachments);
+    },
+    true,
+    submitting,
+  );
 
   const submit = async () => {
     if (submitting || attachmentsBusy || attachmentActivity.current || submissionLock.current)

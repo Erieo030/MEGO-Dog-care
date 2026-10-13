@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 /** 用途：將既有毛孩表單接入 React Navigation，支援新增與編輯。 */
 import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -44,7 +45,8 @@ export function AddPetScreen({ navigation }: AddProps) {
 
 export function EditPetScreen({ navigation }: EditProps) {
   const bottomContentPadding = useTabContentBottomPadding();
-  const { selectedPet, updateSelectedPet } = usePet();
+  const { updateSelectedPet } = usePet();
+  const selectedPet = useFormPet();
   if (!selectedPet) return null;
   const initialData: PetData = {
     name: selectedPet.name,
@@ -64,7 +66,7 @@ export function EditPetScreen({ navigation }: EditProps) {
   };
   const submit = async (data: PetData) => {
     try {
-      await updateSelectedPet(toPetFormData(data));
+      await updateSelectedPet(toPetFormData(data), selectedPet.id);
       return true;
     } catch (error) {
       Alert.alert('更新失敗', (error as Error).message);

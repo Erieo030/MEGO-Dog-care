@@ -18,24 +18,28 @@ const KEY = 'mego.app-settings.v1';
 const validTime = (value: unknown) =>
   typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 export async function loadSettings(): Promise<AppSettings> {
-  try {
-    const value = JSON.parse((await AsyncStorage.getItem(KEY)) || '{}');
-    return {
-      ...DEFAULT_SETTINGS,
-      localNotificationsEnabled:
-        typeof value.localNotificationsEnabled === 'boolean'
-          ? value.localNotificationsEnabled
-          : true,
-      defaultReminderTime: validTime(value.defaultReminderTime)
-        ? value.defaultReminderTime
-        : DEFAULT_SETTINGS.defaultReminderTime,
-      tonightTime: validTime(value.tonightTime) ? value.tonightTime : DEFAULT_SETTINGS.tonightTime,
-      homeTheme: isHomeThemeId(value.homeTheme) ? value.homeTheme : DEFAULT_SETTINGS.homeTheme,
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+  const stored = await AsyncStorage.getItem(KEY);
+  if (stored === null) return { ...DEFAULT_SETTINGS };
+  const value: unknown = JSON.parse(stored);
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    Array.isArray(value) ||
+    typeof (value as AppSettings).localNotificationsEnabled !== 'boolean'
+  )
+    throw new Error('設定無法讀取，請重試；手機通知暫不新增。');
+  const data = value as AppSettings;
+  return {
+    ...DEFAULT_SETTINGS,
+    localNotificationsEnabled: data.localNotificationsEnabled,
+    defaultReminderTime: validTime(data.defaultReminderTime)
+      ? data.defaultReminderTime
+      : DEFAULT_SETTINGS.defaultReminderTime,
+    tonightTime: validTime(data.tonightTime) ? data.tonightTime : DEFAULT_SETTINGS.tonightTime,
+    homeTheme: isHomeThemeId(data.homeTheme) ? data.homeTheme : DEFAULT_SETTINGS.homeTheme,
+  };
 }
+
 export async function saveSettings(value: AppSettings) {
   await AsyncStorage.setItem(KEY, JSON.stringify(value));
 }

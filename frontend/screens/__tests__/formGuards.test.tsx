@@ -416,7 +416,7 @@ test('a copied completed medication starts a new active course owned by the sour
     'p1',
     expect.objectContaining({
       status: 'active',
-      endDate: '',
+      endDate: null,
       reminderTimes: [],
       medicalVisitId: undefined,
     }),
@@ -461,3 +461,84 @@ test('QR slow save preserves newer phone edits and keeps the leave guard dirty',
   expect(guardTabNavigation(jest.fn())).toBe(true);
   await act(async () => choose('繼續編輯'));
 });
+test('an unchanged QR save stays clean when the server adds its metadata', async () => {
+  const initial = { ...DEFAULT_PROFILE, enabled: true, contactPhone: '0912345678' };
+  (getLostProfile as jest.Mock).mockResolvedValueOnce({ profile: initial });
+  (saveLostProfile as jest.Mock).mockResolvedValueOnce({
+    profile: {
+      ...initial,
+      id: 'server-id',
+      publicToken: 'synthetic-token',
+      hasToken: true,
+      petId: 'p1',
+      updatedAt: '2026-10-13T10:00:00+08:00',
+    },
+  });
+  await act(async () => {
+    screen = create(
+      <LostPetSettingsScreen
+        navigation={mockNavigation as never}
+        route={{ params: {} } as never}
+      />,
+    );
+  });
+  await act(async () =>
+    screen.root
+      .findAllByType('AppButton' as never)
+      .find((node) => node.props.title === '儲存公開設定')!
+      .props.onPress(),
+  );
+  expect(guardTabNavigation(jest.fn())).toBe(false);
+});
+
+test.each([
+  [true, true],
+  [true, false],
+  [false, true],
+  [false, false],
+])(
+  'duplicate visit uses a new key and no bound attachments: key=%s photos=%s',
+  async (hasKey, hasPhotos) => {
+    const record = {
+      id: 'old-visit',
+      petId: 'p1',
+      clientRequestId: hasKey ? 'old-request' : undefined,
+      visitedAt: '2026-10-01T04:00:00Z',
+      reason: '舊就醫原因',
+      followUpAt: '2026-11-01T04:00:00Z',
+      followUpReminderId: 'old-reminder',
+      attachments: hasPhotos ? [{ id: 'bound-photo' }] : [],
+    };
+    const service = require('../../services/medicalVisitService');
+    service.createMedicalVisit.mockResolvedValue({ id: 'new-visit' });
+    await act(async () => {
+      screen = create(
+        <MedicalVisitFormScreen
+          navigation={mockNavigation as never}
+          route={{ params: { visit: record, duplicate: true } } as never}
+        />,
+      );
+    });
+    await act(async () =>
+      screen.root
+        .findAllByType('Input' as never)
+        .find((node) => node.props.value === '舊就醫原因')!
+        .props.onChangeText('新就醫原因'),
+    );
+    await act(async () =>
+      screen.root
+        .findAllByType('AppButton' as never)
+        .find((node) => node.props.title === '儲存就醫紀錄')!
+        .props.onPress(),
+    );
+    const payload = service.createMedicalVisit.mock.calls[0][2];
+    expect(payload.clientRequestId).toMatch(/^visit-/);
+    expect(payload.clientRequestId).not.toBe('old-request');
+    expect(payload).toMatchObject({
+      reason: '新就醫原因',
+      attachmentIds: [],
+      followUpAt: null,
+      createFollowUpReminder: false,
+    });
+  },
+);

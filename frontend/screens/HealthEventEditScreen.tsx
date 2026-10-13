@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：編輯健康異常紀錄既有的通用欄位，保留詳細資料與本機圖片 URI。 */
@@ -28,7 +29,6 @@ import { ATTACHMENT_LIMITS } from '../constants/Attachments';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { HEALTH_EVENT_LABELS, SEVERITY_LABELS } from '../constants/HealthEvents';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import type { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/healthEventService';
 import { Attachment, HealthEvent, HealthEventType, Severity } from '../types';
@@ -46,7 +46,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'HealthEventEdit'>;
 export default function HealthEventEditScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const [item, setItem] = useState<HealthEvent | null>(null);
   const [type, setType] = useState<HealthEventType>('other');
   const [summary, setSummary] = useState('');
@@ -73,6 +73,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       setAttachments(value.attachments);
     },
     !loading && !error,
+    submitting,
   );
 
   const load = useCallback(async () => {

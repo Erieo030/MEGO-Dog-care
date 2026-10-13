@@ -1,8 +1,10 @@
+import { useFormPet } from '../../../hooks/useFormPet';
+import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
 import React, { useRef, useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -38,11 +40,11 @@ const fields = [
 export function DewormingFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet, pets } = usePet();
+  const { pets } = usePet();
   const route = useRoute<RouteProp<HomeStackParamList, 'DewormingForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as Deworming | undefined;
-  const ownerPet = existing ? pets.find((pet) => pet.id === existing.petId) : selectedPet;
+  const ownerPet = useFormPet(existing?.petId);
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<DewormingDraft>(() =>
@@ -50,7 +52,7 @@ export function DewormingFormScreen() {
   );
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
-  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft);
+  const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
   const setField = <Key extends keyof DewormingDraft>(key: Key, value: DewormingDraft[Key]) =>
     setDraft((current) => ({ ...current, [key]: value }));
 
@@ -80,15 +82,20 @@ export function DewormingFormScreen() {
         existing && !duplicate
           ? await updateDeworming(session.userId, existing.id, payload)
           : await createDeworming(session.userId, ownerPet.id, payload);
+      const notificationWarning = await syncCareNotifications(session.userId, pets);
       markSaved(draft);
       if (quickEntry) {
         showQuickRecordFeedback({
-          message: '驅蟲紀錄已儲存，完整內容可到「紀錄」查看。',
+          message: '驅蟲紀錄已儲存，完整內容可到「紀錄」查看。' + (notificationWarning ?? ''),
           onDone: () => navigation.popToTop(),
           onAddAnother: () => navigation.replace('DewormingForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', existing && !duplicate ? '驅蟲紀錄已更新' : '驅蟲紀錄已新增');
+        Alert.alert(
+          '已儲存',
+          (existing && !duplicate ? '驅蟲紀錄已更新' : '驅蟲紀錄已新增') +
+            (notificationWarning ? '\n' + notificationWarning : ''),
+        );
         markSaved(draft, () =>
           navigation.replace('DewormingDetail', { recordId: response.record.id }),
         );
@@ -120,6 +127,9 @@ export function DewormingFormScreen() {
           {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (
             <TouchableOpacity
               key={type}
+              accessibilityRole="radio"
+              accessibilityLabel={dewormingTypeLabels[type]}
+              accessibilityState={{ selected: draft.type === type }}
               style={[styles.chip, draft.type === type && styles.selected]}
               onPress={() => setField('type', type)}
             >
@@ -137,6 +147,14 @@ export function DewormingFormScreen() {
                   key={key}
                   label={label}
                   value={validDewormingDate(draft[key])}
+                  onClear={
+                    key === 'nextDueAt'
+                      ? () => {
+                          setField('nextDueAt', '');
+                          setField('createReminder', false);
+                        }
+                      : undefined
+                  }
                   onChange={(date) => setField(key, toTaipeiDateValue(date))}
                   minimumDate={
                     key === 'nextDueAt'
@@ -151,6 +169,7 @@ export function DewormingFormScreen() {
                 <Text style={styles.label}>{label}</Text>
                 <TextInput
                   style={styles.input}
+                  accessibilityLabel={label}
                   placeholder={`請輸入${label.replace('（必填）', '')}`}
                   placeholderTextColor={Colors.subtext}
                   value={typeof draft[key] === 'string' ? draft[key] : ''}
@@ -159,6 +178,24 @@ export function DewormingFormScreen() {
               </View>
             );
           })}
+        <View style={styles.options}>
+          <Text style={styles.label}>建立 App 內提醒</Text>
+          <Switch
+            accessibilityLabel="建立 App 內提醒"
+            accessibilityState={{
+              checked: draft.createReminder,
+              disabled: !draft.nextDueAt || saving,
+            }}
+            value={Boolean(draft.createReminder && draft.nextDueAt)}
+            disabled={!draft.nextDueAt || saving}
+            onValueChange={(value) => setField('createReminder', value)}
+          />
+        </View>
+        <Text style={styles.label}>
+          {draft.nextDueAt
+            ? '此開關建立 App 內提醒；手機通知另依設定與系統權限排定。'
+            : '請先選擇下次日期，才能建立 App 內提醒。'}
+        </Text>
         <SupplementalNotesField
           value={String(draft.notes ?? '')}
           onChange={(value) => setField('notes', value)}

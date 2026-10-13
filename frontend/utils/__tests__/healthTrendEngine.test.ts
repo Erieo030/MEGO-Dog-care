@@ -18,7 +18,7 @@ describe('healthTrendEngine', () => {
   test('喝水偏少連續兩天為 watch', () => {
     const result = analyzeHealthTrend(records([{ water: 'low' }, { water: 'low' }]));
     expect(result).toMatchObject({ overallLevel: 'watch', watchCount: 1, continuedCount: 0 });
-    expect(getHealthObservationText(result)).toBe('近期有 1 項需留意');
+    expect(getHealthObservationText(result)).toBe('紀錄不足或中斷，請持續記錄；已有 1 項需留意');
   });
 
   test('喝水偏少連續三天為 continued', () => {
@@ -26,7 +26,7 @@ describe('healthTrendEngine', () => {
       records([{ water: 'low' }, { water: 'low' }, { water: 'low' }]),
     );
     expect(result).toMatchObject({ overallLevel: 'continued', watchCount: 0, continuedCount: 1 });
-    expect(getHealthObservationText(result)).toBe('有 1 項持續需留意');
+    expect(getHealthObservationText(result)).toContain('紀錄不足或中斷');
   });
 
   test('便便偏軟連續兩天為 watch', () => {
@@ -53,7 +53,7 @@ describe('healthTrendEngine', () => {
       ]),
     );
     expect(result).toMatchObject({ overallLevel: 'watch', watchCount: 2, continuedCount: 0 });
-    expect(getHealthObservationText(result)).toBe('近期有 2 項需留意');
+    expect(getHealthObservationText(result)).toBe('紀錄不足或中斷，請持續記錄；已有 2 項需留意');
   });
 
   test('continued 優先顯示，但仍保留 watch alert', () => {
@@ -65,7 +65,7 @@ describe('healthTrendEngine', () => {
       ]),
     );
     expect(result).toMatchObject({ overallLevel: 'continued', watchCount: 1, continuedCount: 1 });
-    expect(getHealthObservationText(result)).toBe('有 1 項持續需留意');
+    expect(getHealthObservationText(result)).toContain('紀錄不足或中斷');
   });
 
   test('正常值會中斷喝水偏少趨勢', () => {

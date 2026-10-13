@@ -8,7 +8,7 @@ import { sendAIChat, getVetVisitBrief } from '../aiService';
 
 jest.mock('../api', () => ({ apiData: jest.fn() }));
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
+  getItem: jest.fn().mockResolvedValue(null),
   setItem: jest.fn(),
   removeItem: jest.fn(),
 }));

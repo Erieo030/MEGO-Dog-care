@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：提供 10～20 秒可完成的嘔吐專屬新增與編輯快速表單。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -40,7 +41,6 @@ import {
   VOMITING_SAFETY_MESSAGE,
 } from '../constants/Vomiting';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import type { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/healthEventService';
 import { EnergyCondition, Attachment, Severity, VomitCount, VomitingDetails } from '../types';
@@ -73,7 +73,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
   const eventId = route.params?.eventId as string | undefined;
   const quickEntry = route.params?.quickEntry === true;
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const [details, setDetails] = useState<VomitingDetails>(emptyDetails);
   const [occurredAt, setOccurredAt] = useState(new Date());
   const [severity, setSeverity] = useState<Severity>('mild');
@@ -98,6 +98,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
       setImages(value.images);
     },
     !loading && !error,
+    submitting,
   );
 
   const load = useCallback(

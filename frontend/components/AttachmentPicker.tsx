@@ -1,9 +1,9 @@
+import { CardSurface } from '../constants/Layout';
 /** 用途：提供相機、相簿、多張預覽、單張刪除與失敗重試的共用附件 UI。 */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,9 +14,10 @@ import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { RecordActionButton } from './RecordActionButton';
 import { Attachment, AttachmentSourceType } from '../types';
-import { getValidAccessToken } from '../services/api';
+import AuthorizedAttachmentImage from './AuthorizedAttachmentImage';
+import type { ImagePickerAsset } from 'expo-image-picker';
 import {
-  attachmentUri,
+  uploadAttachmentAssets,
   pickAndUploadAttachments,
   AttachmentPickSource,
 } from '../services/attachmentService';
@@ -45,41 +46,62 @@ export default function AttachmentPicker({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [last, setLast] = useState<AttachmentPickSource | null>(null);
-  const [failed, setFailed] = useState<Record<string, boolean>>({});
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [retryAssets, setRetryAssets] = useState<ImagePickerAsset[]>([]);
+  const uploadLock = useRef<symbol | null>(null);
+  const owner = useRef({ userId, petId, generation: 0 });
+  if (owner.current.userId !== userId || owner.current.petId !== petId)
+    owner.current = { userId, petId, generation: owner.current.generation + 1 };
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const callbackRef = useRef(onBusyChange);
+  callbackRef.current = onBusyChange;
   useEffect(() => {
-    let active = true;
-    void getValidAccessToken()
-      .then((token) => {
-        if (active) setAccessToken(token);
-      })
-      .catch(() => {
-        if (active) setError('無法取得照片授權，請重新載入。');
-      });
+    uploadLock.current = null;
+    setBusy(false);
+    setRetryAssets([]);
+    setError('');
     return () => {
-      active = false;
+      owner.current = { ...owner.current, generation: owner.current.generation + 1 };
+      callbackRef.current?.(false);
     };
-  }, [userId]);
+  }, [userId, petId]);
   const pick = async (source: AttachmentPickSource) => {
-    if (busy || disabled) return;
+    if (uploadLock.current || disabled) return;
+    const uploadToken = Symbol('upload');
+    uploadLock.current = uploadToken;
+    const captured = owner.current;
     setBusy(true);
     onBusyChange?.(true);
     setError('');
     setLast(source);
     try {
-      const items = await pickAndUploadAttachments({
-        source,
-        userId,
-        petId,
-        sourceType,
-        remaining: limit - value.length,
-      });
-      onChange([...value, ...items]);
+      const items = retryAssets.length
+        ? await uploadAttachmentAssets(
+            { userId, petId, sourceType },
+            retryAssets.slice(0, limit - valueRef.current.length),
+          )
+        : await pickAndUploadAttachments({
+            source,
+            userId,
+            petId,
+            sourceType,
+            remaining: limit - valueRef.current.length,
+          });
+      if (owner.current !== captured) return;
+      onChange([...valueRef.current, ...items].slice(0, limit));
+      setRetryAssets(items.failed ?? []);
+      if (items.failed?.length)
+        setError(
+          `${items.length} 張已上傳，${items.failed.length} 張失敗；重試只處理失敗照片。${items.errors?.[0] ?? ''}`,
+        );
     } catch (e) {
-      setError((e as Error).message);
+      if (owner.current === captured) setError((e as Error).message);
     } finally {
-      setBusy(false);
-      onBusyChange?.(false);
+      if (uploadLock.current === uploadToken) uploadLock.current = null;
+      if (owner.current === captured) {
+        setBusy(false);
+        onBusyChange?.(false);
+      }
     }
   };
   const remove = (item: Attachment) =>
@@ -134,23 +156,7 @@ export default function AttachmentPicker({
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {value.map((item) => (
           <View key={item.id} style={s.photo}>
-            {failed[item.id] ? (
-              <View style={s.placeholder}>
-                <Text>圖片載入失敗</Text>
-                <TouchableOpacity onPress={() => setFailed((x) => ({ ...x, [item.id]: false }))}>
-                  <Text style={s.retry}>重試</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Image
-                source={{
-                  uri: attachmentUri(item, userId),
-                  headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-                }}
-                style={s.image}
-                onError={() => setFailed((x) => ({ ...x, [item.id]: true }))}
-              />
-            )}
+            <AuthorizedAttachmentImage id={item.id} userId={userId} thumbnail style={s.image} />
             <RecordActionButton
               kind="delete"
               label="移除"
@@ -184,7 +190,7 @@ const s = StyleSheet.create({
   },
   buttonText: { color: Colors.text, fontWeight: '600', flexShrink: 1 },
   status: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  error: { marginTop: 10, padding: 10, backgroundColor: Colors.dangerSoft, borderRadius: 10 },
+  error: { ...CardSurface.hint, marginTop: 10 },
   errorText: { color: Colors.dangerText },
   retry: { color: Colors.primary, fontWeight: '800', marginTop: 4 },
   photo: { width: 120, height: 120, marginTop: 12, marginRight: 10 },

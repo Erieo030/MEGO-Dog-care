@@ -1,3 +1,5 @@
+import { useFormPet } from '../../../hooks/useFormPet';
+import { editableLostProfile } from '../identityFields';
 import {
   ScreenPageHeader,
   ScreenPageFrame,
@@ -17,7 +19,6 @@ import { Colors } from '../../../constants/Colors';
 import ScreenState from '../../../components/ScreenState';
 import KeyboardAwareScrollView from '../../../components/KeyboardAwareScrollView';
 import { useAuth } from '../../../contexts/AuthContext';
-import { usePet } from '../../../contexts/PetContext';
 import type { ProfileStackParamList } from '../../../navigation/types';
 import {
   getLostProfile,
@@ -47,7 +48,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'LostPetSettings'>;
 export function LostPetSettingsScreen({ navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const [profile, setProfile] = useState<LostProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,9 +58,10 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   const userId = session?.userId;
   const petId = selectedPet?.id;
   const { dirtyRef, markSaved } = useFormUnsavedChangesGuard(
-    profile,
-    setProfile,
+    editableLostProfile(profile),
+    (baseline) => setProfile((current) => (baseline ? { ...current, ...baseline } : null)),
     !loading && Boolean(profile),
+    saving,
   );
 
   useFocusEffect(
@@ -79,7 +81,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         .then((result) => {
           if (!cancelled) {
             setProfile(result.profile);
-            markSaved(result.profile);
+            markSaved(editableLostProfile(result.profile));
           }
         })
         .catch((caught) => {
@@ -122,7 +124,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       setProfile((current) =>
         JSON.stringify(current) === JSON.stringify(data) ? result.profile : current,
       );
-      markSaved(submitted);
+      markSaved(editableLostProfile(submitted));
       Alert.alert('已儲存', '毛孩資訊 QR 已更新');
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
@@ -353,12 +355,13 @@ export function LostPetSettingsScreen({ navigation }: Props) {
 export function LostPetQrScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const [profile, setProfile] = useState<LostProfile | null>(null);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
+  const rotateLock = useRef(false);
   const [rotating, setRotating] = useState(false);
   const userId = session?.userId;
   const petId = selectedPet?.id;
@@ -429,7 +432,8 @@ export function LostPetQrScreen() {
       {
         text: '更新',
         onPress: async () => {
-          if (!userId || !petId || rotating) return;
+          if (!userId || !petId || rotateLock.current) return;
+          rotateLock.current = true;
           setRotating(true);
           try {
             const result = await rotateLostToken(userId, petId);
@@ -438,6 +442,7 @@ export function LostPetQrScreen() {
           } catch (error) {
             Alert.alert('更新失敗', (error as Error).message);
           } finally {
+            rotateLock.current = false;
             setRotating(false);
           }
         },

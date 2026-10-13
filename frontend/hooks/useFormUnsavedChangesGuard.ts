@@ -10,6 +10,7 @@ export function useFormUnsavedChangesGuard<T>(
   values: T,
   restore: (baseline: T) => void,
   enabled = true,
+  submitting = false,
 ) {
   const [baseline, setBaseline] = useState(values);
   const valuesRef = useRef(values);
@@ -20,7 +21,7 @@ export function useFormUnsavedChangesGuard<T>(
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const discard = useCallback(() => restoreRef.current(baseline), [baseline]);
-  useUnsavedChangesGuard(dirty, discard);
+  useUnsavedChangesGuard(dirty, discard, submitting);
 
   const [continuation, setContinuation] = useState<(() => void) | null>(null);
   const markSaved = useCallback((saved?: T, proceed?: () => void) => {

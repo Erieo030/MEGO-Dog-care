@@ -1,7 +1,8 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { addDateKeyDays, taipeiDateKey, taipeiDateFromKey } from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：建立或編輯提醒；後端成功後同步裝置 Local Notification。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
@@ -29,7 +30,6 @@ import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import { RECURRENCE_RULES, REMINDER_TYPES } from '../constants/Reminders';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { HomeStackParamList } from '../navigation/types';
 import {
@@ -48,7 +48,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
   const existing = route.params?.reminder;
   const quickEntry = route.params?.quickEntry === true;
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet(existing?.petId);
   const { settings } = useSettings();
   const [type, setType] = useState<ReminderType>(existing?.type ?? 'other');
   const [title, setTitle] = useState(existing?.title ?? '提醒');
@@ -65,19 +65,25 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
   );
   const [rule, setRule] = useState<RecurrenceRule>(existing?.recurrenceRule ?? 'monthly');
   const [notes, setNotes] = useState(existing?.notes ?? '');
+  const mutationLock = useRef(false);
   const [submitting, setSubmitting] = useState(false);
   const [clientRequestId] = useState(
     () => `reminder-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
   );
 
   const formValues = { type, title, scheduledAt, rule, notes };
-  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
-    setType(value.type);
-    setTitle(value.title);
-    setScheduledAt(value.scheduledAt);
-    setRule(value.rule);
-    setNotes(value.notes);
-  });
+  const { markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setType(value.type);
+      setTitle(value.title);
+      setScheduledAt(value.scheduledAt);
+      setRule(value.rule);
+      setNotes(value.notes);
+    },
+    true,
+    submitting,
+  );
 
   const chooseType = (item: (typeof REMINDER_TYPES)[number]) => {
     setType(item[0]);
@@ -86,7 +92,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
   };
 
   const submit = async () => {
-    if (!selectedPet || !session?.userId || !title.trim() || submitting) {
+    if (!selectedPet || !session?.userId || !title.trim() || mutationLock.current) {
       if (!title.trim()) Alert.alert('提示', '請填寫提醒名稱');
       return;
     }
@@ -95,6 +101,8 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
       Alert.alert('提醒時間已過', '請選擇晚於目前時間的日期與時間；同一天的未來時間可以使用。');
       return;
     }
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     setSubmitting(true);
     try {
       const input = {
@@ -145,6 +153,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
     } finally {
+      mutationLock.current = false;
       setSubmitting(false);
     }
   };

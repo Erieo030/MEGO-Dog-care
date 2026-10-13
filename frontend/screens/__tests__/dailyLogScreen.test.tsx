@@ -157,6 +157,7 @@ test('deleting and recreating a historical record keeps its original date', asyn
   (logs.getTodayDailyLog as jest.Mock).mockResolvedValue({
     record: {
       id: 'old',
+      petId: 'p1',
       localDate: '2026-10-03',
       loggedAt: '2026-10-03T04:00:00Z',
       stoolLevel: 'hard',
@@ -232,7 +233,7 @@ test('edits made during saving survive and the next save updates the returned id
 
 test('save blocks deletion until its request completes', async () => {
   (logs.getTodayDailyLog as jest.Mock).mockResolvedValue({
-    record: { id: 'old', localDate: '2026-10-03', loggedAt: '2026-10-03T04:00:00Z' },
+    record: { id: 'old', petId: 'p1', localDate: '2026-10-03', loggedAt: '2026-10-03T04:00:00Z' },
   });
   let finish: (value: object) => void = () => undefined;
   (logs.updateDailyLog as jest.Mock).mockImplementation(
@@ -259,7 +260,7 @@ test('save blocks deletion until its request completes', async () => {
 
 test('duplicate delete confirmations send one request and block saving', async () => {
   (logs.getTodayDailyLog as jest.Mock).mockResolvedValue({
-    record: { id: 'old', localDate: '2026-10-03', loggedAt: '2026-10-03T04:00:00Z' },
+    record: { id: 'old', petId: 'p1', localDate: '2026-10-03', loggedAt: '2026-10-03T04:00:00Z' },
   });
   let finish: () => void = () => undefined;
   (logs.deleteDailyLog as jest.Mock).mockImplementation(

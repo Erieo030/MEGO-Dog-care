@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：依異常類型呈現快速選項，支援時間、嚴重程度、圖片與備註。 */
 import React, { useRef, useState } from 'react';
@@ -28,7 +29,6 @@ import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import { HomeStackParamList } from '../navigation/types';
 import { createHealthEvent } from '../services/healthEventService';
 import { Attachment, Severity } from '../types';
@@ -44,7 +44,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'CreateHealthEvent'>;
 export default function CreateHealthEventScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const { type, label } = route.params;
   const quickEntry = route.params.quickEntry === true;
   const [occurredAt, setOccurredAt] = useState(new Date());
@@ -59,13 +59,18 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const formValues = { occurredAt, severity, details, notes, images };
-  const { markSaved } = useFormUnsavedChangesGuard(formValues, (value) => {
-    setOccurredAt(value.occurredAt);
-    setSeverity(value.severity);
-    setDetails(value.details);
-    setNotes(value.notes);
-    setImages(value.images);
-  });
+  const { markSaved } = useFormUnsavedChangesGuard(
+    formValues,
+    (value) => {
+      setOccurredAt(value.occurredAt);
+      setSeverity(value.severity);
+      setDetails(value.details);
+      setNotes(value.notes);
+      setImages(value.images);
+    },
+    true,
+    submitting,
+  );
 
   const submit = async () => {
     if (

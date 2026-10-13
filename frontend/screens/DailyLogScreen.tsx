@@ -1,3 +1,4 @@
+import { useFormPet } from '../hooks/useFormPet';
 import { dailyLogStyles as s } from '../features/daily-logs/dailyLogStyles';
 import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,7 +16,6 @@ import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { SoftEntrance } from '../components/SoftMotion';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { useAuth } from '../contexts/AuthContext';
-import { usePet } from '../contexts/PetContext';
 import { useSettings } from '../contexts/SettingsContext';
 import {
   createDailyLog,
@@ -59,7 +59,7 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'DailyLog'>;
 export default function DailyLogScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
-  const { selectedPet } = usePet();
+  const selectedPet = useFormPet();
   const { settings } = useSettings();
   const quickEntry = route.params?.quickEntry === true;
   const [record, setRecord] = useState<DailyLog | null>(null);
@@ -72,7 +72,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   const draftRef = useRef(draft);
   draftRef.current = draft;
   const discard = useCallback(() => setDraft(baseline), [baseline]);
-  useUnsavedChangesGuard(dirty, discard);
+
   const recordDate = draft.localDate || requestedDate;
   const dateLabel = dailyLogDateLabel(recordDate);
   const headerDescription =
@@ -81,6 +81,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  useUnsavedChangesGuard(dirty, discard, saving || deleting);
   const mutationInFlight = useRef(false);
   const deleteConfirmationOpen = useRef(false);
   const [error, setError] = useState('');
@@ -107,6 +108,8 @@ export default function DailyLogScreen({ route, navigation }: Props) {
             );
         if (signal?.aborted) return;
         const selectedRecord = result.record;
+        if (selectedRecord && selectedRecord.petId !== selectedPet.id)
+          throw new Error('紀錄不屬於此表單毛孩，請返回重新開啟。');
         setRecord(selectedRecord);
         if (!dirtyRef.current) {
           const next = selectedRecord || emptyDailyLog(requestedDate);

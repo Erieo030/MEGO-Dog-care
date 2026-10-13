@@ -1,3 +1,8 @@
+import {
+  captureExportGeneration,
+  readExportTracking,
+  writeExportTracking,
+} from '../services/exportTrackingService';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：設定資料範圍、追蹤匯出進度，並分享或儲存完成檔案。 */
 import React, { useEffect, useRef, useState } from 'react';
@@ -48,8 +53,64 @@ export default function ExportCenterScreen() {
   const [retryPoll, setRetryPoll] = useState(0);
   const [jobLabel, setJobLabel] = useState('');
   const requestRef = useRef<(() => Promise<void>) | undefined>(undefined);
+  const [trackingError, setTrackingError] = useState('');
+  const [restoreRetry, setRestoreRetry] = useState(0);
+  const [restoring, setRestoring] = useState(true);
+  const trackingRef = useRef<{
+    label: string;
+    scope: ExportScope;
+    period: ExportPeriod;
+    petId?: string;
+  } | null>(null);
+  const currentOwner = useRef(session?.userId);
+  currentOwner.current = session?.userId;
+  useEffect(() => {
+    let active = true;
+    setJob(null);
+    setJobLabel('');
+    setPollError('');
+    setRestoring(true);
+    setTrackingError('');
+    if (!session?.userId) {
+      setRestoring(false);
+      return;
+    }
+    void readExportTracking(session.userId)
+      .then((saved) => {
+        if (!active || !saved) return;
+        trackingRef.current = saved;
+        setJobLabel(saved.label);
+        setScope(saved.scope);
+        setPeriod(saved.period);
+        setJob(saved.job);
+      })
+      .catch((e) => {
+        if (active) setTrackingError((e as Error).message);
+      })
+      .finally(() => {
+        if (active) setRestoring(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.userId, restoreRetry]);
+  const persist = async (userId: string, nextJob: ExportJob, generation: number) => {
+    if (!trackingRef.current) return;
+    try {
+      await writeExportTracking(userId, { ...trackingRef.current, job: nextJob }, generation);
+    } catch {
+      if (currentOwner.current === userId)
+        setPollError('工作已建立，但本機追蹤尚未保存。請留在本頁並重試原工作。');
+    }
+  };
   const run = async () => {
-    if (createLock.current || (job && ['queued', 'processing'].includes(job.status))) return;
+    if (
+      restoring ||
+      trackingError ||
+      createLock.current ||
+      (job && ['queued', 'processing'].includes(job.status))
+    )
+      return;
     if (!session?.userId || (scope === 'current_pet' && !selectedPet)) {
       Alert.alert('無法匯出', '請先選擇毛孩');
       return;
@@ -57,9 +118,16 @@ export default function ExportCenterScreen() {
     createLock.current = true;
     setCreating(true);
     setPollError('');
-    setJobLabel(
-      `${scope === 'current_pet' ? selectedPet?.name : '所有毛孩'} · ${periods.find(([value]) => value === period)?.[1]}`,
-    );
+    const userId = session.userId;
+    const generation = captureExportGeneration(userId);
+    const label = `${scope === 'current_pet' ? selectedPet?.name : '所有毛孩'} · ${periods.find(([value]) => value === period)?.[1]}`;
+    trackingRef.current = {
+      label,
+      scope,
+      period,
+      petId: scope === 'current_pet' ? selectedPet?.id : undefined,
+    };
+    setJobLabel(label);
     try {
       setJob(null);
       const result = await exportService.createExport(session.userId, {
@@ -69,7 +137,8 @@ export default function ExportCenterScreen() {
         period,
         includeAiSummary: true,
       });
-      setJob(result);
+      if (currentOwner.current === userId) setJob(result);
+      await persist(userId, result, generation);
     } catch (e) {
       Alert.alert('匯出失敗', (e as Error).message);
     } finally {
@@ -93,7 +162,10 @@ export default function ExportCenterScreen() {
         exportService
           .getExport(session.userId, job.id, controller.signal)
           .then((updatedJob) => {
-            if (!controller.signal.aborted) setJob(updatedJob);
+            if (!controller.signal.aborted) {
+              setJob(updatedJob);
+              void persist(session.userId, updatedJob, captureExportGeneration(session.userId));
+            }
           })
           .catch((e) => {
             if (!controller.signal.aborted)
@@ -125,7 +197,9 @@ export default function ExportCenterScreen() {
     cancelLock.current = true;
     setCancelling(true);
     try {
-      setJob(await exportService.cancelExport(session.userId, job.id));
+      const cancelled = await exportService.cancelExport(session.userId, job.id);
+      setJob(cancelled);
+      await persist(session.userId, cancelled, captureExportGeneration(session.userId));
       setPollError('');
     } catch (error) {
       Alert.alert('取消尚未完成', (error as Error).message);
@@ -134,7 +208,11 @@ export default function ExportCenterScreen() {
       setCancelling(false);
     }
   };
-  const busy = creating || Boolean(job && ['queued', 'processing'].includes(job.status));
+  const busy =
+    Boolean(trackingError) ||
+    restoring ||
+    creating ||
+    Boolean(job && ['queued', 'processing'].includes(job.status));
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
@@ -148,6 +226,21 @@ export default function ExportCenterScreen() {
             <Text style={styles.lead}>方便自己保存，或帶給獸醫參考。</Text>
           </View>
         </View>
+        {!!trackingError && (
+          <View style={styles.status}>
+            <Text accessibilityRole="alert" style={styles.error}>
+              無法恢復原匯出工作：{trackingError}。請先重試，避免重複建立。
+            </Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="重新讀取本機匯出追蹤"
+              onPress={() => setRestoreRetry((value) => value + 1)}
+              style={{ minHeight: 48, justifyContent: 'center' }}
+            >
+              <Text style={styles.link}>重新讀取</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.infoCard}>
           <View style={styles.infoHeading}>
             <View style={styles.infoIcon}>

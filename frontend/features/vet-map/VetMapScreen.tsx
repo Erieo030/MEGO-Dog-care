@@ -306,7 +306,7 @@ export default function VetMapScreen({ navigation, route }: Props) {
                 <Ionicons name="medical-outline" size={20} color={Colors.successDecoration} />
               </View>
               <View style={styles.hospitalCopy}>
-                <Text numberOfLines={1} style={styles.hospitalName}>
+                <Text numberOfLines={2} ellipsizeMode="tail" style={styles.hospitalName}>
                   {hospital.name}
                 </Text>
                 <Text numberOfLines={2} style={styles.hospitalAddress}>

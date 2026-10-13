@@ -114,3 +114,25 @@ test('datetime display and confirmation use Taipei time at a UTC date boundary',
   await act(async () => button('確認時間').props.onPress());
   expect(onChange.mock.calls[0][0].toISOString()).toBe('2026-09-30T16:30:00.000Z');
 });
+
+test('optional dates expose clear while mandatory dates do not', async () => {
+  const onClear = jest.fn();
+  await act(async () => {
+    screen = create(
+      <DatePickerField
+        label="結束日期"
+        value={new Date('2026-10-13T12:00:00+08:00')}
+        onChange={onChange}
+        onClear={onClear}
+      />,
+    );
+  });
+  await act(async () => button('清除結束日期').props.onPress());
+  expect(onClear).toHaveBeenCalledTimes(1);
+  await act(async () =>
+    screen.update(<DatePickerField label="開始日期" value={new Date()} onChange={onChange} />),
+  );
+  expect(
+    screen.root.findAll((node) => node.props.accessibilityLabel === '清除開始日期'),
+  ).toHaveLength(0);
+});

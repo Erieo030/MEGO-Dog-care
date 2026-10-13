@@ -17,6 +17,7 @@ export interface HealthTrendAlert {
   consecutiveDays: number;
   title: string;
   message: string;
+  observedAt?: string;
 }
 
 export interface HealthTrendResult {
@@ -178,8 +179,13 @@ export function analyzeHealthTrend(
         level,
         consecutiveDays,
         title: rule.title,
+        observedAt: lastRecordDate,
         message:
-          level === 'continued' ? rule.continuedMessage || rule.watchMessage : rule.watchMessage,
+          (lastRecordDate !== asOf ? `最後觀察 ${lastRecordDate}：` : '') +
+          (level === 'continued'
+            ? rule.continuedMessage || rule.watchMessage
+            : rule.watchMessage
+          ).replace(lastRecordDate !== asOf ? '今天' : '不會匹配', '當次紀錄'),
       },
     ];
   });
@@ -198,8 +204,8 @@ export function analyzeHealthTrend(
 export function getHealthObservationText(result: HealthTrendResult): string {
   if (result.dataStatus === 'empty') return '尚無日常紀錄';
   if (result.dataStatus === 'stale') return `今日尚未記錄，最後紀錄 ${result.lastRecordDate}`;
-  if (result.dataStatus === 'insufficient' && result.overallLevel === 'stable')
-    return '紀錄不足或中斷，請持續記錄';
+  if (result.dataStatus === 'insufficient')
+    return `紀錄不足或中斷，請持續記錄${result.overallLevel !== 'stable' ? `；已有 ${result.watchCount + result.continuedCount} 項需留意` : ''}`;
   if (result.overallLevel === 'continued') return `有 ${result.continuedCount} 項持續需留意`;
   if (result.overallLevel === 'watch') return `近期有 ${result.watchCount} 項需留意`;
   return '依已記錄資料，未觸發留意規則';

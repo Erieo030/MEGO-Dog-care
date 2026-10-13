@@ -21,6 +21,10 @@ class MedicationRequest(BaseModel):
     def non_blank(cls,v):
         if not v.strip(): raise ValueError("藥名不可空白")
         return v.strip()
+    @field_validator("endDate", mode="before")
+    @classmethod
+    def clear_optional_end_date(cls, value):
+        return "" if value is None else value
     @field_validator("startDate","endDate")
     @classmethod
     def valid_date(cls,v):

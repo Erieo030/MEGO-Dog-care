@@ -12,7 +12,7 @@ export function guardTabNavigation(proceed: () => void): boolean {
   return true;
 }
 
-export function useUnsavedChangesGuard(dirty: boolean, onDiscard: () => void) {
+export function useUnsavedChangesGuard(dirty: boolean, onDiscard: () => void, submitting = false) {
   const navigation = useNavigation();
   const [discarding, setDiscarding] = useState(false);
   const pending = useRef<(() => void) | null>(null);
@@ -22,6 +22,22 @@ export function useUnsavedChangesGuard(dirty: boolean, onDiscard: () => void) {
     (proceed: () => void) => {
       if (dialogOpen.current) return;
       dialogOpen.current = true;
+      if (submitting) {
+        Alert.alert(
+          '儲存正在處理',
+          '請求已送出，結果尚未確認。請等待處理完成；離開畫面不能取消已送出的儲存。',
+          [
+            {
+              text: '繼續等待',
+              onPress: () => {
+                dialogOpen.current = false;
+              },
+            },
+          ],
+          { cancelable: false },
+        );
+        return;
+      }
       Alert.alert(
         '尚未儲存修改',
         '離開後，這次修改將不會儲存。',
@@ -47,20 +63,20 @@ export function useUnsavedChangesGuard(dirty: boolean, onDiscard: () => void) {
         { cancelable: false },
       );
     },
-    [onDiscard],
+    [onDiscard, submitting],
   );
 
-  usePreventRemove(dirty && !discarding, ({ data }) =>
+  usePreventRemove((dirty || submitting) && !discarding, ({ data }) =>
     confirm(() => navigation.dispatch(data.action)),
   );
   useFocusEffect(
     useCallback(() => {
-      if (!dirty || discarding) return;
+      if (!(dirty || submitting) || discarding) return;
       activeGuards.set(guardKey, confirm);
       return () => {
         activeGuards.delete(guardKey);
       };
-    }, [confirm, dirty, discarding, guardKey]),
+    }, [confirm, dirty, submitting, discarding, guardKey]),
   );
   useEffect(() => {
     if (!discarding) return;

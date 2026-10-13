@@ -1,18 +1,9 @@
 /** 用途：詳細頁可水平滑動查看附件，並在載入失敗時提供 placeholder 與重試。 */
-import React, { useEffect, useState } from 'react';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  LayoutChangeEvent,
-} from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, LayoutChangeEvent } from 'react-native';
 import { Attachment } from '../types';
-import { attachmentUri } from '../services/attachmentService';
+import AuthorizedAttachmentImage from './AuthorizedAttachmentImage';
 import { Colors } from '../constants/Colors';
-import { getValidAccessToken } from '../services/api';
 export default function AttachmentGallery({
   items,
   userId,
@@ -21,17 +12,6 @@ export default function AttachmentGallery({
   userId: string;
 }) {
   const [containerWidth, setContainerWidth] = useState(0);
-  const [failed, setFailed] = useState<Record<string, number>>({});
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  useEffect(() => {
-    let active = true;
-    void getValidAccessToken().then((token) => {
-      if (active) setAccessToken(token);
-    });
-    return () => {
-      active = false;
-    };
-  }, [userId]);
   const onLayout = (event: LayoutChangeEvent) => setContainerWidth(event.nativeEvent.layout.width);
   const imageWidth = Math.min(Math.max(containerWidth - 24, 0), 420);
   return (
@@ -41,24 +21,11 @@ export default function AttachmentGallery({
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
           {items.map((x) => (
             <View key={x.id} style={{ width: containerWidth, alignItems: 'center' }}>
-              {failed[x.id] ? (
-                <View style={[s.placeholder, { width: imageWidth }]}>
-                  <Text>圖片載入失敗</Text>
-                  <TouchableOpacity onPress={() => setFailed((v) => ({ ...v, [x.id]: 0 }))}>
-                    <Text style={s.retry}>重新載入</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <Image
-                  resizeMode="contain"
-                  source={{
-                    uri: attachmentUri(x, userId, failed[x.id] || 0),
-                    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-                  }}
-                  style={[s.image, { width: imageWidth }]}
-                  onError={() => setFailed((v) => ({ ...v, [x.id]: (v[x.id] || 0) + 1 }))}
-                />
-              )}
+              <AuthorizedAttachmentImage
+                id={x.id}
+                userId={userId}
+                style={[s.image, { width: imageWidth }]}
+              />
             </View>
           ))}
         </ScrollView>

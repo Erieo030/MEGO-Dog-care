@@ -103,9 +103,9 @@ export default function SupplementalNotesField({
           <Animated.View style={[styles.backdrop, { opacity: entrance }]}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="完成並關閉補充備註"
+              accessibilityLabel={`取消編輯${label}`}
               style={StyleSheet.absoluteFill}
-              onPress={() => close(true)}
+              onPress={() => close()}
             />
           </Animated.View>
           <Animated.View
@@ -129,12 +129,12 @@ export default function SupplementalNotesField({
           >
             <View style={styles.modalHeader}>
               <View style={styles.titleGroup}>
-                <Text style={styles.modalTitle}>補充備註</Text>
+                <Text style={styles.modalTitle}>{label}</Text>
                 <Text style={styles.modalHint}>記下想補充的內容</Text>
               </View>
               <TouchableOpacity
                 accessibilityRole="button"
-                accessibilityLabel="取消編輯補充備註"
+                accessibilityLabel={`取消編輯${label}`}
                 style={styles.closeButton}
                 onPress={() => close()}
               >
@@ -142,6 +142,7 @@ export default function SupplementalNotesField({
               </TouchableOpacity>
             </View>
             <TextInput
+              accessibilityLabel={label}
               autoFocus
               multiline
               value={draft}

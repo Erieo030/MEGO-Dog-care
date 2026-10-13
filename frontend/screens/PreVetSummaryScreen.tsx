@@ -1,3 +1,5 @@
+import { readPreVetDraft, savePreVetDraft } from '../services/preVetDraftService';
+import { useUnsavedChangesGuard } from '../hooks/useUnsavedChangesGuard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Share, Text, TouchableOpacity, View } from 'react-native';
@@ -49,14 +51,51 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
   const [settingsExpanded, setSettingsExpanded] = useState(false);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [narrativeExpanded, setNarrativeExpanded] = useState(false);
-  const [visitConcern, setVisitConcern] = useState('');
+  const [draftError, setDraftError] = useState(false);
+  const [storedConcern, setVisitConcern] = useState('');
+  const concernUserId = session?.userId;
+  const concernPetId = selectedPet?.id;
+  const concernOwner = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
+  const [loadedConcernOwner, setLoadedConcernOwner] = useState('');
+  const visitConcern = loadedConcernOwner === concernOwner ? storedConcern : '';
+  useUnsavedChangesGuard(draftError && Boolean(visitConcern), () => setDraftError(false));
+  const updateConcern = (value: string) => {
+    setVisitConcern(value);
+    if (!session || !selectedPet || loadedConcernOwner !== concernOwner) return;
+    void savePreVetDraft(session.userId, selectedPet.id, value)
+      .then(() => setDraftError(false))
+      .catch(() => {
+        setDraftError(true);
+        Alert.alert('問題草稿尚未保存', '無法寫入本機，請先保留內容再離開。');
+      });
+  };
+  useEffect(() => {
+    let active = true;
+    if (concernUserId && concernPetId)
+      void readPreVetDraft(concernUserId, concernPetId)
+        .then((value) => {
+          if (active) {
+            setVisitConcern(value);
+            setLoadedConcernOwner(concernOwner);
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setVisitConcern('');
+            setLoadedConcernOwner(concernOwner);
+            setDraftError(true);
+          }
+        });
+    return () => {
+      active = false;
+    };
+  }, [concernOwner, concernUserId, concernPetId]);
   const { brief, loading, narrativeLoading, error, narrativeError, enhanceWithAI, retry } =
     usePreVetBrief(session?.userId, selectedPet?.id, range, appliedSections);
   const appliedKey = appliedSections.join(',');
   const draftChanged = draftSections.join(',') !== appliedKey;
 
   useEffect(() => {
-    setVisitConcern('');
     setDetailsExpanded(false);
     setNarrativeExpanded(false);
   }, [selectedPet?.id, session?.userId]);
@@ -144,7 +183,8 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
               brief={brief}
               sections={appliedSections}
               visitConcern={visitConcern}
-              onChangeVisitConcern={setVisitConcern}
+              concernReady={loadedConcernOwner === concernOwner}
+              onChangeVisitConcern={updateConcern}
             />
             <TouchableOpacity
               accessibilityRole="button"

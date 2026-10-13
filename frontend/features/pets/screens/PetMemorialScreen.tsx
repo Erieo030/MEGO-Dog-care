@@ -1,5 +1,8 @@
+import { useFormPet } from '../../../hooks/useFormPet';
+import { syncCareNotifications } from '../../../services/careNotificationSync';
+import { CardSurface } from '../../../constants/Layout';
 /** 用途：把毛孩移到回憶，或在誤設時還原；所有紀錄都會保留。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -13,7 +16,6 @@ import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChanges
 import { Type } from '../../../constants/Typography';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
-import { reconcileAccountNotifications } from '../../../services/notificationService';
 import { taipeiDateKey, toTaipeiDateValue } from '../../../utils/taipeiDate';
 import {
   MEMORIAL_EFFECTS,
@@ -27,10 +29,12 @@ type Props = { navigation: { goBack: () => void } };
 
 export default function PetMemorialScreen({ navigation }: Props) {
   const { session } = useAuth();
-  const { pets, selectedPet, memorializeSelectedPet, restoreSelectedPet } = usePet();
+  const { pets, memorializeSelectedPet, restoreSelectedPet } = usePet();
+  const selectedPet = useFormPet();
   const bottomPadding = useTabContentBottomPadding(24);
   const [date, setDate] = useState<Date>(new Date());
   const [note, setNote] = useState('');
+  const mutationLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const formValues = { date, note };
   const { markSaved } = useFormUnsavedChangesGuard(
@@ -40,14 +44,15 @@ export default function PetMemorialScreen({ navigation }: Props) {
       setNote(value.note);
     },
     Boolean(selectedPet) && !selectedPet?.memorial,
+    saving,
   );
   if (!selectedPet) return null;
   const pet = selectedPet;
 
-  const refreshNotifications = (memorialPetId: string, memorial: boolean) => {
+  const refreshNotifications = async (memorialPetId: string, memorial: boolean) => {
     if (!session?.userId) return;
     const nextPets = pets.map((item) => (item.id === memorialPetId ? { ...item, memorial } : item));
-    void reconcileAccountNotifications(session.userId, nextPets).catch(() => undefined);
+    return syncCareNotifications(session.userId, nextPets);
   };
 
   const confirmMemorial = () => {
@@ -62,21 +67,28 @@ export default function PetMemorialScreen({ navigation }: Props) {
       {
         text: '移到回憶',
         onPress: async () => {
+          if (mutationLock.current) return;
+          mutationLock.current = true;
           setSaving(true);
           try {
-            const stopped = await memorializeSelectedPet({
-              passedAwayDate: dateKey,
-              memorialNote: note.trim(),
-            });
-            refreshNotifications(pet.id, true);
+            const stopped = await memorializeSelectedPet(
+              {
+                passedAwayDate: dateKey,
+                memorialNote: note.trim(),
+              },
+              pet.id,
+            );
+            const warning = await refreshNotifications(pet.id, true);
             Alert.alert(
               '已移到回憶',
-              stopped ? `謝謝牠的陪伴。已停止 ${stopped} 個未完成的提醒。` : '謝謝牠的陪伴。',
+              (stopped ? `謝謝牠的陪伴。已停止 ${stopped} 個未完成的提醒。` : '謝謝牠的陪伴。') +
+                (warning ? '\n' + warning : ''),
             );
             markSaved(formValues, () => navigation.goBack());
           } catch (error) {
             Alert.alert('無法移到回憶', (error as Error).message);
           } finally {
+            mutationLock.current = false;
             setSaving(false);
           }
         },
@@ -93,14 +105,17 @@ export default function PetMemorialScreen({ navigation }: Props) {
         {
           text: '還原',
           onPress: async () => {
+            if (mutationLock.current) return;
+            mutationLock.current = true;
             setSaving(true);
             try {
-              await restoreSelectedPet();
-              refreshNotifications(pet.id, false);
+              await restoreSelectedPet(pet.id);
+              await refreshNotifications(pet.id, false);
               navigation.goBack();
             } catch (error) {
               Alert.alert('無法還原', (error as Error).message);
             } finally {
+              mutationLock.current = false;
               setSaving(false);
             }
           },
@@ -270,12 +285,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   restoreHint: { color: Colors.muted, fontSize: Type.caption, textAlign: 'center' },
-  effects: {
-    gap: Spacing.md,
-    padding: Spacing.lg,
-    borderRadius: Radius.lg,
-    backgroundColor: Colors.surfaceWarm,
-  },
+  effects: { ...CardSurface.hint, gap: Spacing.md },
   effectRow: { flexDirection: 'row', gap: Spacing.sm },
   effectText: { flex: 1, color: Colors.text, fontSize: Type.subhead, lineHeight: 21 },
   label: { color: Colors.text, fontSize: Type.body, fontWeight: '700', marginBottom: -Spacing.sm },

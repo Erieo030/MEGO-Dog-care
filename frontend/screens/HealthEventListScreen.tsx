@@ -1,3 +1,4 @@
+import { CardSurface } from '../constants/Layout';
 import {
   TAIPEI_TIME_ZONE,
   addDateKeyDays,
@@ -158,7 +159,7 @@ export default function HealthEventListScreen({ navigation }: Props) {
               </View>
               <View style={styles.cardContent}>
                 <View style={styles.cardHeader}>
-                  <Text numberOfLines={1} style={styles.cardTitle}>
+                  <Text numberOfLines={2} ellipsizeMode="tail" style={styles.cardTitle}>
                     {HEALTH_EVENT_LABELS[item.type]}
                   </Text>
                   <Text style={[styles.badge, item.severity === 'severe' && styles.severe]}>
@@ -239,11 +240,8 @@ const styles = StyleSheet.create({
   contextHint: { color: Colors.subtext, fontSize: Type.caption, marginTop: 2 },
   count: { color: Colors.primary, fontSize: Type.caption, fontWeight: '800' },
   card: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 18,
-    padding: 16,
+    ...CardSurface.record,
+
     marginBottom: 11,
   },
   cardTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

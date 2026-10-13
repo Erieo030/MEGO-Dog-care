@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：設定中的登入帳號資訊；由 ProfileStack 的 AccountInfo route 開啟。 */
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,6 +23,7 @@ export function AccountInfoScreen() {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmationText, setConfirmationText] = useState('');
+  const mutationLock = useRef(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -47,7 +48,9 @@ export function AccountInfoScreen() {
   };
 
   const submitDeleteAccount = async () => {
-    if (!password || confirmationText.trim() !== '刪除帳號' || deleting) return;
+    if (!password || confirmationText.trim() !== '刪除帳號' || mutationLock.current) return;
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     setDeleting(true);
     setDeleteError('');
     try {
@@ -56,6 +59,7 @@ export function AccountInfoScreen() {
     } catch (error) {
       setDeleteError((error as Error).message || '刪除失敗，請確認網路後重試。');
     } finally {
+      mutationLock.current = false;
       setDeleting(false);
     }
   };
@@ -117,39 +121,41 @@ export function AccountInfoScreen() {
           style={s.modalBackdrop}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={s.confirmPanel}>
-            <View style={s.confirmIcon}>
-              <Ionicons name="warning-outline" size={26} color={Colors.dangerDecoration} />
-            </View>
-            <Text style={s.confirmTitle}>最後確認</Text>
-            <Text style={s.confirmDescription}>
-              請輸入目前密碼，並輸入「刪除帳號」確認。伺服器上的帳號、毛孩、照護紀錄、AI
-              用量與照片會永久移除，所有登入 session 會撤銷。目前裝置的 AI
-              對話快取會清除；其他裝置上的本機副本不會被遠端抹除。
-            </Text>
-            <TextInput
-              accessibilityLabel="目前密碼"
-              style={s.confirmInput}
-              placeholder="目前密碼"
-              placeholderTextColor={Colors.subtext}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              textContentType="password"
-              editable={!deleting}
-            />
-            <TextInput
-              accessibilityLabel="輸入刪除帳號以確認"
-              style={s.confirmInput}
-              placeholder="輸入「刪除帳號」"
-              placeholderTextColor={Colors.subtext}
-              value={confirmationText}
-              onChangeText={setConfirmationText}
-              autoCapitalize="none"
-              editable={!deleting}
-            />
-            {!!deleteError && <Text style={s.deleteError}>{deleteError}</Text>}
+          <View style={[s.confirmPanel, { maxHeight: '90%' }]}>
+            <ScrollView keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }}>
+              <View style={s.confirmIcon}>
+                <Ionicons name="warning-outline" size={26} color={Colors.dangerDecoration} />
+              </View>
+              <Text style={s.confirmTitle}>最後確認</Text>
+              <Text style={s.confirmDescription}>
+                請輸入目前密碼，並輸入「刪除帳號」確認。伺服器上的帳號、毛孩、照護紀錄、AI
+                用量與照片會永久移除，所有登入 session 會撤銷。目前裝置的 AI
+                對話快取會清除；其他裝置上的本機副本不會被遠端抹除。
+              </Text>
+              <TextInput
+                accessibilityLabel="目前密碼"
+                style={s.confirmInput}
+                placeholder="目前密碼"
+                placeholderTextColor={Colors.subtext}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                textContentType="password"
+                editable={!deleting}
+              />
+              <TextInput
+                accessibilityLabel="輸入刪除帳號以確認"
+                style={s.confirmInput}
+                placeholder="輸入「刪除帳號」"
+                placeholderTextColor={Colors.subtext}
+                value={confirmationText}
+                onChangeText={setConfirmationText}
+                autoCapitalize="none"
+                editable={!deleting}
+              />
+              {!!deleteError && <Text style={s.deleteError}>{deleteError}</Text>}
+            </ScrollView>
             <View style={s.confirmActions}>
               <Pressable
                 accessibilityRole="button"

@@ -103,3 +103,44 @@ test('a denied library permission prevents opening the system photo picker', asy
   ).rejects.toThrow('請允許相簿權限');
   expect(openLibrary).not.toHaveBeenCalled();
 });
+
+test('batch upload preserves successful IDs and retries only failed assets', async () => {
+  const originalFetch = global.fetch;
+  const asset = {
+    uri: 'file:///photo.jpg',
+    fileName: 'photo.jpg',
+    width: 400,
+    height: 400,
+    mimeType: 'image/jpeg',
+  };
+  (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValueOnce({
+    canceled: false,
+    assets: [asset, { ...asset, fileName: 'second.jpg' }],
+  });
+  const fetchMock = jest
+    .fn()
+    .mockResolvedValueOnce({ json: async () => ({ data: { id: 'first' } }) })
+    .mockRejectedValueOnce(new Error('second failed'))
+    .mockResolvedValueOnce({ json: async () => ({ data: { id: 'second' } }) });
+  global.fetch = fetchMock;
+  try {
+    const result = await pickAndUploadAttachments({
+      source: 'library',
+      userId: 'u1',
+      petId: 'p1',
+      sourceType: 'health_event',
+      remaining: 2,
+    });
+    expect(result.map((item) => item.id)).toEqual(['first']);
+    expect(result.failed).toHaveLength(1);
+    const { uploadAttachmentAssets } = require('../attachmentService');
+    const retry = await uploadAttachmentAssets(
+      { userId: 'u1', petId: 'p1', sourceType: 'health_event' },
+      result.failed,
+    );
+    expect(retry.map((item: { id: string }) => item.id)).toEqual(['second']);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

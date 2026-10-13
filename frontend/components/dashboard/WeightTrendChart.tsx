@@ -1,3 +1,4 @@
+import { weightTimePositions } from '../../features/weights/weightChartContent';
 import { TAIPEI_TIME_ZONE } from '../../utils/taipeiDate';
 /** 用途：顯示 Dashboard 期間體重折線，不依賴完整 chart framework。 */
 import React, { useMemo } from 'react';
@@ -9,9 +10,12 @@ import { DashboardWeightPoint } from '../../types';
 export default function WeightTrendChart({ items }: { items: DashboardWeightPoint[] }) {
   const points = useMemo(
     () =>
-      [...items].sort(
-        (a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime(),
-      ),
+      [...items]
+        .filter(
+          (item) =>
+            Number.isFinite(new Date(item.measuredAt).getTime()) && Number.isFinite(item.weightKg),
+        )
+        .sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime()),
     [items],
   );
   if (!points.length) return <Text style={s.empty}>此期間尚無體重資料</Text>;
@@ -28,9 +32,10 @@ export default function WeightTrendChart({ items }: { items: DashboardWeightPoin
   const padding = rawMax === rawMin ? Math.max(rawMax * 0.05, 0.5) : (rawMax - rawMin) * 0.15;
   const min = Math.max(0, rawMin - padding),
     max = rawMax + padding;
+  const positions = weightTimePositions(points, width - left - right);
   const coords = points.map((item, index) => ({
     item,
-    x: left + (index / (points.length - 1)) * (width - left - right),
+    x: left + positions[index],
     y: top + ((max - item.weightKg) / (max - min || 1)) * (height - top - bottom),
   }));
   return (

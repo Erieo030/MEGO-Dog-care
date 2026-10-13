@@ -13,12 +13,20 @@ export const getMedication = (u: string, id: string, signal?: AbortSignal) => {
     ? apiData<{ record: MedicationCourse }>(path, { signal })
     : apiData<{ record: MedicationCourse }>(path);
 };
-export const createMedication = (u: string, p: string, d: Partial<MedicationCourse>) =>
+export const createMedication = (
+  u: string,
+  p: string,
+  d: Omit<Partial<MedicationCourse>, 'endDate'> & { endDate?: string | null },
+) =>
   apiData<{ record: MedicationCourse }>(`/api/pets/${p}/medications?${q(u)}`, {
     method: 'POST',
     body: JSON.stringify(d),
   });
-export const updateMedication = (u: string, id: string, d: Partial<MedicationCourse>) =>
+export const updateMedication = (
+  u: string,
+  id: string,
+  d: Omit<Partial<MedicationCourse>, 'endDate'> & { endDate?: string | null },
+) =>
   apiData<{ record: MedicationCourse }>(`/api/medications/${id}?${q(u)}`, {
     method: 'PATCH',
     body: JSON.stringify(d),

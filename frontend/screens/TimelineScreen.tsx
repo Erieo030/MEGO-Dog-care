@@ -1,3 +1,4 @@
+import { CardSurface } from '../constants/Layout';
 import { taipeiWallDate } from '../utils/taipeiDate';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：以月曆瀏覽每日照護紀錄，並可進入各筆來源明細。 */
@@ -185,14 +186,12 @@ export default function TimelineScreen({ navigation }: Props) {
     Promise.all([loadCalendar(), loadSelectedDate()]).finally(() => setRefreshing(false));
   };
 
-  if (loading) return <ScreenState loading text="正在載入照護紀錄…" />;
-
   const error = calendarError || detailsError;
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <FlatList
-        data={detailsError ? [] : items}
+        data={detailsError || loading ? [] : items}
         keyExtractor={(item) => item.id}
         removeClippedSubviews
         initialNumToRender={8}
@@ -215,6 +214,7 @@ export default function TimelineScreen({ navigation }: Props) {
               onGoToday={goToday}
               onOpenPhotos={() => navigation.navigate('PhotosOverview')}
             />
+            {loading && <ScreenState loading text="正在更新照護紀錄…" />}
             {!!error && (
               <View style={styles.errorBox}>
                 <Text style={styles.error}>{error}</Text>
@@ -263,7 +263,7 @@ export default function TimelineScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: 18, paddingTop: 18, flexGrow: 1 },
-  errorBox: { alignItems: 'center', paddingVertical: 20 },
+  errorBox: { ...CardSurface.hint, alignItems: 'center' },
   error: { color: Colors.danger, textAlign: 'center' },
   loadingDetails: { color: Colors.subtext, textAlign: 'center', paddingVertical: 20 },
   retry: {

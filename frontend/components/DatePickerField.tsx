@@ -15,6 +15,7 @@ interface Props {
   maximumDate?: Date;
   disabled?: boolean;
   onChange: (date: Date) => void;
+  onClear?: () => void;
 }
 
 const today = () => {
@@ -318,6 +319,7 @@ export default function DatePickerField({
   maximumDate: maximumInstant,
   disabled,
   onChange,
+  onClear,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<'date' | 'time'>('date');
@@ -394,6 +396,17 @@ export default function DatePickerField({
         />
         <Text style={validValue ? styles.value : styles.placeholder}>{shown}</Text>
       </TouchableOpacity>
+      {onClear && validValue && (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`清除${label}`}
+          disabled={disabled}
+          onPress={onClear}
+          style={{ minHeight: 48, justifyContent: 'center' }}
+        >
+          <Text style={{ color: Colors.primary }}>清除日期</Text>
+        </TouchableOpacity>
+      )}
       {mode === 'time' || (mode === 'datetime' && phase === 'time') ? (
         <TimeModal
           open={open}

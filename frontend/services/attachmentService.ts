@@ -42,13 +42,51 @@ const compress = async (asset: ImagePicker.ImagePickerAsset) => {
   return { uri: result.uri, width: result.width, height: result.height, mimeType };
 };
 
+export type AttachmentUploadBatch = Attachment[] & {
+  failed?: ImagePicker.ImagePickerAsset[];
+  errors?: string[];
+};
+export async function uploadAttachmentAssets(
+  input: { userId: string; petId: string; sourceType: AttachmentSourceType },
+  selected: ImagePicker.ImagePickerAsset[],
+): Promise<AttachmentUploadBatch> {
+  const uploaded: AttachmentUploadBatch = [];
+  uploaded.failed = [];
+  uploaded.errors = [];
+  for (const asset of selected) {
+    try {
+      const prepared = await compress(asset);
+      const form = new FormData();
+      form.append(
+        'file',
+        new FileSystem.File(prepared.uri),
+        asset.fileName || `mego-${Date.now()}.${prepared.mimeType === 'image/png' ? 'png' : 'jpg'}`,
+      );
+      form.append('width', String(prepared.width));
+      form.append('height', String(prepared.height));
+      const body = await apiRequest<{ data: Attachment }>(
+        `/api/pets/${input.petId}/attachments?userId=${encodeURIComponent(input.userId)}`,
+        { method: 'POST', headers: { Accept: 'application/json' }, body: form },
+      );
+      uploaded.push(body.data);
+    } catch (e) {
+      uploaded.failed.push(asset);
+      uploaded.errors.push((e as Error).message);
+    }
+  }
+  if (!uploaded.failed.length) {
+    delete uploaded.failed;
+    delete uploaded.errors;
+  }
+  return uploaded;
+}
 export async function pickAndUploadAttachments(input: {
   source: AttachmentPickSource;
   userId: string;
   petId: string;
   sourceType: AttachmentSourceType;
   remaining: number;
-}): Promise<Attachment[]> {
+}): Promise<AttachmentUploadBatch> {
   if (input.remaining <= 0) throw new ApiError('已達此紀錄的照片上限');
   await ensurePermission(input.source);
   const options: ImagePicker.ImagePickerOptions = {
@@ -62,25 +100,7 @@ export async function pickAndUploadAttachments(input: {
       ? await ImagePicker.launchCameraAsync(options)
       : await ImagePicker.launchImageLibraryAsync(options);
   if (result.canceled) return [];
-  const selected = result.assets.slice(0, input.remaining);
-  const uploaded: Attachment[] = [];
-  for (const asset of selected) {
-    const prepared = await compress(asset);
-    const form = new FormData();
-    form.append(
-      'file',
-      new FileSystem.File(prepared.uri),
-      asset.fileName || `mego-${Date.now()}.${prepared.mimeType === 'image/png' ? 'png' : 'jpg'}`,
-    );
-    form.append('width', String(prepared.width));
-    form.append('height', String(prepared.height));
-    const body = await apiRequest<{ data: Attachment }>(
-      `/api/pets/${input.petId}/attachments?userId=${encodeURIComponent(input.userId)}`,
-      { method: 'POST', headers: { Accept: 'application/json' }, body: form },
-    );
-    uploaded.push(body.data);
-  }
-  return uploaded;
+  return uploadAttachmentAssets(input, result.assets.slice(0, input.remaining));
 }
 
 export async function uploadPetAvatarImage(

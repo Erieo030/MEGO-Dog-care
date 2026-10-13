@@ -1,7 +1,7 @@
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 毛孩新增與編輯共用表單，集中處理欄位驗證與健康資料輸入。 */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -64,13 +64,14 @@ export default function PetFormScreen({
 }: PetFormScreenProps) {
   const { session } = useAuth();
   const [form, setForm] = useState<PetData>({ ...emptyPetData, ...initialData });
+  const mutationLock = useRef(false);
   const [saving, setSaving] = useState(false);
-  const { markSaved } = useFormUnsavedChangesGuard(form, setForm);
+  const { markSaved } = useFormUnsavedChangesGuard(form, setForm, true, saving);
   const update = <K extends keyof PetData>(key: K, value: PetData[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
   const submit = async () => {
-    if (saving) return;
+    if (mutationLock.current) return;
     if (!form.name.trim() || !form.gender || !form.breed.trim() || !form.arrivalDate.trim()) {
       Alert.alert('提示', '請填寫姓名、性別、品種與到家日期');
       return;
@@ -88,6 +89,8 @@ export default function PetFormScreen({
       Alert.alert('提示', '到家日期請使用 YYYY-MM-DD 格式');
       return;
     }
+    if (mutationLock.current) return;
+    mutationLock.current = true;
     setSaving(true);
     try {
       const result = await onSubmit({
@@ -98,6 +101,7 @@ export default function PetFormScreen({
       });
       if (result !== false) markSaved(form, onSaved);
     } finally {
+      mutationLock.current = false;
       setSaving(false);
     }
   };
