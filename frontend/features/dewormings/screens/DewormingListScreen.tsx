@@ -12,19 +12,17 @@ import {
 } from '../../../components/ScreenPageHeader';
 /** 用途：顯示毛孩的驅蟲紀錄列表。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { Colors } from '../../../constants/Colors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
-import { HOME_THEME_HEALTH_EMPTY_ARTWORK } from '../../../constants/HomeThemes';
 import ScreenState from '../../../components/ScreenState';
-import { SoftEntrance } from '../../../components/SoftMotion';
+import { ThemedRecordEmptyState } from '../../../components/RecordEmptyState';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
-import { useSettings } from '../../../contexts/SettingsContext';
 import type { HomeStackParamList } from '../../../navigation/types';
 import { getDewormings } from '../../../services/dewormingService';
 import type { Deworming } from '../../../types';
@@ -36,7 +34,6 @@ export function DewormingListScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
   const { selectedPet } = usePet();
-  const { settings } = useSettings();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [storedRecords, setRecords] = useState<Deworming[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,18 +132,10 @@ export function DewormingListScreen() {
                 </AppButton>
               )}
               {!error && !records.length ? (
-                <View style={styles.emptyBox}>
-                  <SoftEntrance>
-                    <Image
-                      accessible={false}
-                      resizeMode="contain"
-                      source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                      style={styles.emptyArtwork}
-                    />
-                  </SoftEntrance>
-                  <Text style={styles.empty}>目前沒有驅蟲紀錄</Text>
-                  <Text style={styles.emptyHint}>記下每次預防，照護就不容易忘記。</Text>
-                </View>
+                <ThemedRecordEmptyState
+                  title="目前沒有驅蟲紀錄"
+                  hint="記下每次預防，照護就不容易忘記。"
+                />
               ) : null}
             </>
           }

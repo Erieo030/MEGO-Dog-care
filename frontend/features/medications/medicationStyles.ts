@@ -17,9 +17,6 @@ import {
 import { Type } from '../../constants/Typography';
 
 export const medicationStyles = StyleSheet.create({
-  emptyBox: { alignItems: 'center', paddingVertical: 28 },
-  emptyArtwork: { width: 82, height: 76, marginBottom: 10 },
-  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   page: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },

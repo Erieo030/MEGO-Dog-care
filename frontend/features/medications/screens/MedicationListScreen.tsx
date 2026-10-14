@@ -15,19 +15,17 @@ import {
  * 表單：MedicationFormScreen.tsx
  */
 import React, { useCallback, useRef, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import { Colors } from '../../../constants/Colors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
-import { HOME_THEME_HEALTH_EMPTY_ARTWORK } from '../../../constants/HomeThemes';
 import ScreenState from '../../../components/ScreenState';
-import { SoftEntrance } from '../../../components/SoftMotion';
+import { ThemedRecordEmptyState } from '../../../components/RecordEmptyState';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
-import { useSettings } from '../../../contexts/SettingsContext';
 import type { HomeStackParamList } from '../../../navigation/types';
 import { getMedications } from '../../../services/medicationService';
 import type { MedicationCourse } from '../../../types';
@@ -43,7 +41,6 @@ export function MedicationListScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
   const { selectedPet } = usePet();
-  const { settings } = useSettings();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [storedRecords, setData] = useState<MedicationCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,18 +156,10 @@ export function MedicationListScreen() {
                 </AppButton>
               )}
               {!error && !data.length ? (
-                <View style={styles.emptyBox}>
-                  <SoftEntrance>
-                    <Image
-                      accessible={false}
-                      resizeMode="contain"
-                      source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                      style={styles.emptyArtwork}
-                    />
-                  </SoftEntrance>
-                  <Text style={styles.empty}>目前沒有用藥紀錄</Text>
-                  <Text style={styles.emptyHint}>需要時再新增，讓 MEGO 幫你整理療程。</Text>
-                </View>
+                <ThemedRecordEmptyState
+                  title="目前沒有用藥紀錄"
+                  hint="需要時再新增，讓 MEGO 幫你整理療程。"
+                />
               ) : null}
             </>
           }

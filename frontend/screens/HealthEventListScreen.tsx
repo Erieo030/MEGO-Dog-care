@@ -21,6 +21,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Colors } from '../constants/Colors';
 import { LottieArt } from '../components/LottieArt';
+import { RecordEmptyState } from '../components/RecordEmptyState';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 
 const EMPTY_PUPPY = require('../assets/artwork/care/puppy-sleeping-v1.json');
@@ -149,11 +150,11 @@ export default function HealthEventListScreen({ navigation }: Props) {
           }
           ListEmptyComponent={
             !error ? (
-              <View style={styles.emptyBox}>
-                <LottieArt source={EMPTY_PUPPY} style={styles.emptyArtwork} />
-                <Text style={styles.empty}>尚無健康異常紀錄</Text>
-                <Text style={styles.emptyHint}>有需要時再記下來，方便之後回想。</Text>
-              </View>
+              <RecordEmptyState
+                title="尚無健康異常紀錄"
+                hint="有需要時再記下來，方便之後回想。"
+                artwork={<LottieArt source={EMPTY_PUPPY} style={styles.emptyArtwork} />}
+              />
             ) : null
           }
           renderItem={({ item, index }) => (
@@ -212,10 +213,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   center: { flex: 1, justifyContent: 'center', backgroundColor: Colors.background },
   state: { alignItems: 'center', padding: 30 },
-  emptyBox: { alignItems: 'center', paddingVertical: 28 },
   emptyArtwork: { width: 96, height: 96, marginBottom: 4 },
-  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
-  empty: { color: Colors.subtext, textAlign: 'center', padding: 40 },
   error: { color: Colors.dangerText, textAlign: 'center' },
   retry: {
     marginTop: 14,

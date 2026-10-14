@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, RefreshControl, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { RecordEmptyState } from '../components/RecordEmptyState';
 import { RecordActionButton } from '../components/RecordActionButton';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -221,11 +222,13 @@ export default function WeightListScreen({ navigation, route }: Props) {
                 <Text style={styles.sourceMissing}>來源體重紀錄可能已刪除或不屬於目前毛孩。</Text>
               )}
             {!items.length ? (
-              <View style={styles.emptyBox}>
-                <Ionicons name="scale-outline" size={34} color={Colors.primaryDecoration} />
-                <Text style={styles.empty}>尚未記錄體重</Text>
-                <Text style={styles.emptyHint}>偶爾記一次，就能慢慢看見變化。</Text>
-              </View>
+              <RecordEmptyState
+                title="尚未記錄體重"
+                hint="偶爾記一次，就能慢慢看見變化。"
+                artwork={
+                  <Ionicons name="scale-outline" size={34} color={Colors.primaryDecoration} />
+                }
+              />
             ) : !filteredItems.length ? (
               <Text style={styles.empty}>此期間沒有體重紀錄</Text>
             ) : null}

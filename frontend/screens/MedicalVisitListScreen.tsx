@@ -13,7 +13,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -25,12 +24,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { Colors } from '../constants/Colors';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
-import { HOME_THEME_HEALTH_EMPTY_ARTWORK } from '../constants/HomeThemes';
 import ScreenState from '../components/ScreenState';
-import { SoftEntrance } from '../components/SoftMotion';
+import { ThemedRecordEmptyState } from '../components/RecordEmptyState';
 import { useAuth } from '../contexts/AuthContext';
 import { usePet } from '../contexts/PetContext';
-import { useSettings } from '../contexts/SettingsContext';
 import { HomeStackParamList } from '../navigation/types';
 import * as service from '../services/medicalVisitService';
 import { MedicalVisit } from '../types';
@@ -42,7 +39,6 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
   const { session } = useAuth();
   const { selectedPet } = usePet();
   const listMotion = useRecordListMotion(`${session?.userId ?? ''}:${selectedPet?.id ?? ''}`);
-  const { settings } = useSettings();
   const [items, setItems] = useState<MedicalVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -146,18 +142,10 @@ export default function MedicalVisitListScreen({ navigation }: Props) {
           }
           ListEmptyComponent={
             !error ? (
-              <View style={s.emptyBox}>
-                <SoftEntrance>
-                  <Image
-                    accessible={false}
-                    resizeMode="contain"
-                    source={HOME_THEME_HEALTH_EMPTY_ARTWORK[settings.homeTheme]}
-                    style={s.emptyArtwork}
-                  />
-                </SoftEntrance>
-                <Text style={s.emptyTitle}>目前沒有就醫紀錄</Text>
-                <Text style={s.emptyHint}>下次看診後，再把重要內容留在這裡。</Text>
-              </View>
+              <ThemedRecordEmptyState
+                title="目前沒有就醫紀錄"
+                hint="下次看診後，再把重要內容留在這裡。"
+              />
             ) : null
           }
           renderItem={({ item, index }) => (
@@ -271,8 +259,6 @@ const s = StyleSheet.create({
     gap: 10,
   },
   mapLinkText: { color: Colors.text, fontSize: Type.body, fontWeight: '700', flex: 1 },
-  emptyBox: { alignItems: 'center', paddingVertical: 28 },
-  emptyArtwork: { width: 82, height: 76, marginBottom: 10 },
   emptyIcon: {
     width: 54,
     height: 54,
@@ -282,8 +268,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 10,
   },
-  emptyTitle: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
-  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   empty: { color: Colors.subtext, textAlign: 'center', padding: 18 },
   retry: {
     borderWidth: 1,

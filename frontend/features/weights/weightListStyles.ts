@@ -101,8 +101,6 @@ export const weightListStyles = StyleSheet.create({
   xLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 42, marginTop: 3 },
   xLabel: { color: Colors.subtext, fontSize: Type.caption2, maxWidth: '48%' },
   xLabelRight: { textAlign: 'right' },
-  emptyBox: { alignItems: 'center', paddingVertical: 28 },
-  emptyHint: { color: Colors.muted, fontSize: Type.footnote, marginTop: 6, textAlign: 'center' },
   empty: {
     color: Colors.subtext,
     textAlign: 'center',
