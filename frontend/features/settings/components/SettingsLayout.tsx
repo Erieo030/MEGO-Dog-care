@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 /**
  * 用途：設定子頁共用底色、可捲動容器與設定列。
- * 使用頁：SettingsScreens.tsx；之後新增設定頁也應使用此元件。
+ * 使用頁：設定各子頁（PetManagement、NotificationSettings、About、PrivacyPolicy、TermsOfUse 等）。
  */
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

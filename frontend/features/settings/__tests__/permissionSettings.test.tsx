@@ -10,7 +10,7 @@ import {
   getNotificationPermissionState,
   reconcileAccountNotifications,
 } from '../../../services/notificationService';
-import { NotificationSettingsScreen } from '../screens/SettingsScreens';
+import { NotificationSettingsScreen } from '../screens/NotificationSettingsScreen';
 
 const mockRemove = jest.fn();
 let mockAppStateListener: (state: string) => void;
