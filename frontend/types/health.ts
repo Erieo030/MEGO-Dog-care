@@ -43,42 +43,6 @@ export interface StoolDetails extends Record<string, unknown> {
   suspectedParasite: boolean;
 }
 export type ObservationHealthEventType = 'low_appetite' | 'low_energy' | 'abnormal_drinking';
-export type AppetiteLevel = 'slightly_reduced' | 'less_than_half' | 'not_eating';
-export type AppetiteDuration = 'one_meal' | 'within_half_day' | 'one_day' | 'over_one_day';
-export type AssociatedSymptom = 'vomiting' | 'abnormal_stool' | 'reduced_drinking' | 'low_energy';
-export interface AppetiteDetails extends Record<string, unknown> {
-  appetiteLevel: AppetiteLevel;
-  duration?: AppetiteDuration;
-  associatedSymptoms: AssociatedSymptom[];
-}
-export type EnergyLevel = 'slightly_low' | 'clearly_low' | 'barely_active';
-export type MovementCondition =
-  | 'normal_movement'
-  | 'reduced_movement'
-  | 'reluctant_to_stand'
-  | 'unknown';
-export type ResponseCondition =
-  | 'normal_response'
-  | 'slow_response'
-  | 'minimal_response'
-  | 'unknown';
-export interface LowEnergyDetails extends Record<string, unknown> {
-  energyLevel: EnergyLevel;
-  movementCondition?: MovementCondition;
-  responseCondition?: ResponseCondition;
-}
-export type DrinkingLevel =
-  | 'less_than_usual'
-  | 'barely_drinking'
-  | 'more_than_usual'
-  | 'frequent_drinking';
-export type DrinkingDuration = 'few_hours' | 'half_day' | 'one_day' | 'over_one_day';
-export type DrinkingAbility = 'normal' | 'vomits_after_drinking' | 'unable_to_drink' | 'unknown';
-export interface AbnormalDrinkingDetails extends Record<string, unknown> {
-  drinkingLevel: DrinkingLevel;
-  duration?: DrinkingDuration;
-  drinkingAbility?: DrinkingAbility;
-}
 export type AttachmentSourceType = 'weight' | 'health_event' | 'medical_visit';
 export interface Attachment {
   id: string;

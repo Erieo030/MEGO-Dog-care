@@ -94,14 +94,6 @@ export async function loadAISession(userId: string, petId: string): Promise<AISe
 async function writeSession(userId: string, petId: string, value: AISession) {
   await AsyncStorage.setItem(key(userId, petId), JSON.stringify(value));
 }
-export async function saveAISession(userId: string, petId: string, value: AISession) {
-  return mutate(userId, petId, async () => {
-    await loadAISession(userId, petId);
-    await loadAISessions(userId, petId);
-    await writeSession(userId, petId, value);
-  });
-}
-
 export type AISessionRecord = {
   id: string;
   title: string;
