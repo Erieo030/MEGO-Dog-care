@@ -9,7 +9,7 @@ except ImportError:
     httpx = None
 from .provider import ProviderError
 
-AI_MODELS = {"TEXT": "gemma-4-26b-a4b"}
+AI_MODELS = {"TEXT": "gpt-oss-120b"}
 logger = logging.getLogger(__name__)
 
 
