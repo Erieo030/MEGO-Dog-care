@@ -56,11 +56,8 @@ jest.mock('../../constants/HomeThemes', () => ({
   HOME_THEMES: {
     'morning-home': {
       id: 'morning-home',
-      marker: 1,
       iconColor: '#A9603D',
       iconSurface: 'rgba(243, 237, 220, 0.94)',
-      iconBorder: 'rgba(183, 101, 59, 0.28)',
-      labelSurface: 'rgba(255, 249, 239, 0.78)',
     },
   },
 }));
