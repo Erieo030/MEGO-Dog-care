@@ -11,6 +11,11 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# 自行載入 .env，不依賴 config.py 是否先被匯入；重複呼叫不會覆蓋已存在的環境變數。
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[3] / ".env")
+
 _DEFAULTS_PATH = Path(__file__).resolve().parent / "policy_defaults.json"
 _DEFAULTS = json.loads(_DEFAULTS_PATH.read_text(encoding="utf-8"))
 
