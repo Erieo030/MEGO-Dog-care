@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 from pydantic import BaseModel
+from app.core.policy import get_policy
 from app.schemas.ai import AIContext, HealthMonitorResult
 from app.timezone import now_taipei
 from .provider import LLMProvider
@@ -9,6 +10,7 @@ from .rag_context_service import build_knowledge_bundle
 from .app_knowledge import internal_app_results, is_app_function_question
 
 logger = logging.getLogger(__name__)
+_policy = get_policy()
 
 
 def _provider_error(exc: Exception) -> tuple[str, str]:
@@ -252,11 +254,11 @@ class ChatService:
                 )
             user_content = "\n\n".join(user_content_parts) if user_content_parts else message
             messages = [{"role": "system", "content": dated_system_prompt(GENERAL_SYSTEM_PROMPT)}]
-            for turn in (history or [])[-10:]:
+            for turn in (history or [])[-_policy.chat_history_messages:]:
                 role = turn.get("role")
                 content = turn.get("content", "").strip()
                 if role in {"user", "assistant"} and content:
-                    messages.append({"role": role, "content": content[:1000]})
+                    messages.append({"role": role, "content": content[:_policy.chat_message_max_chars]})
             messages.append({"role": "user", "content": user_content})
             raw, actual = await self.provider.generate_structured(messages)
             if isinstance(raw.get("answer"), str) and raw["answer"].strip():

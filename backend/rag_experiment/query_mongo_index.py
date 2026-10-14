@@ -30,7 +30,14 @@ def cosine(left: list[float], right: list[float]) -> float:
     return dot / (norm_left * norm_right) if norm_left and norm_right else 0.0
 
 
-def reciprocal_rank_fusion(*rankings: list[int], constant: int = 60) -> dict[int, float]:
+def _retrieval_policy():
+    """檢索參數的單一來源；此檔也能以 CLI 獨立執行，因此採延遲匯入。"""
+    from app.core.policy import get_policy
+    return get_policy()
+
+
+def reciprocal_rank_fusion(*rankings: list[int], constant: int | None = None) -> dict[int, float]:
+    constant = _retrieval_policy().rag_rrf_constant if constant is None else constant
     scores: dict[int, float] = {}
     for ranking in rankings:
         for rank, index in enumerate(ranking, start=1):
@@ -89,7 +96,8 @@ def retrieve(question: str, limit: int = 5, model_timeout_seconds: float = 60) -
     bm25_order = sorted(range(len(chunks)), key=lambda index: (-bm25_values[index], index))
     vector_values = [cosine(query_vector, chunk["embedding"]) for chunk in chunks]
     vector_order = sorted(range(len(chunks)), key=lambda index: (-vector_values[index], index))
-    fused = reciprocal_rank_fusion(bm25_order[:5], vector_order[:5])
+    policy = _retrieval_policy()
+    fused = reciprocal_rank_fusion(bm25_order[:policy.rag_bm25_candidates], vector_order[:policy.rag_vector_candidates])
     candidate_indices = sorted(fused, key=lambda index: (-fused[index], index))
     candidates = [chunks[index] for index in candidate_indices]
 

@@ -16,10 +16,12 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.db import db
 from app.core.config import get_settings
+from app.core.policy import get_policy
 
 _settings = get_settings()
+_policy = get_policy()
 MAX_FILE_BYTES = _settings.upload_max_mb * 1024 * 1024
-SOURCE_LIMITS = {"weight": 3, "health_event": 5, "medical_visit": 10}
+SOURCE_LIMITS = _policy.attachment_limits
 SOURCE_COLLECTIONS = {
     "weight": db.weight_records,
     "health_event": db.health_events,
@@ -174,7 +176,7 @@ def _serialize(item: dict) -> dict:
 
 
 def _cleanup_pending() -> None:
-    cutoff = now_taipei() - timedelta(hours=24)
+    cutoff = now_taipei() - timedelta(hours=_policy.orphan_attachment_hours)
     for item in db.attachments.find({"sourceId": None, "createdAt": {"$lt": cutoff}}):
         storage.delete(item["storageKey"])
         db.attachments.delete_one({"_id": item["_id"]})

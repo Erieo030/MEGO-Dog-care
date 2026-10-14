@@ -17,9 +17,10 @@ from app.services.export_service import recover_jobs, shutdown as shutdown_expor
 from app.db import close as close_mongodb
 from app.services.auth_tokens import authenticate_request_token
 from app.services.stool_classifier_service import load_classifier
+from app.core.policy import get_policy
 
 logger = logging.getLogger("mego.api")
-SLOW_REQUEST_THRESHOLD_MS = 1000
+SLOW_REQUEST_THRESHOLD_MS = get_policy().slow_request_threshold_ms
 
 def _error_message(detail):
     if isinstance(detail, str):

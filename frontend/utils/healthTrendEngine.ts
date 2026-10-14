@@ -30,6 +30,10 @@ export interface HealthTrendResult {
 }
 
 type TrendKey = keyof Omit<DailyRecord, 'date'>;
+/**
+ * watchAt／continuedAt 的數值來源是 backend/app/core/policy_defaults.json，
+ * 與後端 AI 健康監測共用；此處保留文案，數值由 healthTrendRules.test.ts 比對防止飄移。
+ */
 type Rule = {
   category: HealthTrendAlert['category'];
   status: string;
