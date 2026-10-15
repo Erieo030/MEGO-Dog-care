@@ -136,3 +136,122 @@ test('optional dates expose clear while mandatory dates do not', async () => {
     screen.root.findAll((node) => node.props.accessibilityLabel === '清除開始日期'),
   ).toHaveLength(0);
 });
+
+test('date field centers its content between equal side rails and exposes a chevron', async () => {
+  await act(async () => {
+    screen = create(
+      <DatePickerField label="下次接種日期" placeholder="選擇下次接種日期" onChange={onChange} />,
+    );
+  });
+  const field = button('下次接種日期');
+  expect(field.props.style).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ minHeight: 54, alignItems: 'center', justifyContent: 'center' }),
+    ]),
+  );
+  const content = field.findAll(
+    (node) => node.type === ('View' as never) && node.props.style?.flex === 1,
+  )[0];
+  expect(content.props.style).toMatchObject({
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  });
+  const rails = field.findAll((node) => node.props.style?.width === 22);
+  expect(rails).toHaveLength(2);
+  expect(rails[1].props.name).toBe('chevron-down');
+  expect(field.findAllByType('Text' as never)[0].props.children).toBe('選擇下次接種日期');
+  expect(field.props.activeOpacity).toBeLessThan(1);
+  expect(
+    screen.root.findAll((node) => node.props.accessibilityLabel === '清除下次接種日期'),
+  ).toHaveLength(0);
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+test('clear is centered inside an outlined action beside the label, not below the date field', async () => {
+  const onClear = jest.fn();
+  await act(async () => {
+    screen = create(
+      <DatePickerField
+        label="下次日期"
+        value={new Date()}
+        disabled
+        onChange={onChange}
+        onClear={onClear}
+      />,
+    );
+  });
+  const clear = button('清除下次日期');
+  expect(clear.props.style).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 44,
+        borderWidth: 1,
+        maxWidth: '45%',
+      }),
+    ]),
+  );
+  const label = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === '下次日期',
+  )[0];
+  expect(clear.parent).toBe(label.parent);
+  expect(clear.parent?.props.style).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ flexDirection: 'row', alignItems: 'center' }),
+      expect.objectContaining({ minHeight: 44 }),
+    ]),
+  );
+  const field = screen.root.find(
+    (node) => node.type === ('Button' as never) && node.props.accessibilityHint,
+  );
+  expect(field.findAll((node) => node.props.accessibilityLabel === '清除下次日期')).toHaveLength(0);
+  const siblings = clear.parent!.parent!.children;
+  expect(siblings.indexOf(clear.parent!)).toBeLessThan(siblings.indexOf(field));
+  expect(clear.findAllByType('Icon' as never)[0].props.name).toBe('close-circle-outline');
+  expect(clear.props.disabled).toBe(true);
+  expect(clear.props.accessibilityState.disabled).toBe(true);
+  expect(onClear).not.toHaveBeenCalled();
+});
+
+test('an empty time field prompts for time without populating it', async () => {
+  await act(async () => {
+    screen = create(<DatePickerField label="提醒時間" mode="time" onChange={onChange} />);
+  });
+  expect(button('提醒時間').findAllByType('Text' as never)[0].props.children).toBe('選擇時間');
+  expect(onChange).not.toHaveBeenCalled();
+});
+
+test('date constraints appear below the field, not inside the label and clear-action row', async () => {
+  const hint = '不可早於接種日期，可選同一天。';
+  await act(async () => {
+    screen = create(
+      <DatePickerField
+        label="下次接種日期（選填）"
+        hint={hint}
+        value={new Date()}
+        onChange={onChange}
+        onClear={jest.fn()}
+      />,
+    );
+  });
+  const hintText = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === hint,
+  )[0];
+  expect(hintText.props.style).toMatchObject({ marginTop: 6, lineHeight: 20 });
+  expect(hintText.props.numberOfLines).toBeUndefined();
+  const field = screen.root.find(
+    (node) => node.type === ('Button' as never) && node.props.accessibilityHint,
+  );
+  expect(field.props.accessibilityHint).toContain(hint);
+  const siblings = hintText.parent!.children;
+  expect(siblings.indexOf(hintText)).toBeGreaterThan(siblings.indexOf(field));
+  const label = screen.root.findAll(
+    (node) => node.type === ('Text' as never) && node.props.children === '下次接種日期（選填）',
+  )[0];
+  expect(label.parent).not.toBe(hintText.parent);
+  expect(button('清除下次接種日期（選填）').parent).toBe(label.parent);
+  expect(onChange).not.toHaveBeenCalled();
+});

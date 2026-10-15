@@ -65,7 +65,6 @@ jest.mock('../../../services/notificationService', () => ({
 jest.mock('../components/SettingsLayout', () => ({
   SettingsPage: 'Page',
   SettingsRow: 'Row',
-  SettingsDocumentHero: 'Hero',
   SettingsDocumentParagraph: 'Paragraph',
   SettingsDocumentSection: 'Section',
   settingsPalette: {},

@@ -48,6 +48,7 @@ import {
 } from '../components/navigation/bottomNavigationLayout';
 import { guardTabNavigation } from '../hooks/useUnsavedChangesGuard';
 import { Type } from '../constants/Typography';
+import { SETTINGS_PAGES } from '../features/settings/settingsPages';
 
 const Tabs = createBottomTabNavigator<MainTabParamList>();
 
@@ -207,7 +208,7 @@ function ProfileStack() {
   return (
     <ProfileStackNav.Navigator
       id="ProfileStack"
-      screenOptions={{ ...screenOptions, headerBackButtonDisplayMode: 'minimal' }}
+      screenOptions={{ ...screenOptions, headerShown: false }}
     >
       <ProfileStackNav.Screen
         name="ProfileOverview"
@@ -217,17 +218,17 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="HomeTheme"
         component={HomeThemeScreen}
-        options={{ title: '照護小屋風格' }}
+        options={{ title: SETTINGS_PAGES.HomeTheme.title }}
       />
       <ProfileStackNav.Screen
         name="AIUsage"
         component={AIUsageScreen}
-        options={{ title: 'AI 使用紀錄' }}
+        options={{ title: SETTINGS_PAGES.AIUsage.title }}
       />
       <ProfileStackNav.Screen
         name="AIDataUseInfo"
         component={AIDataUseInfoScreen}
-        options={{ title: 'AI 資料使用說明' }}
+        options={{ title: SETTINGS_PAGES.AIDataUseInfo.title }}
       />
       <ProfileStackNav.Screen
         name="EditPet"
@@ -237,17 +238,17 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="PetMemorial"
         component={PetMemorialScreen}
-        options={{ title: '回憶' }}
+        options={{ title: SETTINGS_PAGES.PetMemorial.title }}
       />
       <ProfileStackNav.Screen
         name="AccountInfo"
         component={AccountInfoScreen}
-        options={{ title: '使用者資訊' }}
+        options={{ title: SETTINGS_PAGES.AccountInfo.title }}
       />
       <ProfileStackNav.Screen
         name="PetManagement"
         component={PetManagementScreen}
-        options={{ title: '我的毛孩' }}
+        options={{ title: SETTINGS_PAGES.PetManagement.title }}
       />
       <ProfileStackNav.Screen
         name="NotificationSettings"
@@ -257,7 +258,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="ExportCenter"
         component={ExportCenterScreen}
-        options={{ title: '匯出照護紀錄' }}
+        options={{ title: SETTINGS_PAGES.ExportCenter.title }}
       />
       <ProfileStackNav.Screen
         name="LostPetSettings"
@@ -272,7 +273,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="About"
         component={AboutScreen}
-        options={{ title: '關於 MEGO' }}
+        options={{ title: SETTINGS_PAGES.About.title }}
       />
       <ProfileStackNav.Screen
         name="PrivacyPolicy"

@@ -17,8 +17,7 @@ export function AboutScreen() {
     Constants.expoConfig?.ios?.buildNumber ||
     '開發版本';
   return (
-    <Page>
-      <Text style={s.aboutHero}>MEGO</Text>
+    <Page page="About">
       <Text style={s.aboutParagraph}>
         MEGO 是協助飼主低負擔記錄毛孩健康、提醒、體重與就醫資訊的行動 App。
       </Text>
@@ -50,13 +49,6 @@ export function AboutScreen() {
 }
 
 const s = StyleSheet.create({
-  aboutHero: {
-    fontSize: Type.display2,
-    fontWeight: '900',
-    color: Colors.success,
-    textAlign: 'center',
-    marginVertical: 20,
-  },
   aboutParagraph: { fontSize: Type.body, lineHeight: 24, color: Colors.text, marginBottom: 12 },
   heading: {
     fontSize: Type.headline,

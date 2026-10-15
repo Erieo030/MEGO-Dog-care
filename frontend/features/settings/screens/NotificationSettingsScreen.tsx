@@ -5,7 +5,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
 import { useSettings } from '../../../contexts/SettingsContext';
@@ -117,12 +116,7 @@ export function NotificationSettingsScreen() {
     }
   };
   return (
-    <Page>
-      <ScreenPageHeader
-        title="手機權限與提醒"
-        description="查看照片、定位與通知權限"
-        icon="settings-outline"
-      />
+    <Page page="NotificationSettings">
       <Text style={s.subheading}>通知與照護提醒</Text>
       <Text style={s.sectionDescription}>讓 MEGO 在用藥、回診與日常照護時間提醒你。</Text>
       <View style={s.notificationCard}>

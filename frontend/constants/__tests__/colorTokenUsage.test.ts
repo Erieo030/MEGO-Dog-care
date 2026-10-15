@@ -67,10 +67,10 @@ function decorationColorMisuses(file: string, text: string) {
           : '';
       const attribute =
         ancestor && ts.isJsxAttribute(ancestor) ? ancestor.name.getText(source) : '';
-      // ScreenPageHeader 只將 iconColor 傳給 Ionicons，不可套到內文或背景。
+      // Header 與狀態頁只將 iconColor 傳給 Ionicons，不可套到內文或背景。
       const isIconColor =
         (tag === 'Ionicons' && attribute === 'color') ||
-        (tag === 'ScreenPageHeader' && attribute === 'iconColor');
+        (['ScreenPageHeader', 'ScreenPageState'].includes(tag) && attribute === 'iconColor');
       if (!isIconColor) invalid.push(file);
     }
     ts.forEachChild(node, visit);
@@ -87,20 +87,17 @@ test('decoration tokens are restricted to icon colors, not text or background pr
   expect(invalid).toEqual([]);
 });
 
-test('header icon colors are allowed but decoration tokens remain forbidden for text and backgrounds', () => {
-  expect(
-    decorationColorMisuses(
-      'fixture.tsx',
-      '<ScreenPageHeader iconColor={Colors.primaryDecoration} />',
-    ),
-  ).toEqual([]);
-  expect(
-    decorationColorMisuses('fixture.tsx', '<Text color={Colors.primaryDecoration} />'),
-  ).toEqual(['fixture.tsx']);
-  expect(
-    decorationColorMisuses(
-      'fixture.tsx',
-      '<ScreenPageHeader iconBackground={Colors.successDecoration} />',
-    ),
-  ).toEqual(['fixture.tsx']);
-});
+test.each(['ScreenPageHeader', 'ScreenPageState'])(
+  '%s icon colors are allowed but decoration tokens remain forbidden for text and backgrounds',
+  (tag) => {
+    expect(
+      decorationColorMisuses('fixture.tsx', `<${tag} iconColor={Colors.primaryDecoration} />`),
+    ).toEqual([]);
+    expect(
+      decorationColorMisuses('fixture.tsx', '<Text color={Colors.primaryDecoration} />'),
+    ).toEqual(['fixture.tsx']);
+    expect(
+      decorationColorMisuses('fixture.tsx', `<${tag} iconBackground={Colors.successDecoration} />`),
+    ).toEqual(['fixture.tsx']);
+  },
+);

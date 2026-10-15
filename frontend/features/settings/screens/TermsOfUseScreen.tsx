@@ -1,6 +1,5 @@
 /** 用途：使用條款內文頁。 */
 import React from 'react';
-import { ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import {
   SettingsDocumentParagraph,
   SettingsDocumentSection,
@@ -9,12 +8,7 @@ import {
 
 export function TermsOfUseScreen() {
   return (
-    <Page>
-      <ScreenPageHeader
-        title="使用條款"
-        description="了解 MEGO 的服務使用原則"
-        icon="document-text-outline"
-      />
+    <Page page="TermsOfUse">
       <SettingsDocumentSection title="帳號與 App 使用" index={1} icon="phone-portrait-outline">
         <SettingsDocumentParagraph>
           使用 MEGO 即表示你同意使用本 App

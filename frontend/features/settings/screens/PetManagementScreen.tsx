@@ -9,6 +9,7 @@ import { MainTabParamList, ProfileStackParamList } from '../../../navigation/typ
 import { SettingsPage as Page, settingsPalette as palette } from '../components/SettingsLayout';
 import { PetIdentityCarousel } from '../../pets/components/PetIdentityCarousel';
 import { Colors } from '../../../constants/Colors';
+import { SETTINGS_PAGES } from '../settingsPages';
 
 export function PetManagementScreen({
   navigation,
@@ -16,7 +17,7 @@ export function PetManagementScreen({
   const { pets, selectedPet, selectPet } = usePet();
   const parent = navigation.getParent<BottomTabNavigationProp<MainTabParamList>>();
   return (
-    <Page>
+    <Page page="PetManagement">
       <PetIdentityCarousel
         pets={pets}
         selectedPet={selectedPet}
@@ -34,12 +35,12 @@ export function PetManagementScreen({
       </TouchableOpacity>
       <TouchableOpacity
         accessibilityRole="button"
-        accessibilityLabel="毛孩身分卡"
+        accessibilityLabel={SETTINGS_PAGES.LostPetSettings.title}
         style={s.identityAction}
         onPress={() => navigation.navigate('LostPetSettings')}
       >
         <Ionicons name="qr-code-outline" size={19} color={palette.primary} />
-        <Text style={s.identityActionText}>設定毛孩身分 QR</Text>
+        <Text style={s.identityActionText}>{SETTINGS_PAGES.LostPetSettings.title}</Text>
       </TouchableOpacity>
     </Page>
   );

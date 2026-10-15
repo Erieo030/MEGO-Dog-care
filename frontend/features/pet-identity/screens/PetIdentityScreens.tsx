@@ -1,10 +1,10 @@
 import { useFormPet } from '../../../hooks/useFormPet';
 import { editableLostProfile } from '../identityFields';
+import { ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import {
-  ScreenPageHeader,
-  ScreenPageFrame,
-  ScreenPageState,
-} from '../../../components/ScreenPageHeader';
+  SettingsPageHeader,
+  SettingsPageState,
+} from '../../settings/components/SettingsPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：毛孩資訊公開範圍設定與資訊 QR；保留既有 route。 */
 import { useCallback, useRef, useState } from 'react';
@@ -125,7 +125,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         JSON.stringify(current) === JSON.stringify(data) ? result.profile : current,
       );
       markSaved(editableLostProfile(submitted));
-      Alert.alert('已儲存', '毛孩資訊 QR 已更新');
+      Alert.alert('已儲存', '毛孩身分 QR 已更新');
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
     } finally {
@@ -191,26 +191,22 @@ export function LostPetSettingsScreen({ navigation }: Props) {
 
   if (loading)
     return (
-      <ScreenPageState title="公開資訊設定">
+      <SettingsPageState page="LostPetSettings">
         <ScreenState loading text="正在載入毛孩資訊…" />
-      </ScreenPageState>
+      </SettingsPageState>
     );
   if (error)
     return (
-      <ScreenPageState title="公開資訊設定">
+      <SettingsPageState page="LostPetSettings">
         <ScreenState error text={error} action={() => setRetryKey((key) => key + 1)} />
-      </ScreenPageState>
+      </SettingsPageState>
     );
   return (
     <ScreenPageFrame>
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
-        <ScreenPageHeader
-          title="毛孩資訊 QR"
-          description="選擇要公開的毛孩資訊"
-          icon="qr-code-outline"
-        />
+        <SettingsPageHeader page="LostPetSettings" style={{ marginBottom: 0 }} />
         <View style={styles.petCard}>
           <View style={styles.petAvatar}>
             {selectedPet?.avatarAttachmentId && userId ? (
@@ -341,10 +337,10 @@ export function LostPetSettingsScreen({ navigation }: Props) {
             variant="secondary"
             style={styles.secondary}
             onPress={() => navigation.navigate('LostPetQr')}
-            accessibilityLabel="查看毛孩資訊 QR"
+            accessibilityLabel="查看毛孩身分 QR"
           >
             <Ionicons name="qr-code-outline" size={19} color={Colors.successDecoration} />
-            <Text style={styles.secondaryText}>查看毛孩資訊 QR</Text>
+            <Text style={styles.secondaryText}>查看毛孩身分 QR</Text>
           </AppButton>
         ) : null}
       </KeyboardAwareScrollView>
@@ -385,7 +381,7 @@ export function LostPetQrScreen() {
           setToken(result.profile?.publicToken || '');
         })
         .catch((caught) => {
-          if (!cancelled) setError((caught as Error).message || '無法載入毛孩資訊 QR');
+          if (!cancelled) setError((caught as Error).message || '無法載入毛孩身分 QR');
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -401,29 +397,29 @@ export function LostPetQrScreen() {
   const url = token && BASE ? `${BASE}/api/public/lost-pets/${token}/page` : '';
   if (loading)
     return (
-      <ScreenPageState title="毛孩身分 QR">
-        <ScreenState loading text="正在載入毛孩資訊 QR…" />
-      </ScreenPageState>
+      <SettingsPageState page="LostPetQr">
+        <ScreenState loading text="正在載入毛孩身分 QR…" />
+      </SettingsPageState>
     );
   if (error)
     return (
-      <ScreenPageState title="毛孩身分 QR">
+      <SettingsPageState page="LostPetQr">
         <ScreenState error text={error} action={() => setRetryKey((key) => key + 1)} />
-      </ScreenPageState>
+      </SettingsPageState>
     );
   if (!profile || !url)
     return (
-      <ScreenPageState title="毛孩身分 QR">
+      <SettingsPageState page="LostPetQr">
         <View style={styles.center}>
           <Text>
             {!profile
-              ? '請先儲存公開設定，再查看毛孩資訊 QR。'
+              ? '請先儲存公開設定，再查看毛孩身分 QR。'
               : !BASE
                 ? '尚未設定公開網址，請確認 PUBLIC URL 設定。'
                 : '公開連結尚未準備好，請返回公開設定頁確認。'}
           </Text>
         </View>
-      </ScreenPageState>
+      </SettingsPageState>
     );
 
   const rotate = () =>
@@ -438,7 +434,7 @@ export function LostPetQrScreen() {
           try {
             const result = await rotateLostToken(userId, petId);
             setToken(result.publicToken);
-            Alert.alert('已更新', '新的毛孩資訊 QR 已產生');
+            Alert.alert('已更新', '新的毛孩身分 QR 已產生');
           } catch (error) {
             Alert.alert('更新失敗', (error as Error).message);
           } finally {
@@ -452,12 +448,9 @@ export function LostPetQrScreen() {
   return (
     <ScreenPageFrame>
       <ScrollView contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}>
-        <ScreenPageHeader
-          title={`${selectedPet?.name || '毛孩'} 的資訊 QR`}
-          description="只公開你選擇的資料"
-          icon="qr-code-outline"
-        />
+        <SettingsPageHeader page="LostPetQr" style={{ marginBottom: 0 }} />
         <View style={styles.qrCard}>
+          <Text style={styles.petName}>{selectedPet?.name || '毛孩'}</Text>
           <View style={styles.qrFrame}>
             <QRCode value={url} size={224} />
           </View>
@@ -475,10 +468,10 @@ export function LostPetQrScreen() {
               (caught) => Alert.alert('分享失敗', (caught as Error).message || '請稍後再試'),
             )
           }
-          accessibilityLabel="分享毛孩資訊 QR"
+          accessibilityLabel="分享毛孩身分 QR"
         >
           <Ionicons name="share-outline" size={20} color={Colors.onPrimary} />
-          <Text style={styles.primaryText}>分享毛孩資訊 QR</Text>
+          <Text style={styles.primaryText}>分享毛孩身分 QR</Text>
         </AppButton>
         <AppButton
           variant="secondary"

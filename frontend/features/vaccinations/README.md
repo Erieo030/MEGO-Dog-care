@@ -5,3 +5,5 @@
 資料流：`Screen → services/vaccinationService.ts → /api/vaccinations → backend service → MongoDB`。
 
 `types.ts` 負責日期防呆與表單預設值；`vaccinationStyles.ts` 集中共用樣式。詳細頁頁首展示接種日期，資料區不重複該日期；未填醫院與備註不顯示。編輯／複製按鈕等高。接種日期、下次接種日期、提醒、附件、編輯、複製與刪除行為均保留。
+
+提醒區塊使用共用 `components/ReminderToggleField.tsx`：左側標題與說明可換行，右側 Switch 固定寬度、在框內垂直置中。開啟時淡綠底，未選下次日期時停用並說明原因；日期清除後仍取消提醒。清除日期按鈕位於日期標題右側。

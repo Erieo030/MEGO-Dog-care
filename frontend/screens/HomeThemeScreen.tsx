@@ -18,6 +18,7 @@ import { HOME_THEME_IDS, HOME_THEMES } from '../constants/HomeThemes';
 import { HomeThemeId } from '../constants/HomeThemeIds';
 import { useSettings } from '../contexts/SettingsContext';
 import { Type } from '../constants/Typography';
+import { SettingsPageHeader } from '../features/settings/components/SettingsPageHeader';
 
 export default function HomeThemeScreen() {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -40,8 +41,7 @@ export default function HomeThemeScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>選一個照護小屋</Text>
-        <Text style={styles.subtitle}>首頁會以你喜歡的場景陪你整理毛孩日常，隨時都能再更換。</Text>
+        <SettingsPageHeader page="HomeTheme" />
 
         <View style={styles.list}>
           {HOME_THEME_IDS.map((themeId) => {
@@ -84,10 +84,8 @@ export default function HomeThemeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 38 },
-  title: { color: Colors.text, fontSize: Type.display, fontWeight: '900' },
-  subtitle: { color: Colors.subtext, fontSize: Type.body, lineHeight: 23, marginTop: 8 },
-  list: { gap: 15, marginTop: 24 },
+  content: { padding: 18, paddingBottom: 38 },
+  list: { gap: 15 },
   themeCard: {
     minHeight: 172,
     borderRadius: 20,

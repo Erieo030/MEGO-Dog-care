@@ -71,11 +71,15 @@ export function ScreenPageState({
   title,
   description,
   icon,
+  iconColor,
+  iconBackground,
   children,
 }: {
   title: string;
   description?: string;
   icon?: keyof typeof Ionicons.glyphMap;
+  iconColor?: string;
+  iconBackground?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -84,6 +88,8 @@ export function ScreenPageState({
         title={title}
         description={description}
         icon={icon}
+        iconColor={iconColor}
+        iconBackground={iconBackground}
         style={styles.stateHeader}
       />
       {children}

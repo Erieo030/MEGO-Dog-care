@@ -17,6 +17,7 @@ import * as exportService from '../services/exportService';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { ExportJob, ExportPeriod, ExportScope } from '../types';
 import { Type } from '../constants/Typography';
+import { SettingsPageHeader } from '../features/settings/components/SettingsPageHeader';
 const periods: [ExportPeriod, string][] = [
   ['30_days', '最近 30 天'],
   ['90_days', '最近 90 天'],
@@ -216,16 +217,7 @@ export default function ExportCenterScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="document-text-outline" size={24} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.eyebrow}>照護資料</Text>
-            <Text style={styles.title}>整理成照護報告</Text>
-            <Text style={styles.lead}>方便自己保存，或帶給獸醫參考。</Text>
-          </View>
-        </View>
+        <SettingsPageHeader page="ExportCenter" />
         {!!trackingError && (
           <View style={styles.status}>
             <Text accessibilityRole="alert" style={styles.error}>
@@ -382,21 +374,7 @@ export default function ExportCenterScreen() {
 }
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 40 },
-  intro: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  introIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  introCopy: { flex: 1 },
-  eyebrow: { color: Colors.primary, fontSize: Type.footnote, fontWeight: '800', marginBottom: 2 },
-  title: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
-  lead: { fontSize: Type.footnote, color: Colors.subtext, lineHeight: 19, marginTop: 3 },
+  content: { padding: 18, paddingBottom: 40 },
   label: {
     fontSize: Type.callout,
     fontWeight: '800',

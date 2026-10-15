@@ -104,6 +104,66 @@ test('correcting the reason clears validation errors and saves', async () => {
   ).toHaveLength(0);
 });
 
+test('map selection is a separated full-width button and returns to the same form', async () => {
+  await mount();
+  const mapButton = screen.root.findByProps({ accessibilityLabel: '從地圖選擇動物醫院' });
+  expect(mapButton.props.style).toMatchObject({
+    marginTop: 12,
+    alignSelf: 'stretch',
+    minHeight: 48,
+    borderWidth: 1,
+  });
+  expect(mapButton.props.activeOpacity).toBeLessThan(1);
+  await act(async () => mapButton.props.onPress());
+  expect(mockNavigation.navigate).toHaveBeenCalledWith('VetMap', { selectForVisit: true });
+  await act(async () =>
+    screen.update(
+      <MedicalVisitFormScreen
+        navigation={mockNavigation as never}
+        route={{ params: { clinicName: '測試動物醫院' } } as never}
+      />,
+    ),
+  );
+  expect(screen.root.findByProps({ accessibilityLabel: '動物醫院名稱（選填）' }).props.value).toBe(
+    '測試動物醫院',
+  );
+  expect(mockNavigation.setParams).toHaveBeenCalledWith({ clinicName: undefined });
+});
+
+test('clearing the shared follow-up date also cancels its reminder without filling a new date', async () => {
+  await mount();
+  const date = () =>
+    screen.root
+      .findAllByType('DatePicker' as never)
+      .find((node) => node.props.label === '下次回診日期（選填）')!;
+  expect(date().props.placeholder).toBe('選擇下次回診日期');
+  expect(date().props.value).toBeUndefined();
+  expect(screen.root.findByType('Switch' as never).props.accessibilityHint).toBe(
+    '請先選擇下次回診日期。\n選好後即可開啟提醒。',
+  );
+  await act(async () => date().props.onChange(new Date('2099-10-20T10:00:00+08:00')));
+  const reminder = screen.root.findByType('Switch' as never);
+  expect(reminder.props.accessibilityHint).toBe(
+    '關閉後儲存，會移除原有回診提醒。\n手機通知依設定與系統權限排定。',
+  );
+  await act(async () => reminder.props.onValueChange(true));
+  await act(async () => date().props.onClear());
+  expect(date().props.value).toBeUndefined();
+  expect(screen.root.findByType('Switch' as never).props.disabled).toBe(true);
+  expect(screen.root.findByType('Switch' as never).props.value).toBe(false);
+  await act(async () =>
+    screen.root
+      .findByProps({ accessibilityLabel: '看診原因（必填）' })
+      .props.onChangeText('例行檢查'),
+  );
+  await act(async () => submit());
+  expect(createMedicalVisit).toHaveBeenLastCalledWith(
+    'u1',
+    'p1',
+    expect.objectContaining({ followUpAt: null, createFollowUpReminder: false }),
+  );
+});
+
 jest.mock('../../hooks/useFormUnsavedChangesGuard', () => ({
   useFormUnsavedChangesGuard: () => ({ markSaved: jest.fn() }),
 }));

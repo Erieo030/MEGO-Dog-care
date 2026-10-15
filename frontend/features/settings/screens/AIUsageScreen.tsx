@@ -1,4 +1,4 @@
-import { ScreenPageState } from '../../../components/ScreenPageHeader';
+import { SettingsPageHeader, SettingsPageState } from '../components/SettingsPageHeader';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：設定中的 AI 使用狀況；由 ProfileStack 的 AIUsage route 開啟。 */
 import React, { useCallback, useRef, useState } from 'react';
@@ -77,15 +77,15 @@ export function AIUsageScreen() {
   );
   if (loading)
     return (
-      <ScreenPageState title="AI 使用紀錄">
+      <SettingsPageState page="AIUsage">
         <ScreenState loading text="正在載入 AI 使用紀錄…" />
-      </ScreenPageState>
+      </SettingsPageState>
     );
   if (!usage && !history)
     return (
-      <ScreenPageState title="AI 使用紀錄">
+      <SettingsPageState page="AIUsage">
         <ScreenState error text={error || '暫時無法取得 AI 使用紀錄'} action={() => void load()} />
-      </ScreenPageState>
+      </SettingsPageState>
     );
   const used = usage?.used ?? 0;
   const maximum = Math.max(1, ...(history?.dailyUsage ?? []).map((entry) => entry.used));
@@ -93,14 +93,7 @@ export function AIUsageScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.safe}>
       <ScrollView contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}>
-        <View style={s.usageIntro}>
-          <View style={s.usageIntroIcon}>
-            <Ionicons name="sparkles-outline" size={23} color={Colors.primaryDecoration} />
-          </View>
-          <Text style={s.usageEyebrow}>MEGO AI</Text>
-          <Text style={s.usageHeading}>AI 使用紀錄</Text>
-          <Text style={s.usageIntroHint}>查看今天與最近七天使用 MEGO AI 的次數。</Text>
-        </View>
+        <SettingsPageHeader page="AIUsage" style={{ marginBottom: 0 }} />
         {!!error && <ScreenState error text={error} action={() => void load()} />}
         {usage && (
           <View style={s.usageCard}>
@@ -172,30 +165,6 @@ export function AIUsageScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 18, paddingBottom: 45, gap: 12 },
-  usageIntro: {
-    padding: 18,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  usageIntroIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  usageEyebrow: {
-    color: Colors.primary,
-    fontSize: Type.caption,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-  },
-  usageHeading: { color: Colors.text, fontSize: Type.title2, fontWeight: '900', marginTop: 3 },
-  usageIntroHint: { color: Colors.subtext, fontSize: Type.subhead, lineHeight: 21, marginTop: 5 },
   usageCard: {
     backgroundColor: Colors.surface,
     borderRadius: 20,

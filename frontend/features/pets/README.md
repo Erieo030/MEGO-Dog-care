@@ -3,6 +3,7 @@
 - `petFormContent.ts`：毛孩表單欄位定義。
 - `memorialContent.ts`：回憶模式的日期檢查、紀念期間與陪伴時間文字、照顧中／回憶中毛孩分組。
 - `screens/PetMemorialScreen.tsx`：移到回憶（離開日期、紀念文字、二次確認）與還原；入口在編輯毛孩資料最下方。
+- 回憶頁使用與日常相同的頁首和安全區域，照顧中、回憶中與未選擇毛孩時均可返回。編輯毛孩資料的未選擇狀態也保留頁首，不顯示空白頁。
 - `components/PetAvatarPicker.tsx`：相簿／相機照片操作與展示。
 - `components/PetIdentityCarousel.tsx`：共用毛孩身分卡，提供選取、滑動切換與編輯入口；設定與首頁毛孩選擇器共用。
 - `components/PetFormTextField.tsx`：文字與日期欄位外觀。

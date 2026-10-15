@@ -288,10 +288,13 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
           </TouchableOpacity>
         </View>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>最近對話</Text>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            最近對話
+          </Text>
+          <View style={styles.sessionLimit}>
+            <Text style={styles.sessionLimitText}>最多 5 個</Text>
+          </View>
         </View>
-        <Text style={styles.sectionHint}>最多保留 5 個；超過時，建立新對話會刪除最舊的一個。</Text>
-        <Text style={styles.sectionHint}>{AI_LOCAL_HISTORY_NOTICE}</Text>
         {sessionsLoading ? (
           <View style={styles.loadingRow}>
             <ActivityIndicator size="small" color={Colors.primary} />
@@ -350,6 +353,7 @@ export default function AIAssistantHubScreen({ navigation }: Props) {
             <Text style={styles.empty}>還沒有對話，從一次照護提問開始吧。</Text>
           </View>
         )}
+        <Text style={styles.sessionNotice}>{AI_LOCAL_HISTORY_NOTICE}</Text>
       </ScrollView>
       <Modal
         visible={consentVisible}

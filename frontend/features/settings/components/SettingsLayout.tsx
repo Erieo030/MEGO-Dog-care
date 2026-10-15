@@ -10,6 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import { Colors } from '../../../constants/Colors';
 import { Type } from '../../../constants/Typography';
+import { SettingsPageHeader } from './SettingsPageHeader';
+import type { SettingsPageKey } from '../settingsPages';
 
 export const settingsPalette = {
   bg: Colors.background,
@@ -20,26 +22,6 @@ export const settingsPalette = {
   primary: Colors.primary,
   danger: Colors.dangerText,
 };
-
-export function SettingsDocumentHero({
-  title,
-  subtitle,
-  icon = 'document-text-outline',
-}: {
-  title: string;
-  subtitle: string;
-  icon?: keyof typeof Ionicons.glyphMap;
-}) {
-  return (
-    <View style={documentStyles.hero}>
-      <View style={documentStyles.heroIcon}>
-        <Ionicons name={icon} size={23} color={settingsPalette.primary} />
-      </View>
-      <Text style={documentStyles.title}>{title}</Text>
-      <Text style={documentStyles.subtitle}>{subtitle}</Text>
-    </View>
-  );
-}
 
 export function SettingsDocumentSection({
   title,
@@ -95,27 +77,6 @@ export function SettingsDocumentParagraph({
 }
 
 const documentStyles = StyleSheet.create({
-  hero: {
-    flex: 1,
-    minWidth: 0,
-    padding: 18,
-    borderRadius: 20,
-    backgroundColor: settingsPalette.surface,
-    borderWidth: 1,
-    borderColor: settingsPalette.border,
-    marginBottom: 14,
-  },
-  heroIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  title: { color: settingsPalette.text, fontSize: Type.title3, fontWeight: '800' },
-  subtitle: { color: settingsPalette.sub, fontSize: Type.subhead, lineHeight: 21, marginTop: 6 },
   section: {
     padding: 16,
     borderRadius: 18,
@@ -165,11 +126,18 @@ const documentStyles = StyleSheet.create({
   emphasisBody: { color: settingsPalette.text },
 });
 
-export function SettingsPage({ children }: { children: React.ReactNode }) {
+export function SettingsPage({
+  page,
+  children,
+}: {
+  page: SettingsPageKey;
+  children: React.ReactNode;
+}) {
   const bottomContentPadding = useTabContentBottomPadding();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}>
+        <SettingsPageHeader page={page} />
         {children}
       </ScrollView>
     </SafeAreaView>

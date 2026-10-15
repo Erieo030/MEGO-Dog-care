@@ -31,7 +31,7 @@ export function IdentityInfoBox({
 export const identityStyles = StyleSheet.create({
   page: {
     paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING,
-    paddingTop: 20,
+    paddingTop: 18,
     gap: 14,
     paddingBottom: 40,
     backgroundColor: Colors.background,

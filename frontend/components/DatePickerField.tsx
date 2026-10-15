@@ -11,6 +11,7 @@ interface Props {
   mode?: 'date' | 'datetime' | 'time';
   label: string;
   placeholder?: string;
+  hint?: string;
   minimumDate?: Date;
   maximumDate?: Date;
   disabled?: boolean;
@@ -314,7 +315,8 @@ export default function DatePickerField({
   value,
   mode = 'date',
   label,
-  placeholder = '選擇日期',
+  placeholder,
+  hint,
   minimumDate: minimumInstant,
   maximumDate: maximumInstant,
   disabled,
@@ -369,18 +371,41 @@ export default function DatePickerField({
             hour: '2-digit',
             minute: '2-digit',
           })
-    : placeholder;
+    : placeholder || (mode === 'time' ? '選擇時間' : '選擇日期');
   return (
     <View style={styles.container}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {(Boolean(label) || Boolean(onClear && validValue)) && (
+        <View style={[styles.labelRow, onClear && styles.clearableLabelRow]}>
+          {label ? <Text style={styles.label}>{label}</Text> : null}
+          {onClear && validValue && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`清除${label}`}
+              disabled={disabled}
+              accessibilityState={{ disabled: Boolean(disabled) }}
+              activeOpacity={0.72}
+              onPress={onClear}
+              style={[styles.clearButton, disabled && styles.disabledField]}
+            >
+              <Ionicons name="close-circle-outline" size={17} color={Colors.primaryDecoration} />
+              <Text style={styles.clearText}>{mode === 'time' ? '清除時間' : '清除日期'}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
       <TouchableOpacity
         accessibilityRole="button"
         accessibilityLabel={`${label}${validValue ? `，目前為 ${shown}` : ''}`}
-        accessibilityHint={
-          disabled ? '目前無法修改' : `開啟${mode === 'time' ? '時間' : '日期'}選擇器`
-        }
+        accessibilityHint={[
+          disabled ? '目前無法修改' : `開啟${mode === 'time' ? '時間' : '日期'}選擇器`,
+          hint,
+        ]
+          .filter(Boolean)
+          .join('。')}
         disabled={disabled}
-        style={styles.field}
+        accessibilityState={{ disabled: Boolean(disabled) }}
+        activeOpacity={0.72}
+        style={[styles.field, disabled && styles.disabledField]}
         onPress={() => {
           setDraft(clampDate(validValue ?? today(), minimumDate, maximumDate, mode === 'date'));
           setPhase(mode === 'datetime' ? 'date' : mode);
@@ -388,25 +413,24 @@ export default function DatePickerField({
           setTimeout(() => setOpen(true), 0);
         }}
       >
+        <View style={styles.fieldBalance} accessible={false} />
+        <View style={styles.fieldContent}>
+          <Ionicons
+            name={mode === 'time' ? 'time-outline' : 'calendar-outline'}
+            size={19}
+            color={Colors.primaryDecoration}
+            style={styles.calendarIcon}
+          />
+          <Text style={validValue ? styles.value : styles.placeholder}>{shown}</Text>
+        </View>
         <Ionicons
-          name={mode === 'time' ? 'time-outline' : 'calendar-outline'}
-          size={19}
-          color={Colors.primaryDecoration}
-          style={styles.calendarIcon}
+          name="chevron-down"
+          size={18}
+          color={Colors.subtext}
+          style={styles.fieldBalance}
         />
-        <Text style={validValue ? styles.value : styles.placeholder}>{shown}</Text>
       </TouchableOpacity>
-      {onClear && validValue && (
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel={`清除${label}`}
-          disabled={disabled}
-          onPress={onClear}
-          style={{ minHeight: 48, justifyContent: 'center' }}
-        >
-          <Text style={{ color: Colors.primary }}>清除日期</Text>
-        </TouchableOpacity>
-      )}
+      {!!hint && <Text style={styles.hint}>{hint}</Text>}
       {mode === 'time' || (mode === 'datetime' && phase === 'time') ? (
         <TimeModal
           open={open}

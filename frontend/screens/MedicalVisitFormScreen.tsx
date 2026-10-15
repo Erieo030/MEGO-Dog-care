@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
-import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ReminderToggleField } from '../components/ReminderToggleField';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
@@ -258,12 +259,14 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         />
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="在地圖上尋找動物醫院"
+          accessibilityLabel="從地圖選擇動物醫院"
+          accessibilityHint="開啟地圖，選擇後帶回動物醫院名稱"
           style={s.findHospital}
+          activeOpacity={0.72}
           onPress={() => navigation.navigate('VetMap', { selectForVisit: true })}
         >
           <Ionicons name="map-outline" size={17} color={Colors.successDecoration} />
-          <Text style={s.findHospitalText}>在地圖上尋找動物醫院</Text>
+          <Text style={s.findHospitalText}>從地圖選擇動物醫院</Text>
           <Ionicons name="chevron-forward" size={16} color={Colors.subtext} />
         </TouchableOpacity>
         <MedicalVisitTextField
@@ -288,37 +291,30 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           <Text style={s.heading}>回診安排</Text>
           <DatePickerField
             label="下次回診日期（選填）"
+            placeholder="選擇下次回診日期"
             value={followUp || undefined}
             mode="datetime"
             minimumDate={visitedAt}
             onChange={setFollowUp}
-          />
-          {fieldError(errors.followUp)}
-        </View>
-        {followUp && (
-          <TouchableOpacity
-            onPress={() => {
+            onClear={() => {
               setFollowUp(null);
               setCreateReminder(false);
             }}
-          >
-            <Text style={s.removeText}>清除回診日期</Text>
-          </TouchableOpacity>
-        )}
-        {followUp && (
-          <View style={s.switchRow}>
-            <View>
-              <Text style={s.switchText}>是否建立回診提醒？</Text>
-              <Text style={s.helper}>關閉時會移除這筆就醫紀錄原有的回診提醒。</Text>
-            </View>
-            <Switch
-              accessibilityLabel="建立回診 App 內提醒"
-              accessibilityState={{ checked: createReminder }}
-              value={createReminder}
-              onValueChange={setCreateReminder}
-            />
-          </View>
-        )}
+          />
+          {fieldError(errors.followUp)}
+        </View>
+        <ReminderToggleField
+          title="是否建立回診提醒？"
+          accessibilityLabel="建立回診 App 內提醒"
+          description={
+            followUp
+              ? '關閉後儲存，會移除原有回診提醒。\n手機通知依設定與系統權限排定。'
+              : '請先選擇下次回診日期。\n選好後即可開啟提醒。'
+          }
+          value={Boolean(followUp && createReminder)}
+          disabled={!followUp || submitting}
+          onValueChange={setCreateReminder}
+        />
         <Text style={s.sectionHeading}>藥物與費用</Text>
         <View onLayout={position('cost')}>
           <MedicalVisitTextField
@@ -414,19 +410,6 @@ const s = StyleSheet.create({
     marginTop: 20,
     marginBottom: 2,
   },
-  switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surfaceSoft,
-    borderRadius: 16,
-    padding: 13,
-  },
-  switchText: { color: Colors.text, fontWeight: '700' },
   helper: { color: Colors.subtext, fontSize: Type.caption, marginTop: 4, maxWidth: 280 },
   heading: {
     color: Colors.text,
@@ -436,7 +419,6 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   empty: { color: Colors.subtext, paddingVertical: 12 },
-  removeText: { color: Colors.dangerText, fontWeight: '700', marginTop: 8 },
   outline: {
     borderWidth: 1,
     borderColor: Colors.primary,
@@ -449,18 +431,27 @@ const s = StyleSheet.create({
   },
   outlineText: { color: Colors.primary, fontWeight: '700' },
   findHospital: {
-    minHeight: 44,
-    alignSelf: 'flex-start',
+    minHeight: 48,
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    marginTop: -5,
+    marginTop: 12,
     marginBottom: 12,
-    paddingHorizontal: 11,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.success,
     backgroundColor: Colors.successSoft,
   },
-  findHospitalText: { color: Colors.success, fontSize: Type.footnote, fontWeight: '700' },
+  findHospitalText: {
+    flex: 1,
+    color: Colors.success,
+    fontSize: Type.subhead,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
   images: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   image: { width: 75, height: 75, borderRadius: 10 },
   removeImage: {

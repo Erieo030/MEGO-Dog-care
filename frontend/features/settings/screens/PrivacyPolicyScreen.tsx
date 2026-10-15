@@ -1,6 +1,5 @@
 /** 用途：隱私政策內文頁。 */
 import React from 'react';
-import { ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import {
   SettingsDocumentParagraph,
   SettingsDocumentSection,
@@ -9,12 +8,7 @@ import {
 
 export function PrivacyPolicyScreen() {
   return (
-    <Page>
-      <ScreenPageHeader
-        title="MEGO 隱私政策"
-        description="了解個人資料的使用方式"
-        icon="shield-checkmark-outline"
-      />
+    <Page page="PrivacyPolicy">
       <SettingsDocumentSection title="資料與用途" index={1} icon="folder-open-outline">
         <SettingsDocumentParagraph label="處理的資料">
           MEGO

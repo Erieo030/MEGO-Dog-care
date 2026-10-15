@@ -2,7 +2,6 @@
 import React from 'react';
 import { AI_LOCAL_HISTORY_NOTICE } from '../../ai/aiResponseContent';
 import {
-  SettingsDocumentHero,
   SettingsDocumentParagraph,
   SettingsDocumentSection,
   SettingsPage,
@@ -105,12 +104,7 @@ const sections = [
 
 export function AIDataUseInfoScreen() {
   return (
-    <SettingsPage>
-      <SettingsDocumentHero
-        title="MEGO AI 資料使用說明"
-        subtitle="供你隨時查看 AI 問答與毛孩資料的使用方式。"
-        icon="lock-closed-outline"
-      />
+    <SettingsPage page="AIDataUseInfo">
       {sections.map((section, index) => (
         <SettingsDocumentSection
           key={section.title}

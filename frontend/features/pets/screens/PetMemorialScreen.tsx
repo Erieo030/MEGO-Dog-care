@@ -14,6 +14,12 @@ import { Colors } from '../../../constants/Colors';
 import { CardShadow, Radius, Spacing } from '../../../constants/Layout';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 import { Type } from '../../../constants/Typography';
+import { ScreenPageFrame } from '../../../components/ScreenPageHeader';
+import ScreenState from '../../../components/ScreenState';
+import {
+  SettingsPageHeader,
+  SettingsPageState,
+} from '../../settings/components/SettingsPageHeader';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
 import { taipeiDateKey, toTaipeiDateValue } from '../../../utils/taipeiDate';
@@ -46,7 +52,12 @@ export default function PetMemorialScreen({ navigation }: Props) {
     Boolean(selectedPet) && !selectedPet?.memorial,
     saving,
   );
-  if (!selectedPet) return null;
+  if (!selectedPet)
+    return (
+      <SettingsPageState page="PetMemorial">
+        <ScreenState text="請先選擇毛孩，再查看回憶。" />
+      </SettingsPageState>
+    );
   const pet = selectedPet;
 
   const refreshNotifications = async (memorialPetId: string, memorial: boolean) => {
@@ -142,93 +153,99 @@ export default function PetMemorialScreen({ navigation }: Props) {
     const period = memorialPeriodText(pet);
     const together = companionshipText(pet);
     return (
-      <ScrollView
-        style={styles.page}
-        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
-      >
-        <View style={[styles.card, styles.memorialCard]}>
-          {avatar}
-          <Text style={styles.name}>{pet.name}</Text>
-          <View style={styles.badge}>
-            <Ionicons name="flower-outline" size={14} color={Colors.memorial} />
-            <Text style={styles.badgeText}>在回憶中</Text>
+      <ScreenPageFrame>
+        <ScrollView
+          style={styles.page}
+          contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
+        >
+          <SettingsPageHeader page="PetMemorial" style={{ marginBottom: 0 }} />
+          <View style={[styles.card, styles.memorialCard]}>
+            {avatar}
+            <Text style={styles.name}>{pet.name}</Text>
+            <View style={styles.badge}>
+              <Ionicons name="flower-outline" size={14} color={Colors.memorial} />
+              <Text style={styles.badgeText}>在回憶中</Text>
+            </View>
+            {period ? <Text style={styles.period}>{period}</Text> : null}
+            {together ? <Text style={styles.together}>{together}</Text> : null}
+            {pet.memorialNote ? <Text style={styles.note}>「{pet.memorialNote}」</Text> : null}
           </View>
-          {period ? <Text style={styles.period}>{period}</Text> : null}
-          {together ? <Text style={styles.together}>{together}</Text> : null}
-          {pet.memorialNote ? <Text style={styles.note}>「{pet.memorialNote}」</Text> : null}
-        </View>
-        <Text style={styles.sectionNote}>
-          {pet.name}的紀錄和照片都還在，可以從首頁、紀錄和相簿回顧。
-        </Text>
-        <AppButton
-          title={saving ? '正在還原…' : '從回憶還原'}
-          variant="secondary"
-          busy={saving}
-          onPress={confirmRestore}
-          accessibilityLabel={`把${pet.name}從回憶還原`}
-        />
-        <Text style={styles.restoreHint}>只有在誤設時才需要還原。</Text>
-      </ScrollView>
+          <Text style={styles.sectionNote}>
+            {pet.name}的紀錄和照片都還在，可以從首頁、紀錄和相簿回顧。
+          </Text>
+          <AppButton
+            title={saving ? '正在還原…' : '從回憶還原'}
+            variant="secondary"
+            busy={saving}
+            onPress={confirmRestore}
+            accessibilityLabel={`把${pet.name}從回憶還原`}
+          />
+          <Text style={styles.restoreHint}>只有在誤設時才需要還原。</Text>
+        </ScrollView>
+      </ScreenPageFrame>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.page}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
-    >
-      <View style={styles.card}>
-        {avatar}
-        <Text style={styles.name}>{pet.name}</Text>
-        <Text style={styles.lead}>
-          當{pet.name}離開了，可以把牠移到回憶。MEGO 會好好收著你們一起留下的紀錄。
+    <ScreenPageFrame>
+      <ScrollView
+        style={styles.page}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
+      >
+        <SettingsPageHeader page="PetMemorial" style={{ marginBottom: 0 }} />
+        <View style={styles.card}>
+          {avatar}
+          <Text style={styles.name}>{pet.name}</Text>
+          <Text style={styles.lead}>
+            當{pet.name}離開了，可以把牠移到回憶。MEGO 會好好收著你們一起留下的紀錄。
+          </Text>
+        </View>
+
+        <View style={styles.effects}>
+          {MEMORIAL_EFFECTS.map((effect) => (
+            <View key={effect} style={styles.effectRow}>
+              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.successStrong} />
+              <Text style={styles.effectText}>{effect}</Text>
+            </View>
+          ))}
+        </View>
+
+        <DatePickerField
+          label="離開的日期"
+          value={date}
+          maximumDate={new Date()}
+          onChange={setDate}
+        />
+        <Text style={styles.label}>想對牠說的話（選填）</Text>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          maxLength={MEMORIAL_NOTE_MAX}
+          multiline
+          placeholder="例如：謝謝你陪我們走過的每一天"
+          placeholderTextColor={Colors.muted}
+          style={styles.input}
+          accessibilityLabel="想對牠說的話"
+        />
+        <Text style={styles.counter}>
+          {note.length}/{MEMORIAL_NOTE_MAX}
         </Text>
-      </View>
-
-      <View style={styles.effects}>
-        {MEMORIAL_EFFECTS.map((effect) => (
-          <View key={effect} style={styles.effectRow}>
-            <Ionicons name="checkmark-circle-outline" size={18} color={Colors.successStrong} />
-            <Text style={styles.effectText}>{effect}</Text>
-          </View>
-        ))}
-      </View>
-
-      <DatePickerField
-        label="離開的日期"
-        value={date}
-        maximumDate={new Date()}
-        onChange={setDate}
-      />
-      <Text style={styles.label}>想對牠說的話（選填）</Text>
-      <TextInput
-        value={note}
-        onChangeText={setNote}
-        maxLength={MEMORIAL_NOTE_MAX}
-        multiline
-        placeholder="例如：謝謝你陪我們走過的每一天"
-        placeholderTextColor={Colors.muted}
-        style={styles.input}
-        accessibilityLabel="想對牠說的話"
-      />
-      <Text style={styles.counter}>
-        {note.length}/{MEMORIAL_NOTE_MAX}
-      </Text>
-      <AppButton
-        title={saving ? '正在處理…' : '移到回憶'}
-        busy={saving}
-        onPress={confirmMemorial}
-        style={styles.submit}
-        accessibilityLabel={`把${pet.name}移到回憶`}
-      />
-    </ScrollView>
+        <AppButton
+          title={saving ? '正在處理…' : '移到回憶'}
+          busy={saving}
+          onPress={confirmMemorial}
+          style={styles.submit}
+          accessibilityLabel={`把${pet.name}移到回憶`}
+        />
+      </ScrollView>
+    </ScreenPageFrame>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.xl, gap: Spacing.lg },
+  content: { padding: 18, gap: Spacing.lg },
   card: {
     alignItems: 'center',
     padding: Spacing.xxl,

@@ -17,8 +17,11 @@ import {
 import { Colors } from '../../../constants/Colors';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Type } from '../../../constants/Typography';
+import { SettingsPageHeader } from '../components/SettingsPageHeader';
+import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 
 export function AccountInfoScreen() {
+  const bottomContentPadding = useTabContentBottomPadding();
   const { session, deleteAccount } = useAuth();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [password, setPassword] = useState('');
@@ -66,17 +69,12 @@ export function AccountInfoScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={s.safe}>
-      <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-        <View style={s.accountIntro}>
-          <View style={s.accountIntroIcon}>
-            <Ionicons name="person-outline" size={24} color={Colors.primaryDecoration} />
-          </View>
-          <View style={s.accountIntroCopy}>
-            <Text style={s.usageEyebrow}>帳號資料</Text>
-            <Text style={s.accountHeading}>登入帳號</Text>
-            <Text style={s.accountHint}>此帳號用於同步你的毛孩與照護紀錄。</Text>
-          </View>
-        </View>
+      <ScrollView
+        contentContainerStyle={[s.content, { paddingBottom: bottomContentPadding }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <SettingsPageHeader page="AccountInfo" />
+        <Text style={s.accountHint}>此帳號用於同步你的毛孩與照護紀錄。</Text>
         <Text style={s.section}>帳號資訊</Text>
         <View style={s.group}>
           <View style={s.row}>
@@ -187,25 +185,7 @@ export function AccountInfoScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 18, paddingBottom: 120 },
-  accountIntro: { flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 14 },
-  accountIntroIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  accountIntroCopy: { flex: 1 },
-  usageEyebrow: {
-    color: Colors.primary,
-    fontSize: Type.footnote,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  accountHeading: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
+  content: { padding: 18 },
   accountHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19, marginTop: 3 },
   section: {
     fontSize: Type.footnote,

@@ -1,4 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { SETTINGS_PAGES } from '../features/settings/settingsPages';
 /** 用途：MEGO 統一設定中心。 */
 import Constants from 'expo-constants';
 import React, { useRef, useState } from 'react';
@@ -89,13 +90,13 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         </View>
         <Section title="帳號與毛孩">
           <Row
-            title="我的帳號"
+            title={SETTINGS_PAGES.AccountInfo.title}
             value={session?.email || '尚未確認'}
             onPress={() => navigation.navigate('AccountInfo')}
             icon="person-outline"
           />
           <Row
-            title="我的毛孩"
+            title={SETTINGS_PAGES.PetManagement.title}
             value={selectedPet?.name}
             onPress={() => navigation.navigate('PetManagement')}
             icon="paw-outline"
@@ -105,13 +106,13 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         </Section>
         <Section title="一般設定">
           <Row
-            title="手機權限與提醒"
+            title={SETTINGS_PAGES.NotificationSettings.title}
             description="通知、相簿、相機與定位"
             icon="phone-portrait-outline"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
           <Row
-            title="照護小屋風格"
+            title={SETTINGS_PAGES.HomeTheme.title}
             value={HOME_THEMES[settings.homeTheme].title}
             icon="color-palette-outline"
             onPress={() => navigation.navigate('HomeTheme')}
@@ -119,13 +120,13 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         </Section>
         <Section title="AI 助手">
           <Row
-            title="AI 資料使用說明"
+            title={SETTINGS_PAGES.AIDataUseInfo.title}
             description="查看資料如何用於問答"
             onPress={() => navigation.navigate('AIDataUseInfo')}
             icon="lock-closed-outline"
           />
           <Row
-            title="AI 使用紀錄"
+            title={SETTINGS_PAGES.AIUsage.title}
             value={aiUsageText}
             onPress={() => navigation.navigate('AIUsage')}
             icon="sparkles-outline"
@@ -133,7 +134,7 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         </Section>
         <Section title="資料">
           <Row
-            title="匯出照護紀錄"
+            title={SETTINGS_PAGES.ExportCenter.title}
             value="PDF"
             onPress={() => navigation.navigate('ExportCenter')}
             icon="share-outline"
@@ -141,18 +142,18 @@ export default function SettingsHomeScreen({ navigation }: Props) {
         </Section>
         <Section title="關於">
           <Row
-            title="關於 MEGO"
+            title={SETTINGS_PAGES.About.title}
             value={Constants.expoConfig?.version || '尚未確認'}
             onPress={() => navigation.navigate('About')}
             icon="information-circle-outline"
           />
           <Row
-            title="隱私政策"
+            title={SETTINGS_PAGES.PrivacyPolicy.title}
             icon="lock-closed-outline"
             onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <Row
-            title="使用條款"
+            title={SETTINGS_PAGES.TermsOfUse.title}
             icon="document-text-outline"
             onPress={() => navigation.navigate('TermsOfUse')}
           />

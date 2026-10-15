@@ -14,6 +14,8 @@ import { useTabContentBottomPadding } from '../components/navigation/useTabConte
 import { Colors } from '../constants/Colors';
 import { Radius, Spacing } from '../constants/Layout';
 import { Type } from '../constants/Typography';
+import { ScreenPageState } from '../components/ScreenPageHeader';
+import ScreenState from '../components/ScreenState';
 
 type AddProps = NativeStackScreenProps<HomeStackParamList, 'AddPet'>;
 type EditProps = { navigation: { goBack: () => void; navigate: (route: 'PetMemorial') => void } };
@@ -47,7 +49,18 @@ export function EditPetScreen({ navigation }: EditProps) {
   const bottomContentPadding = useTabContentBottomPadding();
   const { updateSelectedPet } = usePet();
   const selectedPet = useFormPet();
-  if (!selectedPet) return null;
+  if (!selectedPet)
+    return (
+      <ScreenPageState
+        title="編輯毛孩資料"
+        description="查看與更新毛孩的基本資料"
+        icon="paw"
+        iconColor={Colors.primaryDecoration}
+        iconBackground={Colors.primarySoft}
+      >
+        <ScreenState text="請先選擇要編輯的毛孩。" />
+      </ScreenPageState>
+    );
   const initialData: PetData = {
     name: selectedPet.name,
     gender: selectedPet.gender,

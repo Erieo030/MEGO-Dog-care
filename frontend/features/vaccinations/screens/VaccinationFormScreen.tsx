@@ -4,7 +4,8 @@ import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPag
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
 /** 用途：新增、編輯與複製疫苗紀錄。 */
 import React, { useRef, useState } from 'react';
-import { Alert, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Text, TextInput, View } from 'react-native';
+import { ReminderToggleField } from '../../../components/ReminderToggleField';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,7 +28,7 @@ const fields = [
   ['vaccineName', '疫苗名稱（必填）'],
   ['administeredAt', '接種日期（必填）'],
   ['hospitalName', '醫院'],
-  ['nextDueAt', '下次接種日期（選填，需晚於接種日期）'],
+  ['nextDueAt', '下次接種日期（選填）'],
   ['notes', '補充備註'],
 ] as const;
 export function VaccinationFormScreen() {
@@ -121,6 +122,8 @@ export function VaccinationFormScreen() {
                 <DatePickerField
                   key={`${key}-${String(draft[key])}`}
                   label={label}
+                  placeholder={key === 'nextDueAt' ? '選擇下次接種日期' : '選擇接種日期'}
+                  hint={key === 'nextDueAt' ? '不可早於接種日期，可選同一天。' : undefined}
                   value={validVaccinationDate(draft[key])}
                   onClear={
                     key === 'nextDueAt'
@@ -153,24 +156,17 @@ export function VaccinationFormScreen() {
               </View>
             );
           })}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Text style={styles.label}>建立 App 內提醒</Text>
-          <Switch
-            accessibilityLabel="建立 App 內提醒"
-            accessibilityState={{
-              checked: draft.createReminder,
-              disabled: !draft.nextDueAt || saving,
-            }}
-            value={Boolean(draft.createReminder && draft.nextDueAt)}
-            disabled={!draft.nextDueAt || saving}
-            onValueChange={(value) => setField('createReminder', value)}
-          />
-        </View>
-        <Text style={styles.label}>
-          {draft.nextDueAt
-            ? '此開關建立 App 內提醒；手機通知另依設定與系統權限排定。'
-            : '請先選擇下次日期，才能建立 App 內提醒。'}
-        </Text>
+        <ReminderToggleField
+          title="建立 App 內提醒"
+          description={
+            draft.nextDueAt
+              ? '加入下次接種提醒。\n手機通知依設定與系統權限排定。'
+              : '請先選擇下次接種日期。\n選好後即可開啟提醒。'
+          }
+          value={Boolean(draft.createReminder && draft.nextDueAt)}
+          disabled={!draft.nextDueAt || saving}
+          onValueChange={(value) => setField('createReminder', value)}
+        />
         <SupplementalNotesField
           value={String(draft.notes ?? '')}
           onChange={(value) => setField('notes', value)}
