@@ -8,7 +8,7 @@ from app.schemas.chat import ChatRequest
 from app.api.routes import ai as ai_route
 from app.services.ai.chat_service import ChatService, ChatSource, classify, general_context_data
 from app.services.ai import rag_context_service
-from app.services.ai.rag_context_service import build_knowledge_bundle, is_canine_knowledge_question
+from app.services.ai.rag_context_service import build_knowledge_bundle
 
 def ctx():
     now=datetime.now(timezone.utc)
@@ -184,17 +184,23 @@ def test_rag_bundle_only_includes_http_sources_and_question_scoping_does_not_blo
     }])
     assert bundle["evidence"] == []
     assert bundle["allowedSources"] == []
-    assert is_canine_knowledge_question("狗狗可以吃葡萄嗎？")
-    assert not is_canine_knowledge_question("幫我整理旅行清單")
 
 
-def test_rag_retrieval_fails_open_and_does_not_run_for_general_questions(monkeypatch):
+def test_rag_retrieval_runs_without_predicting_the_topic(monkeypatch):
+    """口語問法不含「狗」「犬」時也要檢索；原本的關鍵詞預判會擋下約 23% 的題目。"""
     monkeypatch.setenv("MEGO_RAG_ENABLED", "true")
-    def unexpected_retrieve(*_args, **_kwargs):
-        raise AssertionError("general questions must skip canine knowledge retrieval")
-    monkeypatch.setattr(rag_context_service, "retrieve", unexpected_retrieve)
-    assert asyncio.run(rag_context_service.retrieve_canine_knowledge("幫我整理旅行清單")) == []
+    asked = []
+    def record_retrieve(question, *_args, **_kwargs):
+        asked.append(question)
+        return {"results": []}
+    monkeypatch.setattr(rag_context_service, "retrieve", record_retrieve)
+    for question in ("牙齦發白又站不穩，要等一般門診嗎？", "幫我整理旅行清單"):
+        asyncio.run(rag_context_service.retrieve_canine_knowledge(question))
+    assert asked == ["牙齦發白又站不穩，要等一般門診嗎？", "幫我整理旅行清單"]
 
+
+def test_rag_retrieval_fails_open(monkeypatch):
+    monkeypatch.setenv("MEGO_RAG_ENABLED", "true")
     def unavailable_retrieve(*_args, **_kwargs):
         raise RuntimeError("offline test")
     monkeypatch.setattr(rag_context_service, "retrieve", unavailable_retrieve)

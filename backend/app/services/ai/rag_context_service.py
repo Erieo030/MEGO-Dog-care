@@ -23,20 +23,6 @@ def configured_rag_top_k() -> int:
         return DEFAULT_RAG_TOP_K
     return min(MAX_RAG_TOP_K, max(MIN_RAG_TOP_K, value))
 
-_CANINE_CUES = (
-    "狗", "犬", "毛孩", "寵物", "獸醫", "疫苗", "狂犬病", "驅蟲", "寄生蟲",
-    "心絲蟲", "跳蚤", "壁蝨", "飼料", "狗糧", "飲食", "營養", "體重", "體態",
-    "便便", "大便", "糞便", "嘔吐", "腹瀉", "皮膚", "用藥", "藥物", "藥品",
-    "誤食", "可以吃", "能吃", "症狀", "照護", "訓練", "品種", "幼犬", "成犬",
-)
-
-
-def is_canine_knowledge_question(question: str) -> bool:
-    """Scope retrieval only; this never filters or rejects the chat question."""
-    text = question.strip().lower()
-    return bool(text) and any(cue in text for cue in _CANINE_CUES)
-
-
 def build_knowledge_bundle(results: list[dict[str, Any]]) -> dict[str, Any]:
     """Create model-safe evidence and an allowlisted URL map from retrieved chunks."""
     source_by_url: dict[str, dict[str, str]] = {}
@@ -84,8 +70,11 @@ def build_knowledge_bundle(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 async def retrieve_canine_knowledge(question: str) -> list[dict[str, Any]]:
     """Retrieve public references with bounded waits; failures leave normal chat available."""
+    # 不再用關鍵詞預判主題：飼主的口語問法常常不含「狗」或「犬」，
+    # 評估題庫中有 23% 的題目會被擋下，其中包含牙齦發白、連續嘔吐這類
+    # 最需要檢索到知識的高風險問題。沒有找到資料時對話照常繼續。
     enabled = os.getenv("MEGO_RAG_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
-    if not enabled or not is_canine_knowledge_question(question):
+    if not enabled:
         return []
 
     try:
