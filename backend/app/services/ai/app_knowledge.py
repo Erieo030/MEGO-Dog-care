@@ -6,10 +6,8 @@ DOCUMENTS = (
     ("supported-features", "已提供與未提供的功能", "目前支援手機淺色三種首頁主題，原始毛孩 QR 公開資訊可選公開欄位並更新安全連結。紀錄包含體重、日常、健康異常、疫苗、驅蟲、用藥、就醫與提醒，照片可附於紀錄並於照護相簿查看。設定提供通知、AI 用量、PDF 照護報告匯出、帳號刪除。App 內提醒與手機通知權限分開；登出取消此帳號手機通知。沒有列明的功能不得假設存在；目前未提供修改 Email、密碼、Email 驗證、暗色模式或平板專用介面。未知功能應明確回答此版本文件無法確認，不提供虛構操作步驟。"),
 )
 
-def internal_app_results(question: str):
-    cues = ("mego", "app", "首頁", "功能", "分頁", "設定", "就醫前", "摘要範圍", "健康觀察", "規則", "操作", "怎麼用")
-    if not any(cue in question.lower() for cue in cues):
-        return []
+def internal_app_results():
+    """三篇文件合計約 630 字，每次都附上；用關鍵詞猜使用者是否在問功能並不可靠。"""
     return [{"document_title": f"MEGO 內部功能文件 v{VERSION}", "section": title, "text": text, "citations": [{"sourceId": f"APP:{VERSION}:{slug}", "title": title}]} for slug, title, text in DOCUMENTS]
 
 def trusted_internal_sources():
@@ -17,6 +15,7 @@ def trusted_internal_sources():
 
 
 def is_app_function_question(question: str) -> bool:
+    """只用於判斷是否略過個人照護紀錄；功能文件一律附上，不經此判斷。"""
     text = question.lower()
     app_named = any(cue in text for cue in ("mego", "app", "首頁", "分頁", "設定頁"))
     functional = any(cue in text for cue in ("功能", "操作", "怎麼用", "如何使用", "支援", "有沒有", "能不能", "是否可以", "判斷", "規則", "範圍"))

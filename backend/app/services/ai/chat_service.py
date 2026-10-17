@@ -214,7 +214,7 @@ class ChatService:
         history: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
         context_sources = context_sources or []
-        knowledge_bundle = build_knowledge_bundle([*(knowledge_results or []), *internal_app_results(message)])
+        knowledge_bundle = build_knowledge_bundle([*(knowledge_results or []), *internal_app_results()])
         fallback = {
             "answer": "AI 回覆未完成。",
             "intent": "general",

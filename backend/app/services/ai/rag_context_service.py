@@ -8,7 +8,7 @@ from typing import Any
 
 from rag_experiment.query_mongo_index import retrieve
 
-from .app_knowledge import trusted_internal_sources, is_app_function_question
+from .app_knowledge import trusted_internal_sources
 
 logger = logging.getLogger(__name__)
 DEFAULT_RAG_TOP_K = 3
@@ -84,8 +84,6 @@ def build_knowledge_bundle(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 async def retrieve_canine_knowledge(question: str) -> list[dict[str, Any]]:
     """Retrieve public references with bounded waits; failures leave normal chat available."""
-    if is_app_function_question(question):
-        return []
     enabled = os.getenv("MEGO_RAG_ENABLED", "true").strip().lower() not in {"0", "false", "no", "off"}
     if not enabled or not is_canine_knowledge_question(question):
         return []

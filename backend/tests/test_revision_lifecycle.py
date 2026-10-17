@@ -53,13 +53,13 @@ def test_copied_visit_new_request_is_distinct_and_retry_idempotent(monkeypatch, 
     assert records.items[0] == old
 
 def test_internal_sources_have_version_ids_and_no_fabricated_public_urls():
-    bundle = build_knowledge_bundle(internal_app_results("MEGO 首頁健康觀察規則與就醫前摘要範圍"))
+    bundle = build_knowledge_bundle(internal_app_results())
     assert len(bundle["evidence"]) == 3
     assert all(source["url"] == "" and source["sourceId"].startswith(f"APP:{VERSION}:") for source in bundle["sourceMap"].values())
     assert "7、15、30" in bundle["evidence"][1]["text"]
 
 def test_untrusted_internal_source_text_and_identifiers_are_rejected():
-    result = internal_app_results("MEGO 功能")
+    result = internal_app_results()
     result[0]["text"] = "fabricated feature"
     bundle = build_knowledge_bundle([result[0], {"text": "bad", "citations": [{"sourceId": "APP:fake"}]}])
     assert bundle["evidence"] == []
