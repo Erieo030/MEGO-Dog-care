@@ -371,6 +371,10 @@ def test_scope_prompt_keeps_colloquial_care_questions_and_defines_three_tiers():
     assert all(tier in GENERAL_SYSTEM_PROMPT for tier in ("1. 寵物照護", "2. 周邊生活", "3. 即時資訊與無關問題"))
     assert "沒有即時搜尋能力" in GENERAL_SYSTEM_PROMPT
     assert "沒有功能資料時說明無法確認" in GENERAL_SYSTEM_PROMPT
+    # 第三層要擋住「先說不提供、再順手回答」這種常見的半拒絕。
+    assert "不提供該主題的實質內容" in GENERAL_SYSTEM_PROMPT
+    assert "不要因為題目簡單就順手回答" in GENERAL_SYSTEM_PROMPT
+    assert "只要與毛孩或飼養情境有關就依第 1、2 層完整回答" in GENERAL_SYSTEM_PROMPT
 
 
 def test_unknown_care_wording_still_reaches_provider_with_scope_guidance():
