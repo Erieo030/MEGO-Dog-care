@@ -1,6 +1,6 @@
 import { datePickerStyles as styles } from './date-picker/datePickerStyles';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { adjustTimePart, clampDate, dateInRange } from '../utils/datePicker';
@@ -43,6 +43,8 @@ function CalendarModal({
   const [month, setMonth] = useState(
     new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), 1)),
   );
+  // 超出範圍的訊息顯示在對話框內；再疊一層系統 Alert 會蓋住剛才選的日期。
+  const [rangeError, setRangeError] = useState('');
   const [selected, setSelected] = useState(value);
   const [yearPicker, setYearPicker] = useState(false);
   const [yearStart, setYearStart] = useState(Math.floor(value.getUTCFullYear() / 12) * 12);
@@ -183,6 +185,11 @@ function CalendarModal({
               </View>
             </>
           )}
+          {rangeError ? (
+            <Text accessibilityRole="alert" style={styles.rangeError}>
+              {rangeError}
+            </Text>
+          ) : null}
           <View style={styles.actions}>
             <TouchableOpacity
               accessibilityRole="button"
@@ -190,9 +197,10 @@ function CalendarModal({
               style={styles.done}
               onPress={() => {
                 if (!dateInRange(selected, minimumDate, maximumDate, true)) {
-                  Alert.alert('日期超出範圍', '請選擇允許範圍內的日期。');
+                  setRangeError('請選擇允許範圍內的日期。');
                   return;
                 }
+                setRangeError('');
                 onConfirm(selected);
               }}
             >
@@ -350,6 +358,8 @@ export default function DatePickerField({
     [maximumTime],
   );
   const [draft, setDraft] = useState(validValue ?? today());
+  // TimeModal 不知道可選範圍，超出時由欄位顯示訊息，不用系統 Alert。
+  const [rangeMessage, setRangeMessage] = useState('');
   useEffect(() => {
     if (validValue && !open) setDraft(validValue);
   }, [validValue, open]);
@@ -431,15 +441,21 @@ export default function DatePickerField({
         />
       </TouchableOpacity>
       {!!hint && <Text style={styles.hint}>{hint}</Text>}
+      {rangeMessage ? (
+        <Text accessibilityRole="alert" style={styles.rangeError}>
+          {rangeMessage}
+        </Text>
+      ) : null}
       {mode === 'time' || (mode === 'datetime' && phase === 'time') ? (
         <TimeModal
           open={open}
           value={draft}
           onConfirm={(date) => {
             if (!dateInRange(date, minimumDate, maximumDate)) {
-              Alert.alert('時間超出範圍', '請選擇允許範圍內的日期與時間。');
+              setRangeMessage('請選擇允許範圍內的日期與時間。');
               return;
             }
+            setRangeMessage('');
             setDraft(date);
             onChange(fromTaipeiPickerValue(date));
             setOpen(false);
@@ -453,10 +469,9 @@ export default function DatePickerField({
           minimumDate={minimumDate}
           maximumDate={maximumDate}
           onConfirm={(date) => {
-            if (!dateInRange(date, minimumDate, maximumDate, true)) {
-              Alert.alert('日期超出範圍', '請選擇允許範圍內的日期。');
-              return;
-            }
+            // CalendarModal 內部已擋下並顯示訊息，這裡只是防禦。
+            if (!dateInRange(date, minimumDate, maximumDate, true)) return;
+            setRangeMessage('');
             if (mode === 'datetime')
               date.setUTCHours(draft.getUTCHours(), draft.getUTCMinutes(), 0, 0);
             setDraft(mode === 'datetime' ? clampDate(date, minimumDate, maximumDate) : date);

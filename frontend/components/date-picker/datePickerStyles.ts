@@ -66,6 +66,7 @@ export const datePickerStyles = StyleSheet.create({
   },
   disabledField: { opacity: 0.5 },
   hint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 20, marginTop: 6 },
+  rangeError: { color: Colors.dangerText, fontSize: Type.footnote, lineHeight: 20, marginTop: 6 },
   clearButton: {
     minHeight: 44,
     maxWidth: '45%',

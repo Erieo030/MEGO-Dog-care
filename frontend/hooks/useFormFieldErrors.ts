@@ -7,6 +7,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import type { KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 import { useReducedMotion } from './usePressFeedback';
+import { hapticError } from '../utils/haptics';
 
 /** 捲動時在欄位上方保留的留白，讓標籤不會貼齊畫面頂端。 */
 const SCROLL_OFFSET = 16;
@@ -62,6 +63,8 @@ export function useFormFieldErrors<
       setErrors(next);
       const first = order.find((key) => next[key]);
       if (!first) return true;
+      // 錯誤在欄位下方，不一定在視線內；震一下讓使用者知道送出被擋下了。
+      hapticError();
       scrollToField(first);
       return false;
     },

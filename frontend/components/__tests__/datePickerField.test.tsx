@@ -81,7 +81,15 @@ test('final datetime confirmation refuses an out-of-range time', async () => {
   await act(async () => button('減少一小時').props.onPress());
   await act(async () => button('確認時間').props.onPress());
   expect(onChange).not.toHaveBeenCalled();
-  expect(Alert.alert).toHaveBeenCalledWith('時間超出範圍', expect.any(String));
+  // 訊息顯示在欄位下方，不再疊一層系統 Alert。
+  expect(
+    screen.root
+      .findAll(
+        (node) => node.type === ('Text' as never) && node.props.accessibilityRole === 'alert',
+      )
+      .map((node) => node.props.children),
+  ).toContain('請選擇允許範圍內的日期與時間。');
+  expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 test('birthdays before 2000 display and confirm without being reset to today', async () => {

@@ -40,7 +40,13 @@ export function HealthEventToggle({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
+    <TouchableOpacity
+      accessibilityRole="radio"
+      accessibilityLabel={text}
+      accessibilityState={{ selected: active }}
+      style={[styles.chip, active && styles.chipActive]}
+      onPress={onPress}
+    >
       <Text style={[styles.chipText, active && styles.chipTextActive]}>{text}</Text>
     </TouchableOpacity>
   );

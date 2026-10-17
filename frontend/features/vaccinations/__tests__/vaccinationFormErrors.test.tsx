@@ -2,6 +2,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { Alert } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { VaccinationFormScreen } from '../screens/VaccinationFormScreen';
 import { createVaccination } from '../../../services/vaccinationService';
 
@@ -129,4 +130,21 @@ test('a next-due date earlier than the administered date is reported on that fie
   expect(alerts()).toContain('下次接種日期不能早於接種日期。');
   expect(Alert.alert).not.toHaveBeenCalled();
   expect(createVaccination).not.toHaveBeenCalled();
+});
+
+test('a blocked submit also gives haptic feedback, since the error may be off-screen', async () => {
+  await mount();
+  await act(async () => submit());
+  expect(Haptics.notificationAsync).toHaveBeenCalledWith(Haptics.NotificationFeedbackType.Error);
+});
+
+test('a successful submit does not give error feedback', async () => {
+  await mount();
+  const input = screen.root.find(
+    (node) =>
+      node.type === ('Input' as never) && node.props.accessibilityLabel === '疫苗名稱（必填）',
+  );
+  await act(async () => input.props.onChangeText('狂犬病'));
+  await act(async () => submit());
+  expect(Haptics.notificationAsync).not.toHaveBeenCalled();
 });
