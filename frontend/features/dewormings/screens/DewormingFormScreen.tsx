@@ -6,7 +6,8 @@ import { FieldError } from '../../../components/FieldError';
 import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
 import React, { useRef, useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TextInput, View } from 'react-native';
+import { SelectionChip, SelectionGroup } from '../../../components/SelectionChip';
 import { ReminderToggleField } from '../../../components/ReminderToggleField';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
@@ -134,20 +135,17 @@ export function DewormingFormScreen() {
           毛孩：{ownerPet?.name || '原紀錄毛孩無法取得，請返回重新載入'}
         </Text>
         <Text style={styles.section}>驅蟲類型</Text>
-        <View style={styles.options}>
+        <SelectionGroup label="驅蟲類型">
           {(Object.keys(dewormingTypeLabels) as DewormingType[]).map((type) => (
-            <TouchableOpacity
+            <SelectionChip
               key={type}
-              accessibilityRole="radio"
-              accessibilityLabel={dewormingTypeLabels[type]}
-              accessibilityState={{ selected: draft.type === type }}
-              style={[styles.chip, draft.type === type && styles.selected]}
+              size="form"
+              label={dewormingTypeLabels[type]}
+              selected={draft.type === type}
               onPress={() => setField('type', type)}
-            >
-              <Text>{dewormingTypeLabels[type]}</Text>
-            </TouchableOpacity>
+            />
           ))}
-        </View>
+        </SelectionGroup>
         {fields
           .filter(([key]) => key !== 'notes')
           .map(([key, label]) => {

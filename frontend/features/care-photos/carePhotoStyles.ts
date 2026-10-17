@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
+import { PageLayout } from '../../constants/PageLayout';
 
 export const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: Colors.background },
-  list: { paddingHorizontal: 20 },
-  header: { paddingTop: 18, paddingBottom: 20 },
+  list: { paddingHorizontal: PageLayout.mainHorizontal },
+  header: { paddingTop: PageLayout.top, paddingBottom: 20 },
   subtitle: { fontSize: Type.subhead, lineHeight: 21, color: Colors.subtext, marginTop: 6 },
   petRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 18, marginBottom: 16 },
   petName: { flex: 1, minWidth: 0, fontSize: Type.headline, fontWeight: '700', color: Colors.text },
@@ -34,17 +35,6 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   filters: { gap: 8, paddingTop: 16, paddingBottom: 4 },
-  filter: {
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  filterActive: { backgroundColor: Colors.primarySoft, borderColor: Colors.primary },
-  filterText: { fontSize: Type.footnote, color: Colors.text, fontWeight: '600' },
   switchRow: {
     flexDirection: 'row',
     gap: 10,

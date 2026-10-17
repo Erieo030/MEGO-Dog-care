@@ -5,6 +5,7 @@ import {
   Vaccination,
   Deworming,
   MedicationCourse,
+  Medication,
   HealthEventType,
   MedicalVisit,
   ObservationHealthEventType,
@@ -27,7 +28,18 @@ export type HomeStackParamList = {
   DewormingDetail: { recordId: string };
   MedicationList: undefined;
   MedicationForm:
-    | { record?: MedicationCourse; duplicate?: boolean; quickEntry?: boolean }
+    | {
+        record?: MedicationCourse;
+        duplicate?: boolean;
+        quickEntry?: boolean;
+        sourceVisit?: {
+          id: string;
+          petId: string;
+          visitedAt: string;
+          medication: Medication;
+          sourceMedicationKey: string;
+        };
+      }
     | undefined;
   MedicationDetail: { recordId: string };
   HealthOverview: undefined;

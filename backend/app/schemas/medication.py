@@ -16,6 +16,7 @@ class MedicationRequest(BaseModel):
     reminderTimes:list[str]=Field(default_factory=list,max_length=6)
     reminderEnabled:bool=False
     medicalVisitId:str|None=None
+    medicalVisitMedicationKey:str|None=Field(default=None,pattern=r"^[a-f0-9]{64}$")
     @field_validator("name")
     @classmethod
     def non_blank(cls,v):
@@ -43,6 +44,8 @@ class MedicationRequest(BaseModel):
         return values
     @model_validator(mode="after")
     def dates(self):
+        if self.medicalVisitMedicationKey and not self.medicalVisitId:
+            raise ValueError("指定開藥來源前必須提供就醫紀錄")
         if self.endDate and self.endDate<self.startDate: raise ValueError("結束日期不可早於開始日期")
         if self.reminderEnabled and not self.reminderTimes: raise ValueError("啟用提醒前請先設定提醒時間")
         return self

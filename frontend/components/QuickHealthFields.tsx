@@ -1,58 +1,64 @@
 /** 用途：提供健康快速表單共用的大型單選、複選與安全提示元件。 */
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { Option } from '../constants/ObservationHealthEvents';
+import { SelectionChip, SelectionGroup } from './SelectionChip';
 
 export function QuickOptionGroup({
+  label,
   options,
   value,
   onChange,
 }: {
+  label?: string;
   options: Option[];
   value?: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <View style={styles.chips}>
+    <SelectionGroup label={label}>
       {options.map(([key, label]) => (
-        <TouchableOpacity
+        <SelectionChip
           key={key}
-          style={[styles.chip, value === key && styles.active]}
+          size="form"
+          label={label}
+          selected={value === key}
           onPress={() => onChange(key)}
-        >
-          <Text style={[styles.text, value === key && styles.activeText]}>{label}</Text>
-        </TouchableOpacity>
+        />
       ))}
-    </View>
+    </SelectionGroup>
   );
 }
 export function MultiSelectOptionGroup({
+  label,
   options,
   values,
   onChange,
 }: {
+  label?: string;
   options: Option[];
   values: string[];
   onChange: (values: string[]) => void;
 }) {
   return (
-    <View style={styles.chips}>
+    <SelectionGroup multiple label={label}>
       {options.map(([key, label]) => {
         const active = values.includes(key);
         return (
-          <TouchableOpacity
+          <SelectionChip
             key={key}
-            style={[styles.chip, active && styles.active]}
+            size="form"
+            multiple
+            label={label}
+            selected={active}
             onPress={() =>
               onChange(active ? values.filter((value) => value !== key) : [...values, key])
             }
-          >
-            <Text style={[styles.text, active && styles.activeText]}>{label}</Text>
-          </TouchableOpacity>
+          />
         );
       })}
-    </View>
+    </SelectionGroup>
   );
 }
 export function HealthSafetyNotice({ message }: { message: string }) {
@@ -64,20 +70,6 @@ export function HealthSafetyNotice({ message }: { message: string }) {
   );
 }
 const styles = StyleSheet.create({
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    minHeight: 48,
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-  },
-  active: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  text: { color: Colors.text, fontWeight: '700' },
-  activeText: { color: Colors.onPrimary, fontWeight: '700' },
   safety: {
     backgroundColor: Colors.warningSoft,
     borderWidth: 1,

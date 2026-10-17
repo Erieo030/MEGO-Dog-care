@@ -8,6 +8,7 @@ from app.db import db
 from app.schemas.medical_visit import MedicalVisitRequest
 from app.services.attachment_service import delete_source_attachments, source_attachments, sync_source_attachments, timeline_attachment_count
 from app.services.timeline_service import delete_timeline_item, upsert_timeline_item
+from app.services.medication_source import with_course_links
 
 SOURCE_TYPE = "medical_visit"
 def _id(value: str, label: str = "就醫紀錄 ID ") -> ObjectId:
@@ -38,7 +39,12 @@ def _sync_follow_up_reminder(pet_id:str,visit_id:str,data:MedicalVisitRequest)->
     db.reminders.update_one(query,{"$set":{**query,"title":f"回診：{title_basis}","scheduledAt":data.followUpAt,"recurrenceRule":"none","notes":data.reason,"status":"pending","completedAt":None,"updatedAt":now},"$setOnInsert":{"createdAt":now}},upsert=True)
 def list_visits(pet_id:str,user_id:str)->list[dict]:
     _ensure_owned_pet(pet_id,user_id); return [_serialize(x) for x in db.medical_visits.find({"petId":pet_id}).sort([("visitedAt",-1),("_id",-1)])]
-def get_visit(visit_id:str,user_id:str)->dict: return _serialize(_owned_visit(visit_id,user_id))
+def get_visit(visit_id:str,user_id:str)->dict:
+    visit = _owned_visit(visit_id,user_id)
+    courses = db.medications.find({"petId": visit["petId"], "medicalVisitId": visit_id})
+    result = _serialize(visit)
+    result["medications"] = with_course_links(visit, courses)
+    return result
 def create_visit(pet_id:str,user_id:str,data:MedicalVisitRequest)->dict:
     _ensure_owned_pet(pet_id,user_id)
     if data.clientRequestId:

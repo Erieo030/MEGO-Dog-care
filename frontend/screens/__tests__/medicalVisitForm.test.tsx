@@ -3,7 +3,7 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import MedicalVisitFormScreen from '../MedicalVisitFormScreen';
-import { createMedicalVisit } from '../../services/medicalVisitService';
+import { createMedicalVisit, updateMedicalVisit } from '../../services/medicalVisitService';
 const mockScrollTo = jest.fn();
 const mockPet = { id: 'p1', name: '小米' };
 const mockNavigation = { navigate: jest.fn(), goBack: jest.fn(), setParams: jest.fn() };
@@ -45,7 +45,11 @@ jest.mock('../../services/notificationService', () => ({
   reconcileAccountNotifications: jest.fn().mockResolvedValue(undefined),
 }));
 let screen: ReactTestRenderer;
-const submit = () => screen.root.findByType('AppButton' as never).props.onPress();
+const submit = () =>
+  screen.root
+    .findAllByType('AppButton' as never)
+    .at(-1)!
+    .props.onPress();
 beforeEach(() => {
   jest.clearAllMocks();
   global.requestAnimationFrame = (callback) => {
@@ -128,6 +132,54 @@ test('map selection is a separated full-width button and returns to the same for
     '測試動物醫院',
   );
   expect(mockNavigation.setParams).toHaveBeenCalledWith({ clinicName: undefined });
+});
+
+test('editing a visit sends only prescription fields, never the read-only course link metadata', async () => {
+  await act(async () => {
+    screen = create(
+      <MedicalVisitFormScreen
+        navigation={mockNavigation as never}
+        route={
+          {
+            params: {
+              visit: {
+                id: 'v1',
+                petId: 'p1',
+                reason: '例行檢查',
+                visitedAt: '2026-10-16T12:00:00+08:00',
+                medications: [
+                  {
+                    name: '藥袋 A',
+                    instructions: '依醫囑',
+                    timesPerDay: 2,
+                    startDate: '',
+                    endDate: '',
+                    mealTiming: 'after',
+                    notes: '',
+                    sourceMedicationKey: 'a'.repeat(64),
+                    linkedMedicationId: 'course-1',
+                  },
+                ],
+              },
+            },
+          } as never
+        }
+      />,
+    );
+  });
+  await act(async () => submit());
+  const saved = (updateMedicalVisit as jest.Mock).mock.calls[0][2];
+  expect(saved.medications).toEqual([
+    {
+      name: '藥袋 A',
+      instructions: '依醫囑',
+      timesPerDay: 2,
+      startDate: '',
+      endDate: '',
+      mealTiming: 'after',
+      notes: '',
+    },
+  ]);
 });
 
 test('clearing the shared follow-up date also cancels its reminder without filling a new date', async () => {

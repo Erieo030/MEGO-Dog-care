@@ -5,7 +5,8 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
+import { Spacing } from '../constants/Layout';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
@@ -17,6 +18,7 @@ import {
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -210,16 +212,24 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
     }
   };
 
-  if (loading) return <HealthEventLoadingState text={`正在載入${config.title}紀錄…`} />;
+  const pageTitle = eventId ? `編輯${config.title}紀錄` : `記錄${config.title}`;
+  if (loading)
+    return (
+      <ScreenPageState title={pageTitle}>
+        <HealthEventLoadingState text={`正在載入${config.title}紀錄…`} />
+      </ScreenPageState>
+    );
   if (error)
     return (
-      <HealthEventErrorState
-        text={error}
-        onRetry={() => {
-          setLoading(true);
-          load();
-        }}
-      />
+      <ScreenPageState title={pageTitle}>
+        <HealthEventErrorState
+          text={error}
+          onRetry={() => {
+            setLoading(true);
+            load();
+          }}
+        />
+      </ScreenPageState>
     );
   const safety = shouldShowObservationSafety(type, values, severity);
   return (
@@ -228,20 +238,18 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
         ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="eye-outline" size={22} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.title}>
-              {eventId ? `編輯${config.title}紀錄` : `記錄${config.title}`}
-            </Text>
-            <Text style={styles.subtitle}>只保存觀察到的狀況，不提供疾病診斷或治療建議。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={pageTitle}
+          description="只保存觀察到的狀況，不提供疾病診斷或治療建議。"
+          icon="eye-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <View onLayout={position('primary')}>
           <Text style={styles.label}>{config.primaryLabel}（必填）</Text>
           <QuickOptionGroup
+            label={config.primaryLabel}
             options={config.primaryOptions}
             value={values[config.primaryKey] as string | undefined}
             onChange={(value) => {
@@ -255,6 +263,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
           <View key={group.key}>
             <Text style={styles.label}>{group.label}</Text>
             <QuickOptionGroup
+              label={group.label}
               options={group.options}
               value={values[group.key] as string | undefined}
               onChange={(value) =>
@@ -270,6 +279,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
           <>
             <Text style={styles.label}>{config.multiGroup.label}</Text>
             <MultiSelectOptionGroup
+              label={config.multiGroup.label}
               options={config.multiGroup.options}
               values={(values[config.multiGroup.key] as string[]) ?? []}
               onChange={(selected) =>
@@ -294,6 +304,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
         </View>
         <Text style={styles.label}>嚴重程度（必填）</Text>
         <QuickOptionGroup
+          label="嚴重程度"
           options={severities}
           value={severity}
           onChange={(value) => setSeverity(value as Severity)}
@@ -334,18 +345,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 7 },
-  introIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
+  intro: { marginBottom: Spacing.md },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: FORM_BUTTON_RADIUS,
     padding: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: FORM_ACTION_GAP,
     minHeight: FORM_BUTTON_HEIGHT,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },

@@ -1,50 +1,48 @@
 import { useFormPet } from '../../../hooks/useFormPet';
 import { syncCareNotifications } from '../../../services/careNotificationSync';
-import { CardSurface } from '../../../constants/Layout';
 /** 用途：把毛孩移到回憶，或在誤設時還原；所有紀錄都會保留。 */
 import React, { useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 
 import { AppButton } from '../../../components/AppButton';
-import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
 import DatePickerField from '../../../components/DatePickerField';
+import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { FieldError } from '../../../components/FieldError';
 import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import { Colors } from '../../../constants/Colors';
-import { CardShadow, Radius, Spacing } from '../../../constants/Layout';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
-import { Type } from '../../../constants/Typography';
-import { ScreenPageFrame } from '../../../components/ScreenPageHeader';
+import { ScreenPageFrame, ScreenPageHeader } from '../../../components/ScreenPageHeader';
 import ScreenState from '../../../components/ScreenState';
-import {
-  SettingsPageHeader,
-  SettingsPageState,
-} from '../../settings/components/SettingsPageHeader';
+import { SettingsPageState } from '../../settings/components/SettingsPageHeader';
 import { useAuth } from '../../../contexts/AuthContext';
 import { usePet } from '../../../contexts/PetContext';
-import { taipeiDateKey, toTaipeiDateValue } from '../../../utils/taipeiDate';
+import { taipeiDateKey, taipeiDateFromKey } from '../../../utils/taipeiDate';
+import type { MainTabParamList } from '../../../navigation/types';
+import { MemorialPetCard } from '../components/MemorialPetCard';
+import { memorialStyles as styles } from '../memorialStyles';
 import {
   MEMORIAL_EFFECTS,
+  MEMORIAL_EFFECT_GROUPS,
   MEMORIAL_NOTE_MAX,
-  companionshipText,
-  memorialPeriodText,
   validateMemorialDate,
 } from '../memorialContent';
 
 type Props = { navigation: { goBack: () => void } };
 
 export default function PetMemorialScreen({ navigation }: Props) {
+  const tabNavigation = useNavigation<NavigationProp<MainTabParamList>>();
   const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<
     'date',
     ScrollView
   >();
   const { session } = useAuth();
-  const { pets, memorializeSelectedPet, restoreSelectedPet } = usePet();
+  const { pets, selectPet, memorializeSelectedPet, restoreSelectedPet } = usePet();
   const selectedPet = useFormPet();
   const bottomPadding = useTabContentBottomPadding(24);
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>();
   const [note, setNote] = useState('');
   const mutationLock = useRef(false);
   const [saving, setSaving] = useState(false);
@@ -73,7 +71,7 @@ export default function PetMemorialScreen({ navigation }: Props) {
   };
 
   const confirmMemorial = () => {
-    const dateKey = toTaipeiDateValue(date).slice(0, 10);
+    const dateKey = date ? taipeiDateKey(date) : '';
     const problem = validateMemorialDate(dateKey, pet, taipeiDateKey());
     if (!showErrors(problem ? { date: problem } : {}, ['date'])) return;
     Alert.alert(`把${pet.name}移到回憶？`, MEMORIAL_EFFECTS.join('\n\n'), [
@@ -137,53 +135,75 @@ export default function PetMemorialScreen({ navigation }: Props) {
       ],
     );
 
-  const avatar = (
-    <View style={styles.avatarRing}>
-      {pet.avatarAttachmentId && session?.userId ? (
-        <AuthenticatedPetAvatar
-          attachmentId={pet.avatarAttachmentId}
-          userId={session.userId}
-          style={styles.avatar}
-          fallback={<Ionicons name="paw" size={36} color={Colors.memorial} />}
-        />
-      ) : (
-        <Ionicons name="paw" size={36} color={Colors.memorial} />
-      )}
-    </View>
+  const earliestDate = [pet.birthDate, pet.adoptionDate].filter(Boolean).sort().pop();
+  const pageHeader = (
+    <ScreenPageHeader
+      title={pet.memorial ? '回憶' : '移到回憶'}
+      description={
+        pet.memorial ? '保留毛孩一起生活的紀錄與照片' : '保留一起生活的紀錄，設定前請確認以下內容'
+      }
+      icon="flower-outline"
+      iconColor={Colors.memorial}
+      iconBackground={Colors.memorialSoft}
+    />
   );
+  const petCard = <MemorialPetCard pet={pet} userId={session?.userId} />;
+
+  const openHistory = (screen: 'TimelineOverview' | 'PhotosOverview') => {
+    selectPet(pet.id);
+    tabNavigation.navigate('Timeline', { screen });
+  };
 
   if (pet.memorial) {
-    const period = memorialPeriodText(pet);
-    const together = companionshipText(pet);
     return (
       <ScreenPageFrame>
         <ScrollView
           style={styles.page}
           contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
         >
-          <SettingsPageHeader page="PetMemorial" style={{ marginBottom: 0 }} />
-          <View style={[styles.card, styles.memorialCard]}>
-            {avatar}
-            <Text style={styles.name}>{pet.name}</Text>
-            <View style={styles.badge}>
-              <Ionicons name="flower-outline" size={14} color={Colors.memorial} />
-              <Text style={styles.badgeText}>在回憶中</Text>
+          {pageHeader}
+          {petCard}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>一起留下的日常</Text>
+            <Text style={styles.helper}>紀錄與照片都還在，想念時可以隨時回來看看。</Text>
+            <View style={styles.reviewActions}>
+              <AppButton
+                title="查看照護紀錄"
+                variant="secondary"
+                style={styles.reviewButton}
+                disabled={saving}
+                onPress={() => openHistory('TimelineOverview')}
+              >
+                <Ionicons name="book-outline" size={20} color={Colors.memorial} />
+                <Text style={styles.reviewText}>查看照護紀錄</Text>
+              </AppButton>
+              <AppButton
+                title="查看照護相簿"
+                variant="secondary"
+                style={styles.reviewButton}
+                disabled={saving}
+                onPress={() => openHistory('PhotosOverview')}
+              >
+                <Ionicons name="images-outline" size={20} color={Colors.memorial} />
+                <Text style={styles.reviewText}>查看照護相簿</Text>
+              </AppButton>
             </View>
-            {period ? <Text style={styles.period}>{period}</Text> : null}
-            {together ? <Text style={styles.together}>{together}</Text> : null}
-            {pet.memorialNote ? <Text style={styles.note}>「{pet.memorialNote}」</Text> : null}
           </View>
-          <Text style={styles.sectionNote}>
-            {pet.name}的紀錄和照片都還在，可以從首頁、紀錄和相簿回顧。
-          </Text>
-          <AppButton
-            title={saving ? '正在還原…' : '從回憶還原'}
-            variant="secondary"
-            busy={saving}
-            onPress={confirmRestore}
-            accessibilityLabel={`把${pet.name}從回憶還原`}
-          />
-          <Text style={styles.restoreHint}>只有在誤設時才需要還原。</Text>
+          <View style={styles.restoreSection}>
+            <Text style={styles.restoreTitle}>誤設處理</Text>
+            <Text style={styles.helper}>
+              若是不小心設定成回憶，可以還原為照顧中。已停止的提醒不會自動恢復。
+            </Text>
+            <AppButton
+              title={saving ? '正在還原…' : '從回憶還原'}
+              variant="secondary"
+              style={styles.restoreButton}
+              textStyle={{ color: Colors.memorial }}
+              busy={saving}
+              onPress={confirmRestore}
+              accessibilityLabel={`把${pet.name}從回憶還原`}
+            />
+          </View>
         </ScrollView>
       </ScreenPageFrame>
     );
@@ -197,50 +217,53 @@ export default function PetMemorialScreen({ navigation }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
       >
-        <SettingsPageHeader page="PetMemorial" style={{ marginBottom: 0 }} />
-        <View style={styles.card}>
-          {avatar}
-          <Text style={styles.name}>{pet.name}</Text>
-          <Text style={styles.lead}>
-            當{pet.name}離開了，可以把牠移到回憶。MEGO 會好好收著你們一起留下的紀錄。
-          </Text>
-        </View>
-
-        <View style={styles.effects}>
-          {MEMORIAL_EFFECTS.map((effect) => (
-            <View key={effect} style={styles.effectRow}>
-              <Ionicons name="checkmark-circle-outline" size={18} color={Colors.successStrong} />
-              <Text style={styles.effectText}>{effect}</Text>
+        {pageHeader}
+        {petCard}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>設定後會有哪些變化</Text>
+          {MEMORIAL_EFFECT_GROUPS.map((group) => (
+            <View key={group.title} style={styles.group}>
+              <View style={styles.groupHeading}>
+                <Ionicons name={group.icon} size={20} color={Colors.memorial} />
+                <Text style={styles.groupTitle}>{group.title}</Text>
+              </View>
+              {group.items.map((effect) => (
+                <View key={effect} style={styles.effectRow}>
+                  <Text style={styles.bullet} accessible={false}>
+                    ・
+                  </Text>
+                  <Text style={styles.effectText}>{effect}</Text>
+                </View>
+              ))}
             </View>
           ))}
         </View>
-
-        <View onLayout={position('date')}>
-          <DatePickerField
-            label="離開的日期"
-            value={date}
-            maximumDate={new Date()}
-            onChange={(next) => {
-              clearError('date');
-              setDate(next);
-            }}
+        <View style={styles.section} onLayout={position('date')}>
+          <Text style={styles.sectionTitle}>留下紀念</Text>
+          <View>
+            <DatePickerField
+              label="離開的日期（必填）"
+              placeholder="選擇離開的日期"
+              value={date}
+              minimumDate={earliestDate ? taipeiDateFromKey(earliestDate) : undefined}
+              maximumDate={new Date()}
+              onChange={(next) => {
+                clearError('date');
+                setDate(next);
+              }}
+            />
+            <FieldError message={errors.date} />
+          </View>
+          <SupplementalNotesField
+            label="想對牠說的話（選填）"
+            accessibilityLabel="想對牠說的話"
+            value={note}
+            onChange={setNote}
+            maxLength={MEMORIAL_NOTE_MAX}
+            placeholder="例如：謝謝你陪我們走過的每一天"
+            helperText="可以現在寫，也可以先留白。"
           />
-          <FieldError message={errors.date} />
         </View>
-        <Text style={styles.label}>想對牠說的話（選填）</Text>
-        <TextInput
-          value={note}
-          onChangeText={setNote}
-          maxLength={MEMORIAL_NOTE_MAX}
-          multiline
-          placeholder="例如：謝謝你陪我們走過的每一天"
-          placeholderTextColor={Colors.muted}
-          style={styles.input}
-          accessibilityLabel="想對牠說的話"
-        />
-        <Text style={styles.counter}>
-          {note.length}/{MEMORIAL_NOTE_MAX}
-        </Text>
         <AppButton
           title={saving ? '正在處理…' : '移到回憶'}
           busy={saving}
@@ -252,86 +275,3 @@ export default function PetMemorialScreen({ navigation }: Props) {
     </ScreenPageFrame>
   );
 }
-
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 18, gap: Spacing.lg },
-  card: {
-    alignItems: 'center',
-    padding: Spacing.xxl,
-    borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
-    ...CardShadow,
-  },
-  memorialCard: { backgroundColor: Colors.memorialSoft },
-  avatarRing: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    marginBottom: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: Colors.surface,
-    backgroundColor: Colors.surfaceSoft,
-  },
-  avatar: { width: 96, height: 96 },
-  name: { color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
-  lead: {
-    marginTop: Spacing.sm,
-    color: Colors.subtext,
-    fontSize: Type.body,
-    lineHeight: 23,
-    textAlign: 'center',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xxs,
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xxs,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
-  },
-  badgeText: { color: Colors.memorial, fontSize: Type.footnote, fontWeight: '800' },
-  period: { marginTop: Spacing.md, color: Colors.text, fontSize: Type.callout, fontWeight: '700' },
-  together: { marginTop: Spacing.xxs, color: Colors.subtext, fontSize: Type.subhead },
-  note: {
-    marginTop: Spacing.lg,
-    color: Colors.text,
-    fontSize: Type.body,
-    lineHeight: 24,
-    textAlign: 'center',
-  },
-  sectionNote: {
-    color: Colors.subtext,
-    fontSize: Type.subhead,
-    lineHeight: 21,
-    textAlign: 'center',
-  },
-  restoreHint: { color: Colors.muted, fontSize: Type.caption, textAlign: 'center' },
-  effects: { ...CardSurface.hint, gap: Spacing.md },
-  effectRow: { flexDirection: 'row', gap: Spacing.sm },
-  effectText: { flex: 1, color: Colors.text, fontSize: Type.subhead, lineHeight: 21 },
-  label: { color: Colors.text, fontSize: Type.body, fontWeight: '700', marginBottom: -Spacing.sm },
-  input: {
-    minHeight: 96,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    color: Colors.text,
-    fontSize: Type.callout,
-    textAlignVertical: 'top',
-  },
-  counter: {
-    alignSelf: 'flex-end',
-    marginTop: -Spacing.sm,
-    color: Colors.muted,
-    fontSize: Type.caption,
-  },
-  submit: { marginTop: Spacing.xs },
-});

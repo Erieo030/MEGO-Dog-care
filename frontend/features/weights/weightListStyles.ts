@@ -67,18 +67,6 @@ export const weightListStyles = StyleSheet.create({
   },
   historyToggleText: { color: Colors.primary, fontWeight: '700' },
   filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  filter: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    minHeight: 44,
-  },
-  filterActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  filterText: { color: Colors.text, fontSize: Type.caption, fontWeight: '600' },
-  filterTextActive: { color: Colors.onPrimary },
   chartCard: { ...CardSurface.record },
   chartCanvas: { height: 165, position: 'relative' },
   axisLabel: {

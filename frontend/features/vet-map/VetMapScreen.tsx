@@ -20,6 +20,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { Colors } from '../../constants/Colors';
+import { ScreenPageHeader } from '../../components/ScreenPageHeader';
+import { SelectionChip } from '../../components/SelectionChip';
 import { useTabContentBottomPadding } from '../../components/navigation/useTabContentBottomPadding';
 import type { HomeStackParamList } from '../../navigation/types';
 import {
@@ -113,28 +115,14 @@ export default function VetMapScreen({ navigation, route }: Props) {
         keyboardDismissMode="on-drag"
         contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
       >
-        <View style={styles.header}>
-          {!isTabRoot && (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={selectForVisit ? '返回就醫紀錄表單' : '返回上一頁'}
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={22} color={Colors.text} />
-            </TouchableOpacity>
-          )}
-          <View style={styles.headingCopy}>
-            <Text style={styles.eyebrow}>MEGO 照護支援</Text>
-            <Text style={styles.title}>{selectForVisit ? '選擇動物醫院' : '就醫地圖'}</Text>
-          </View>
-          <View style={styles.headingIcon}>
-            <Ionicons name="medical-outline" size={23} color={Colors.successDecoration} />
-          </View>
-        </View>
-        <Text style={styles.subtitle}>
-          先整理臺中市夜間／急診名單；出發前請先電話確認服務狀況。
-        </Text>
+        <ScreenPageHeader
+          title={selectForVisit ? '選擇動物醫院' : '就醫地圖'}
+          description="臺中市夜間／急診名單，出發前請先電話確認"
+          icon="medical-outline"
+          showBack={!isTabRoot}
+          backLabel={selectForVisit ? '返回就醫紀錄表單' : '返回上一頁'}
+          onBack={() => navigation.goBack()}
+        />
 
         <View style={styles.searchRow}>
           <View style={styles.searchBox}>
@@ -181,26 +169,17 @@ export default function VetMapScreen({ navigation, route }: Props) {
           {(['map', 'list'] as const).map((item) => {
             const active = mode === item;
             return (
-              <TouchableOpacity
+              <SelectionChip
                 key={item}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                style={[styles.modeOption, active && styles.modeOptionActive]}
+                label={item === 'map' ? '地圖' : '清單'}
+                selected={active}
+                style={styles.modeOption}
                 onPress={() => {
                   Keyboard.dismiss();
                   setInteractingWithMap(false);
                   setMode(item);
                 }}
-              >
-                <Ionicons
-                  name={item === 'map' ? 'map-outline' : 'list-outline'}
-                  size={17}
-                  color={active ? Colors.primaryDecoration : Colors.subtext}
-                />
-                <Text style={[styles.modeText, active && styles.modeTextActive]}>
-                  {item === 'map' ? '地圖' : '清單'}
-                </Text>
-              </TouchableOpacity>
+              />
             );
           })}
         </View>

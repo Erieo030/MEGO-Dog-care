@@ -13,6 +13,8 @@ import type { RootStackParamList } from '../navigation/types';
 import { VetBriefSection } from '../services/aiService';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { FieldError } from '../components/FieldError';
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
+import { SelectionChip } from '../components/SelectionChip';
 import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import { usePreVetBrief } from '../features/ai/pre-vet/usePreVetBrief';
 import { DashboardWeightPoint } from '../types';
@@ -146,26 +148,18 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
-      <View style={styles.pageHeader}>
-        <TouchableOpacity
-          accessibilityRole="button"
-          accessibilityLabel="返回 MEGO AI 對話"
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="chevron-back" size={23} color={Colors.text} />
-        </TouchableOpacity>
-        <View style={styles.pageHeaderCopy}>
-          <Text style={styles.title}>就醫前摘要</Text>
-          <Text style={styles.subtitle}>先看一頁近期重點，需要時再展開完整紀錄。</Text>
-        </View>
-      </View>
       <KeyboardAwareScrollView
         ref={scrollRef}
         contentContainerStyle={styles.content}
         bottomOffset={24}
         showsVerticalScrollIndicator={false}
       >
+        <ScreenPageHeader
+          title="就醫前摘要"
+          description="先看近期重點，再展開完整紀錄"
+          icon="document-text-outline"
+          onBack={() => navigation.goBack()}
+        />
         {loading && (
           <Text style={styles.loading}>
             {brief ? '正在更新摘要…' : '正在整理已選擇的照護資料…'}
@@ -226,17 +220,12 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
                 <Text style={styles.selectorTitle}>選擇資料期間</Text>
                 <View style={styles.rangeRow}>
                   {PRE_VET_RANGES.map((value) => (
-                    <TouchableOpacity
+                    <SelectionChip
                       key={value}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: range === value }}
-                      style={[styles.chip, range === value && styles.activeChip]}
+                      label={`近 ${value} 天`}
+                      selected={range === value}
                       onPress={() => setRange(value)}
-                    >
-                      <Text style={[styles.chipText, range === value && styles.activeChipText]}>
-                        近 {value} 天
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
                 <Text style={styles.selectorTitle}>選擇要帶入的資料</Text>
@@ -245,26 +234,13 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
                 </Text>
                 <View style={styles.optionWrap} onLayout={position('sections')}>
                   {PRE_VET_SECTION_OPTIONS.map((option) => (
-                    <TouchableOpacity
+                    <SelectionChip
                       key={option.key}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: draftSections.includes(option.key) }}
-                      style={[
-                        styles.option,
-                        draftSections.includes(option.key) && styles.optionActive,
-                      ]}
+                      label={option.label}
+                      multiple
+                      selected={draftSections.includes(option.key)}
                       onPress={() => toggleSection(option.key)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          draftSections.includes(option.key) && styles.optionTextActive,
-                        ]}
-                      >
-                        {draftSections.includes(option.key) ? '✓ ' : ''}
-                        {option.label}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
                 <FieldError message={errors.sections} />

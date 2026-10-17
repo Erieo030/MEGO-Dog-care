@@ -2,11 +2,12 @@ import { CardSurface } from '../../constants/Layout';
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
+import { PageLayout } from '../../constants/PageLayout';
 import { CardShadow, Radius, Spacing } from '../../constants/Layout';
 
 export const aiHubStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingHorizontal: 20, paddingTop: 20 },
+  content: { paddingHorizontal: PageLayout.mainHorizontal, paddingTop: PageLayout.top },
   petHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   petAvatar: {
     width: 54,

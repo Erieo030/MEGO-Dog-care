@@ -10,11 +10,13 @@ import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
  * API：../../../services/medicationService.ts
  */
 import React, { useRef, useState } from 'react';
-import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppButton } from '../../../components/AppButton';
+import { SelectionChip } from '../../../components/SelectionChip';
+import { MedicationFrequencyField } from '../components/MedicationFrequencyField';
 import { RecordActionButton } from '../../../components/RecordActionButton';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { Colors } from '../../../constants/Colors';
@@ -50,11 +52,12 @@ export function MedicationFormScreen() {
   const route = useRoute<RouteProp<HomeStackParamList, 'MedicationForm'>>();
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const existing = route.params?.record as MedicationCourse | undefined;
-  const ownerPet = useFormPet(existing?.petId);
+  const sourceVisit = route.params?.sourceVisit;
+  const ownerPet = useFormPet(existing?.petId ?? sourceVisit?.petId);
   const duplicate = route.params?.duplicate === true;
   const quickEntry = route.params?.quickEntry === true;
   const [draft, setDraft] = useState<MedicationDraft>(() =>
-    createMedicationDraft(existing, duplicate),
+    createMedicationDraft(existing, duplicate, sourceVisit),
   );
   const { errors, scrollRef, position, showErrors, clearError } =
     useFormFieldErrors<MedicationField>();
@@ -96,6 +99,7 @@ export function MedicationFormScreen() {
         reminderTimes,
         reminderEnabled: reminderTimes.length > 0,
         medicalVisitId: draft.medicalVisitId,
+        medicalVisitMedicationKey: draft.medicalVisitMedicationKey,
       };
       const response =
         existing && !duplicate
@@ -141,6 +145,12 @@ export function MedicationFormScreen() {
         <Text style={styles.label}>
           毛孩：{ownerPet?.name || '原紀錄毛孩無法取得，請返回重新載入'}
         </Text>
+        {!!sourceVisit && (
+          <Text style={styles.reminderHint}>
+            已帶入當次開藥資訊，請依藥袋確認頻次、日期及提醒時間後儲存。
+            這不會修改原就醫紀錄，也不會自動開啟服藥提醒。
+          </Text>
+        )}
         {fields
           .filter(([key]) => key !== 'notes')
           .map(([key, label]) => {
@@ -168,21 +178,15 @@ export function MedicationFormScreen() {
             if (key === 'timesPerDay')
               return (
                 <View key={key} onLayout={position('timesPerDay')}>
-                  <Text style={styles.label}>{label}：1–6 次</Text>
-                  <View style={styles.options}>
-                    {[1, 2, 3, 4, 5, 6].map((count) => (
-                      <TouchableOpacity
-                        key={count}
-                        accessibilityRole="radio"
-                        accessibilityLabel={`每日 ${count} 次`}
-                        accessibilityState={{ selected: draft.timesPerDay === count }}
-                        style={[styles.chip, draft.timesPerDay === count && styles.selected]}
-                        onPress={() => setField('timesPerDay', count)}
-                      >
-                        <Text>{count} 次</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <Text style={styles.label}>{label}</Text>
+                  <MedicationFrequencyField
+                    value={draft.timesPerDay}
+                    onChange={(count) => setField('timesPerDay', count)}
+                    invalid={!!errors.timesPerDay}
+                  />
+                  <Text style={styles.reminderHint}>
+                    請依獸醫指示填寫；提醒時間可另外設定，不會依次數自動建立。
+                  </Text>
                   <FieldError message={errors.timesPerDay} />
                 </View>
               );
@@ -209,16 +213,14 @@ export function MedicationFormScreen() {
         <Text style={styles.section}>服用方式</Text>
         <View style={styles.options}>
           {(Object.keys(mealTimingLabels) as MedicationMealTiming[]).map((key) => (
-            <TouchableOpacity
+            <SelectionChip
               key={key}
-              accessibilityRole="radio"
-              accessibilityLabel={mealTimingLabels[key]}
-              accessibilityState={{ selected: draft.mealTiming === key }}
-              style={[styles.chip, draft.mealTiming === key && styles.selected]}
+              size="form"
+              label={mealTimingLabels[key]}
+              selected={draft.mealTiming === key}
               onPress={() => setField('mealTiming', key)}
-            >
-              <Text>{mealTimingLabels[key]}</Text>
-            </TouchableOpacity>
+              style={styles.mealOption}
+            />
           ))}
         </View>
 
@@ -252,33 +254,37 @@ export function MedicationFormScreen() {
           )}
           <FieldError message={errors.reminderTimes} />
         </View>
-        {draft.reminderTimes.map((time) => (
-          <View key={time} style={styles.reminderRow}>
-            <Text style={styles.reminderHint}>每天 {time}</Text>
-            <RecordActionButton
-              kind="edit"
-              label="編輯"
-              style={styles.reminderAction}
-              onPress={() => {
-                setEditingReminderTime(time);
-                setField('reminderTimeDraft', time);
-              }}
-            />
-            <RecordActionButton
-              kind="delete"
-              label="刪除"
-              style={styles.reminderAction}
-              onPress={() => {
-                setDraft((current) => ({
-                  ...current,
-                  reminderTimes: current.reminderTimes.filter((item) => item !== time),
-                  reminderTimeDraft: '',
-                }));
-                setEditingReminderTime(null);
-              }}
-            />
+        {draft.reminderTimes.length > 0 && (
+          <View style={styles.reminderList}>
+            {draft.reminderTimes.map((time) => (
+              <View key={time} style={styles.reminderRow}>
+                <Text style={styles.reminderHint}>每天 {time}</Text>
+                <RecordActionButton
+                  kind="edit"
+                  label="編輯"
+                  style={styles.reminderAction}
+                  onPress={() => {
+                    setEditingReminderTime(time);
+                    setField('reminderTimeDraft', time);
+                  }}
+                />
+                <RecordActionButton
+                  kind="delete"
+                  label="刪除"
+                  style={styles.reminderAction}
+                  onPress={() => {
+                    setDraft((current) => ({
+                      ...current,
+                      reminderTimes: current.reminderTimes.filter((item) => item !== time),
+                      reminderTimeDraft: '',
+                    }));
+                    setEditingReminderTime(null);
+                  }}
+                />
+              </View>
+            ))}
           </View>
-        ))}
+        )}
 
         <AppButton
           title={saving ? '儲存中…' : '儲存'}

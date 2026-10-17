@@ -3,9 +3,10 @@ import { addDateKeyDays, taipeiDateKey, taipeiDateFromKey } from '../utils/taipe
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：建立或編輯提醒；後端成功後同步裝置 Local Notification。 */
 import React, { useRef, useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
+import { SelectionChip, SelectionGroup } from '../components/SelectionChip';
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -13,6 +14,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -206,16 +208,17 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
           iconBackground={Colors.primarySoft}
         />
         <Label text="提醒類型（必填）" />
-        <View style={styles.chips}>
+        <SelectionGroup label="提醒類型">
           {REMINDER_TYPES.map((item) => (
-            <Chip
+            <SelectionChip
               key={item[0]}
+              size="form"
               label={item[1]}
-              active={type === item[0]}
+              selected={type === item[0]}
               onPress={() => chooseType(item)}
             />
           ))}
-        </View>
+        </SelectionGroup>
         <View onLayout={position('title')}>
           <Label text="提醒名稱（必填）" />
           <TextInput
@@ -244,16 +247,17 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
           <FieldError message={errors.scheduledAt} />
         </View>
         <Label text="是否重複（建議值，可自行調整）" />
-        <View style={styles.chips}>
+        <SelectionGroup label="重複頻率">
           {RECURRENCE_RULES.map(([value, label]) => (
-            <Chip
+            <SelectionChip
               key={value}
+              size="form"
               label={label}
-              active={rule === value}
+              selected={rule === value}
               onPress={() => setRule(value)}
             />
           ))}
-        </View>
+        </SelectionGroup>
         <View style={styles.notice}>
           <Ionicons name="information-circle-outline" size={17} color={Colors.successDecoration} />
           <View style={styles.noticeCopy}>
@@ -279,13 +283,6 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
 function Label({ text }: { text: string }) {
   return <Text style={styles.label}>{text}</Text>;
 }
-function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={[styles.chip, active && styles.chipActive]} onPress={onPress}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
@@ -297,20 +294,6 @@ const styles = StyleSheet.create({
     marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: Colors.surface,
-    borderColor: Colors.border,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 11,
-  },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { color: Colors.text },
-  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   input: {
     fontSize: FORM_FIELD_FONT_SIZE,
     minHeight: FORM_FIELD_HEIGHT,
@@ -341,7 +324,7 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: FORM_BUTTON_HEIGHT,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: FORM_ACTION_GAP,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.55 },

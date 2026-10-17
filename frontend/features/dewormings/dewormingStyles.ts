@@ -1,8 +1,10 @@
-import { CardSurface } from '../../constants/Layout';
+import { CardSurface, Spacing } from '../../constants/Layout';
 /** 用途：驅蟲列表、表單與詳細頁共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import {
+  FORM_ACTION_GAP,
+  FORM_FIELD_GAP,
   FORM_BUTTON_HEIGHT,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
@@ -94,17 +96,6 @@ export const dewormingStyles = StyleSheet.create({
     padding: 14,
     minHeight: FORM_FIELD_HEIGHT,
   },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  chip: {
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: Colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selected: { backgroundColor: Colors.successSoft, borderColor: Colors.success },
   primary: {
     flexDirection: 'row',
     gap: 7,
@@ -114,7 +105,8 @@ export const dewormingStyles = StyleSheet.create({
     minHeight: FORM_BUTTON_HEIGHT,
     borderRadius: FORM_BUTTON_RADIUS,
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: FORM_ACTION_GAP,
+    marginBottom: Spacing.sm,
   },
   primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 18 },
@@ -182,6 +174,7 @@ export const dewormingStyles = StyleSheet.create({
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
   error: { color: Colors.dangerText },
   deleteButton: {
+    marginTop: FORM_FIELD_GAP,
     alignSelf: 'center',
     minHeight: 44,
     minWidth: 72,

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import { Type } from '../constants/Typography';
+import { Spacing } from '../constants/Layout';
 import { SoftButton } from './SoftMotion';
 
 /** Page-owned heading and back action; navigation guards still handle goBack. */
@@ -14,6 +15,9 @@ export function ScreenPageHeader({
   icon,
   iconColor,
   iconBackground = Colors.successSoft,
+  showBack = true,
+  backLabel = '返回上一頁',
+  onBack,
   style,
 }: {
   title: string;
@@ -21,28 +25,29 @@ export function ScreenPageHeader({
   icon?: keyof typeof Ionicons.glyphMap;
   iconColor?: string;
   iconBackground?: string;
+  showBack?: boolean;
+  backLabel?: string;
+  onBack?: () => void;
   style?: StyleProp<ViewStyle>;
 }) {
   const navigation = useNavigation();
   return (
     <View style={[style, styles.header]}>
-      <SoftButton
-        accessibilityRole="button"
-        accessibilityLabel="返回上一頁"
-        style={styles.back}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={22} color={Colors.text} />
-      </SoftButton>
-      <View style={styles.copy}>
+      {showBack && (
+        <SoftButton
+          accessibilityRole="button"
+          accessibilityLabel={backLabel}
+          style={styles.back}
+          onPress={onBack ?? (() => navigation.goBack())}
+        >
+          <Ionicons name="chevron-back" size={22} color={Colors.text} />
+        </SoftButton>
+      )}
+      <View style={[styles.copy, showBack && styles.copyWithBack]}>
         <Text accessibilityRole="header" style={styles.title}>
           {title}
         </Text>
-        {!!description && (
-          <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
-            {description}
-          </Text>
-        )}
+        {!!description && <Text style={styles.description}>{description}</Text>}
       </View>
       {!!icon && (
         <View
@@ -112,9 +117,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  copy: { flex: 1, minWidth: 0, marginLeft: 8 },
+  copy: { flex: 1, minWidth: 0 },
+  copyWithBack: { marginLeft: Spacing.sm },
   title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
-  description: { color: Colors.subtext, fontSize: Type.footnote, marginTop: 2 },
+  description: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 20, marginTop: 2 },
   icon: {
     width: 44,
     height: 44,

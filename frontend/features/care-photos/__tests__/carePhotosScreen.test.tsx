@@ -109,7 +109,7 @@ test('album uses the shared one-row heading and returns through the same back ac
   const description = screen.root.findAll(
     (node) => node.type === ('Text' as never) && node.props.children === '依日期回顧毛孩照護照片',
   )[0];
-  expect(description.props.numberOfLines).toBe(2);
+  expect(description.props.numberOfLines).toBeUndefined();
   const back = byLabel('返回上一頁');
   expect(back.props.style).toEqual(
     expect.objectContaining({ width: 44, height: 44, borderRadius: 14 }),

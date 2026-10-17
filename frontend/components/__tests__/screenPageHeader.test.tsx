@@ -41,7 +41,7 @@ test('page header exposes a labeled 44-unit back button and delegates navigation
   await act(async () => back.props.onPress());
   expect(mockGoBack).toHaveBeenCalledTimes(1);
 });
-test('layout F keeps title and two-line description between the back button and optional icon', async () => {
+test('the shared header keeps readable, untruncated copy between the back button and optional icon', async () => {
   await act(async () => {
     screen = create(
       <ScreenPageHeader title="疫苗紀錄" description="查看接種與下次日期" icon="medkit-outline" />,
@@ -50,8 +50,9 @@ test('layout F keeps title and two-line description between the back button and 
   const description = screen.root.findAll(
     (node) => node.type === ('Text' as never) && node.props.children === '查看接種與下次日期',
   )[0];
-  expect(description.props.numberOfLines).toBe(2);
-  expect(description.props.ellipsizeMode).toBe('tail');
+  expect(description.props.numberOfLines).toBeUndefined();
+  expect(description.props.ellipsizeMode).toBeUndefined();
+  expect(description.props.style.lineHeight).toBeGreaterThan(description.props.style.fontSize);
   const header = screen.root.findAllByType('View' as never)[0];
   expect(header.children).toHaveLength(3);
   expect(screen.root.findAllByType('Icon' as never).map((node) => node.props.name)).toEqual([
@@ -64,6 +65,25 @@ test('the category icon is optional', async () => {
     screen = create(<ScreenPageHeader title="提醒" />);
   });
   expect(screen.root.findAllByType('Icon' as never)).toHaveLength(1);
+});
+test('custom back copy and handler preserve the same shared back-button presentation', async () => {
+  const onBack = jest.fn();
+  await act(async () => {
+    screen = create(
+      <ScreenPageHeader title="選擇動物醫院" backLabel="返回就醫紀錄表單" onBack={onBack} />,
+    );
+  });
+  const back = screen.root.findByType('Button' as never);
+  expect(back.props.accessibilityLabel).toBe('返回就醫紀錄表單');
+  await act(async () => back.props.onPress());
+  expect(onBack).toHaveBeenCalledTimes(1);
+  expect(mockGoBack).not.toHaveBeenCalled();
+});
+test('a root-mode heading has no unnecessary back control', async () => {
+  await act(async () => {
+    screen = create(<ScreenPageHeader title="就醫地圖" showBack={false} />);
+  });
+  expect(screen.root.findAllByType('Button' as never)).toHaveLength(0);
 });
 test.each(['載入中', '載入失敗', '找不到紀錄'])(
   'state %s retains top safe area and visible back action',

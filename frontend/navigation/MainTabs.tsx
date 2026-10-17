@@ -129,7 +129,11 @@ function HomeStack() {
       <Stack.Screen name="DailyLog" component={DailyLogScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddPet" component={AddPetScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditPet" component={EditPetScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="PetMemorial" component={PetMemorialScreen} options={{ title: '回憶' }} />
+      <Stack.Screen
+        name="PetMemorial"
+        component={PetMemorialScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="ReminderList"
         component={ReminderListScreen}
@@ -148,7 +152,7 @@ function HomeStack() {
       <Stack.Screen
         name="CreateHealthEvent"
         component={CreateHealthEventScreen}
-        options={{ title: '新增健康紀錄' }}
+        options={{ headerShown: false }}
       />
       {renderSharedHealthScreens(Stack)}
     </Stack.Navigator>

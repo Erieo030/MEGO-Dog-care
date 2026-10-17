@@ -30,6 +30,7 @@ jest.mock('@react-navigation/native', () => ({
   usePreventRemove: jest.fn(),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+jest.mock('../../components/SoftMotion', () => ({ SoftButton: 'Button' }));
 jest.mock('../../hooks/useFormPet', () => ({ useFormPet: () => mockPet }));
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ session: { userId: 'u1' } }),

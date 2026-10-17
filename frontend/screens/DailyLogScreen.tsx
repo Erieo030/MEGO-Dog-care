@@ -7,6 +7,7 @@ import type { HomeStackParamList } from '../navigation/types';
 import { Alert, Image, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
+import { SelectionChip, SelectionGroup } from '../components/SelectionChip';
 import { RecordActionButton } from '../components/RecordActionButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 import { Colors } from '../constants/Colors';
@@ -290,13 +291,33 @@ export default function DailyLogScreen({ route, navigation }: Props) {
           <AppButton title="重新載入" variant="tertiary" onPress={() => void load()} />
         ) : null}
         <Text style={s.label}>喝水量</Text>
-        <Options values={water} value={draft.waterLevel} onPick={(v) => set('waterLevel', v)} />
+        <Options
+          label="喝水量"
+          values={water}
+          value={draft.waterLevel}
+          onPick={(v) => set('waterLevel', v)}
+        />
         <Text style={s.label}>飼料量</Text>
-        <Options values={water} value={draft.foodLevel} onPick={(v) => set('foodLevel', v)} />
+        <Options
+          label="飼料量"
+          values={water}
+          value={draft.foodLevel}
+          onPick={(v) => set('foodLevel', v)}
+        />
         <Text style={s.label}>精神狀態</Text>
-        <Options values={energy} value={draft.energyLevel} onPick={(v) => set('energyLevel', v)} />
+        <Options
+          label="精神狀態"
+          values={energy}
+          value={draft.energyLevel}
+          onPick={(v) => set('energyLevel', v)}
+        />
         <Text style={s.label}>大便狀況</Text>
-        <Options values={stool} value={draft.stoolLevel} onPick={(v) => set('stoolLevel', v)} />
+        <Options
+          label="大便狀況"
+          values={stool}
+          value={draft.stoolLevel}
+          onPick={(v) => set('stoolLevel', v)}
+        />
         <View style={s.classifierSection}>
           <TouchableOpacity
             accessibilityRole="button"
@@ -367,6 +388,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
                 <AppButton
                   title={`採用建議：${stoolSuggestion.suggestedStoolLabel}`}
                   variant="secondary"
+                  style={s.suggestionAction}
                   onPress={() => set('stoolLevel', stoolSuggestion.suggestedStoolLevel!)}
                 />
               ) : null}
@@ -411,28 +433,27 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   );
 }
 function Options({
+  label,
   values,
   value,
   onPick,
 }: {
+  label: string;
   values: [string | boolean | number, string][];
   value: string | boolean | number | undefined;
   onPick: (v: string | boolean | number) => void;
 }) {
   return (
-    <View style={s.options}>
+    <SelectionGroup label={label}>
       {values.map(([v, l]) => (
-        <TouchableOpacity
-          accessibilityRole="radio"
-          accessibilityState={{ checked: value === v }}
-          accessibilityLabel={l}
+        <SelectionChip
+          size="form"
+          selected={value === v}
+          label={l}
           key={String(v)}
-          style={[s.chip, value === v && s.selected]}
           onPress={() => onPick(v)}
-        >
-          <Text style={[s.chipText, value === v && s.selectedText]}>{l}</Text>
-        </TouchableOpacity>
+        />
       ))}
-    </View>
+    </SelectionGroup>
   );
 }

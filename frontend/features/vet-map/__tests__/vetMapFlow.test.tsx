@@ -48,6 +48,7 @@ jest.mock('../../../components/navigation/useTabContentBottomPadding', () => ({
   useTabContentBottomPadding: () => 96,
 }));
 jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ goBack: jest.fn() }),
   useFocusEffect: (callback: () => () => void) =>
     require('react').useEffect(() => {
       const cleanup = callback();
@@ -55,6 +56,7 @@ jest.mock('@react-navigation/native', () => ({
       return cleanup;
     }, [callback]),
 }));
+jest.mock('../../../components/SoftMotion', () => ({ SoftButton: 'SoftButton' }));
 jest.mock('expo-location', () => ({
   Accuracy: { Balanced: 3 },
   requestForegroundPermissionsAsync: jest.fn(),

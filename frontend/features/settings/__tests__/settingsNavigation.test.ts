@@ -3,6 +3,48 @@ import { join } from 'node:path';
 import { parse } from '@babel/parser';
 import { SETTINGS_PAGES } from '../settingsPages';
 
+test('memorial opened from Home also disables the native header, just like DailyLog', () => {
+  const source = readFileSync(join(__dirname, '../../../navigation/MainTabs.tsx'), 'utf8');
+  const ast = parse(source, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
+  const home = ast.program.body.find(
+    (node) => node.type === 'FunctionDeclaration' && node.id?.name === 'HomeStack',
+  );
+  if (home?.type !== 'FunctionDeclaration') throw new Error('Missing HomeStack');
+  const navigator = home.body.body.find((node) => node.type === 'ReturnStatement')?.argument;
+  if (navigator?.type !== 'JSXElement') throw new Error('Missing home navigator');
+  for (const route of ['DailyLog', 'PetMemorial']) {
+    const screen = navigator.children.find(
+      (node) =>
+        node.type === 'JSXElement' &&
+        node.openingElement.attributes.some(
+          (attribute) =>
+            attribute.type === 'JSXAttribute' &&
+            attribute.name.name === 'name' &&
+            attribute.value?.type === 'StringLiteral' &&
+            attribute.value.value === route,
+        ),
+    );
+    if (screen?.type !== 'JSXElement') throw new Error(`Missing ${route}`);
+    const options = screen.openingElement.attributes.find(
+      (attribute) => attribute.type === 'JSXAttribute' && attribute.name.name === 'options',
+    );
+    if (
+      options?.type !== 'JSXAttribute' ||
+      options.value?.type !== 'JSXExpressionContainer' ||
+      options.value.expression.type !== 'ObjectExpression'
+    )
+      throw new Error(`Missing ${route} options`);
+    expect(options.value.expression.properties).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: expect.objectContaining({ name: 'headerShown' }),
+          value: expect.objectContaining({ value: false }),
+        }),
+      ]),
+    );
+  }
+});
+
 /** 檢查實際導航宣告，避免自製頁首外又出現系統標題，或新增子頁時漏掉頁首規劃。 */
 test('all settings routes disable the native header without overriding it on a child screen', () => {
   const source = readFileSync(join(__dirname, '../../../navigation/MainTabs.tsx'), 'utf8');

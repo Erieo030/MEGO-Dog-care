@@ -4,6 +4,7 @@
  * API：../../../services/medicationService.ts
  */
 import type { MedicationCourse, MedicationMealTiming } from '../../types';
+import type { HomeStackParamList } from '../../navigation/types';
 import { taipeiDateKey, taipeiDateFromKey } from '../../utils/taipeiDate';
 
 export type MedicationDraft = {
@@ -19,6 +20,7 @@ export type MedicationDraft = {
   reminderTimes: string[];
   reminderTimeDraft: string;
   medicalVisitId?: string;
+  medicalVisitMedicationKey?: string;
   [key: string]: string | number | boolean | string[] | undefined;
 };
 
@@ -51,10 +53,37 @@ export const timeValue = (value?: string) => {
 export function createMedicationDraft(
   existing?: MedicationCourse,
   duplicate = false,
+  source?: NonNullable<HomeStackParamList['MedicationForm']>['sourceVisit'],
 ): MedicationDraft {
   const blank = createBlankMedicationDraft();
+  if (!existing && source) {
+    const med = source.medication;
+    return {
+      ...blank,
+      name: med.name,
+      instructions: med.instructions,
+      timesPerDay: med.timesPerDay,
+      startDate: med.startDate || taipeiDateKey(new Date(source.visitedAt)),
+      endDate: med.endDate,
+      mealTiming:
+        med.mealTiming === 'before'
+          ? 'before_meal'
+          : med.mealTiming === 'after'
+            ? 'after_meal'
+            : 'anytime',
+      notes: med.notes,
+      medicalVisitId: source.id,
+      medicalVisitMedicationKey: source.sourceMedicationKey,
+    };
+  }
   if (!existing) return blank;
-  if (!duplicate) return { ...blank, ...existing };
+  if (!duplicate)
+    return {
+      ...blank,
+      ...existing,
+      medicalVisitId: existing.medicalVisitId ?? undefined,
+      medicalVisitMedicationKey: existing.medicalVisitMedicationKey ?? undefined,
+    };
   return {
     ...blank,
     name: existing.name,

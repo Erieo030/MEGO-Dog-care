@@ -3,41 +3,13 @@ import { CardSurface } from '../../../constants/Layout';
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../../constants/Colors';
 import { Type } from '../../../constants/Typography';
+import { PageLayout } from '../../../constants/PageLayout';
+import { Spacing } from '../../../constants/Layout';
 
 export const preVetStyles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, paddingBottom: 36, gap: 18 },
-  pageHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 6,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  pageHeaderCopy: { flex: 1, minWidth: 0 },
-  title: { fontSize: Type.display, fontWeight: '800', color: Colors.text },
-  subtitle: { marginTop: 6, color: Colors.subtext, fontSize: Type.body, lineHeight: 22 },
-  rangeRow: { flexDirection: 'row', gap: 8 },
-  chip: {
-    paddingVertical: 9,
-    paddingHorizontal: 13,
-    borderRadius: 16,
-    backgroundColor: Colors.peachSoft,
-  },
-  activeChip: { backgroundColor: Colors.primary },
-  chipText: { color: Colors.subtext, fontWeight: '700' },
-  activeChipText: { color: Colors.surface },
+  content: { padding: PageLayout.detailHorizontal, paddingBottom: 36, gap: Spacing.lg },
+  rangeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   selector: {
     borderRadius: 18,
     backgroundColor: Colors.surfaceSoft,
@@ -49,17 +21,6 @@ export const preVetStyles = StyleSheet.create({
   selectorTitle: { color: Colors.text, fontSize: Type.headline, fontWeight: '800' },
   selectorHint: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 19 },
   optionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  option: {
-    paddingVertical: 8,
-    paddingHorizontal: 11,
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  optionActive: { backgroundColor: Colors.successSoft, borderColor: Colors.success },
-  optionText: { color: Colors.subtext, fontWeight: '600' },
-  optionTextActive: { color: Colors.success },
   applyButton: {
     alignSelf: 'flex-start',
     paddingVertical: 8,

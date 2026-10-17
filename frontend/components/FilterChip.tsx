@@ -1,41 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { Colors } from '../constants/Colors';
-import { Type } from '../constants/Typography';
+import { SelectionChip } from './SelectionChip';
 
-export default function FilterChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[styles.chip, selected && styles.selected]}
-    >
-      <Text style={styles.text}>{label}</Text>
-    </TouchableOpacity>
-  );
+/** 既有篩選入口沿用相同 API，選取外觀由 SelectionChip 統一維護。 */
+export default function FilterChip(props: React.ComponentProps<typeof SelectionChip>) {
+  return <SelectionChip {...props} />;
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    minHeight: 48,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    justifyContent: 'center',
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selected: { backgroundColor: Colors.primarySoft, borderColor: Colors.primary },
-  text: { fontSize: Type.footnote, fontWeight: '600', color: Colors.text },
-});

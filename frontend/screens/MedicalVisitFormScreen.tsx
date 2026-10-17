@@ -1,4 +1,4 @@
-import { CardSurface } from '../constants/Layout';
+import { CardSurface, Spacing } from '../constants/Layout';
 import { useReducedMotion } from '../hooks/usePressFeedback';
 import { useFormPet } from '../hooks/useFormPet';
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
@@ -19,6 +19,8 @@ import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
 import { Colors } from '../constants/Colors';
 import {
+  FORM_FIELD_GAP,
+  FORM_ACTION_GAP,
   FORM_BUTTON_HEIGHT,
   FORM_BUTTON_RADIUS,
   FORM_PAGE_HORIZONTAL_PADDING,
@@ -180,9 +182,12 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
         notes: notes.trim(),
         attachmentIds: attachments.map((a) => a.id),
         medications: medications.map((m) => ({
-          ...m,
           name: m.name.trim(),
           instructions: m.instructions.trim(),
+          timesPerDay: m.timesPerDay,
+          startDate: m.startDate,
+          endDate: m.endDate,
+          mealTiming: m.mealTiming,
           notes: m.notes.trim(),
         })),
         createFollowUpReminder: Boolean(followUp && createReminder),
@@ -340,8 +345,10 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
             placeholder="0"
           />
         </View>
-        <Text style={s.heading}>用藥紀錄（選填）</Text>
-        <Text style={s.helper}>只有拿藥時才需要新增；不知道藥名可先查看藥袋或附上照片。</Text>
+        <Text style={s.heading}>當次開藥紀錄（選填）</Text>
+        <Text style={s.helper}>
+          保留這次看診的藥袋資訊，不會自動建立療程或服藥提醒。儲存後可從詳情帶入用藥療程；不清楚藥名時，可先填治療／用藥說明並附照片。
+        </Text>
         {!medications.length && <Text style={s.empty}>目前沒有藥物</Text>}
         {medications.map((medication, index) => (
           <View key={index} onLayout={position(`medication-${index}`)}>
@@ -424,7 +431,7 @@ const s = StyleSheet.create({
     marginTop: 20,
     marginBottom: 2,
   },
-  helper: { color: Colors.subtext, fontSize: Type.caption, marginTop: 4, maxWidth: 280 },
+  helper: { color: Colors.subtext, fontSize: Type.footnote, lineHeight: 20, marginTop: Spacing.sm },
   heading: {
     color: Colors.text,
     fontSize: Type.headline,
@@ -441,7 +448,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: FORM_FIELD_GAP,
   },
   outlineText: { color: Colors.primary, fontWeight: '700' },
   findHospital: {
@@ -481,7 +488,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: FORM_ACTION_GAP,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.5 },

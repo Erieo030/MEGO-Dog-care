@@ -62,7 +62,7 @@ test.each(Object.keys(SETTINGS_PAGES) as SettingsPageKey[])(
       (node) =>
         node.type === ('Text' as never) && node.props.children === SETTINGS_PAGES[page].description,
     )[0];
-    expect(description.props.numberOfLines).toBe(2);
+    expect(description.props.numberOfLines).toBeUndefined();
     const scroll = screen.root.findByType('ScrollView' as never);
     expect(flatten(scroll.props.contentContainerStyle)).toMatchObject({
       padding: 18,

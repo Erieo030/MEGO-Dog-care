@@ -34,6 +34,7 @@ export interface MedicationCourse {
   id: string;
   petId: string;
   medicalVisitId?: string | null;
+  medicalVisitMedicationKey?: string | null;
   name: string;
   instructions?: string;
   timesPerDay: number;

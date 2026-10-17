@@ -82,3 +82,4 @@ test.each([
     expect(screen.root.findByType('Switch' as never).props.accessibilityHint).toBe(unavailable);
   },
 );
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));

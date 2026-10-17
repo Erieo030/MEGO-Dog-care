@@ -19,6 +19,7 @@ import {
   SettingsHomeSection as Section,
 } from '../features/settings/components/SettingsHomeRows';
 import { Type } from '../constants/Typography';
+import { PageLayout } from '../constants/PageLayout';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileOverview'>;
 
 export default function SettingsHomeScreen({ navigation }: Props) {
@@ -172,7 +173,7 @@ export default function SettingsHomeScreen({ navigation }: Props) {
 }
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingHorizontal: 18, paddingTop: 18 },
+  content: { paddingHorizontal: PageLayout.mainHorizontal, paddingTop: PageLayout.top },
   profileBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   profileLogo: { width: 36, height: 34, resizeMode: 'contain' },
   hero: { fontSize: Type.display, fontWeight: '900', color: Colors.text, marginBottom: 12 },

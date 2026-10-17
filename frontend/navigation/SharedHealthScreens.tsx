@@ -63,17 +63,17 @@ export function renderSharedHealthScreens(Screen: HomeStackNavigator) {
       <Screen.Screen
         name="VomitingHealthEvent"
         component={VomitingHealthEventScreen}
-        options={{ title: '嘔吐快速紀錄' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="StoolHealthEvent"
         component={StoolHealthEventScreen}
-        options={{ title: '排便異常快速紀錄' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="ObservationHealthEvent"
         component={ObservationHealthEventScreen}
-        options={{ title: '健康異常快速紀錄' }}
+        options={{ headerShown: false }}
       />
       <Screen.Screen
         name="WeightList"

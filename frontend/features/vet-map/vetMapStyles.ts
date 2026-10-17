@@ -1,36 +1,16 @@
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
+import { PageLayout } from '../../constants/PageLayout';
+import { Spacing } from '../../constants/Layout';
 
 export const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingHorizontal: 18, paddingTop: 8, gap: 13 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 11 },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 21,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  content: {
+    paddingHorizontal: PageLayout.detailHorizontal,
+    paddingTop: PageLayout.top,
+    gap: Spacing.md,
   },
-  headingCopy: { flex: 1 },
-  eyebrow: {
-    color: Colors.primary,
-    fontSize: Type.caption2,
-    fontWeight: '800',
-    letterSpacing: 1.3,
-  },
-  title: { marginTop: 2, color: Colors.text, fontSize: Type.title1, fontWeight: '800' },
-  headingIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    backgroundColor: Colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  subtitle: { color: Colors.subtext, fontSize: Type.subhead, lineHeight: 21, marginBottom: 1 },
   searchRow: { flexDirection: 'row', gap: 9 },
   searchBox: {
     flex: 1,
@@ -63,22 +43,11 @@ export const styles = StyleSheet.create({
   modeSwitch: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
-    padding: 4,
-    borderRadius: 16,
-    backgroundColor: '#EEE8DF',
+    gap: Spacing.sm,
   },
   modeOption: {
     minWidth: 84,
-    minHeight: 44,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
   },
-  modeOptionActive: { backgroundColor: Colors.surface },
-  modeText: { color: Colors.subtext, fontSize: Type.footnote, fontWeight: '700' },
-  modeTextActive: { color: Colors.primary },
   mapFrame: {
     height: 300,
     overflow: 'hidden',

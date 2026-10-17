@@ -3,6 +3,7 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { Alert } from 'react-native';
 import DailyLogScreen from '../DailyLogScreen';
+import { SelectionGroup } from '../../components/SelectionChip';
 import * as logs from '../../services/dailyLogService';
 import { classifyStoolPhoto } from '../../services/stoolClassifierService';
 const mockPet = { id: 'p1' };
@@ -123,6 +124,41 @@ test('returning focus does not reload over edited choices', async () => {
   await act(async () => screen.update(<DailyLogScreen {...props} />));
   expect(logs.getTodayDailyLog).toHaveBeenCalledTimes(1);
   expect(choice('偏硬').props.accessibilityState.checked).toBe(true);
+});
+test('named daily groups keep independent single selections and save the original field values', async () => {
+  await mount();
+  for (const [groupName, label] of [
+    ['喝水量', '偏少'],
+    ['飼料量', '偏多'],
+    ['精神狀態', '稍沒精神'],
+    ['大便狀況', '偏軟'],
+  ]) {
+    const group = screen.root
+      .findAllByType(SelectionGroup)
+      .find((node) => node.props.label === groupName)!;
+    const option = group.find(
+      (node) =>
+        node.type === ('TouchableOpacity' as never) && node.props.accessibilityLabel === label,
+    );
+    await act(async () => option.props.onPress());
+    expect(
+      group.findAll(
+        (node) =>
+          node.type === ('TouchableOpacity' as never) && node.props.accessibilityState?.checked,
+      ),
+    ).toHaveLength(1);
+  }
+  await act(async () => button('儲存這天的紀錄').props.onPress());
+  expect(logs.createDailyLog).toHaveBeenCalledWith(
+    'u1',
+    'p1',
+    expect.objectContaining({
+      waterLevel: 'low',
+      foodLevel: 'high',
+      energyLevel: 'slightly_low',
+      stoolLevel: 'soft',
+    }),
+  );
 });
 test('photo controls start collapsed and differing suggestions require explicit adoption', async () => {
   await mount();

@@ -96,6 +96,9 @@ export interface WeightSummary {
 }
 export type WeightInput = Pick<WeightRecord, 'weightKg' | 'measuredAt' | 'notes' | 'attachmentIds'>;
 export interface Medication {
+  /** 就醫詳情回傳的唯讀來源資訊；儲存就醫紀錄時不送回。 */
+  sourceMedicationKey?: string;
+  linkedMedicationId?: string | null;
   name: string;
   instructions: string;
   timesPerDay: number;

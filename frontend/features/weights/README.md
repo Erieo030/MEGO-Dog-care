@@ -4,6 +4,7 @@
 - `components/WeightSummaryCard.tsx`: 最新體重摘要。
 - `components/WeightLineChart.tsx`: 純 React Native 折線趨勢圖。
 - `weightListStyles.ts`: 體重清單與展示元件共用樣式。
+- 查看期間的 `FilterChip` 共用 `SelectionChip`：單選文字置中，以淡底、邊框及加粗文字區分選取狀態，不預留單邊圖示；與照護相簿、就醫前摘要一致，不改變期間計算或紀錄分類色。
 
 `WeightLineChart` 以內層繪圖容器的實際寬度定位圖點，保留邊緣空間避免節點裁切。`WeightListScreen` 的歷史紀錄預設顯示最新 3 筆，可展開全部；篩選仍同時套用趨勢圖及清單。
 

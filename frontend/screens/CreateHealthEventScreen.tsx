@@ -2,15 +2,17 @@ import { useFormPet } from '../hooks/useFormPet';
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：依異常類型呈現快速選項，支援時間、嚴重程度、圖片與備註。 */
 import React, { useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { ScreenPageHeader } from '../components/ScreenPageHeader';
+import { Spacing } from '../constants/Layout';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -38,7 +40,6 @@ import {
 } from '../features/health-events/components/CreateHealthEventChoices';
 import { CREATE_EVENT_SEVERITY_OPTIONS } from '../features/health-events/createHealthEventContent';
 import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
-import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CreateHealthEvent'>;
 export default function CreateHealthEventScreen({ route, navigation }: Props) {
@@ -131,15 +132,14 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="pulse-outline" size={22} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.title}>{label}</Text>
-            <Text style={styles.subtitle}>記下看見的狀況，方便日後回看。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={label}
+          description="記下看見的狀況，方便日後回看。"
+          icon="pulse-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
         <CreateHealthEventQuestions
           type={type}
           details={details}
@@ -195,18 +195,7 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 7 },
-  introIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
+  intro: { marginBottom: Spacing.md },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -243,7 +232,7 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: FORM_BUTTON_HEIGHT,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: FORM_ACTION_GAP,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },
   disabled: { opacity: 0.55 },

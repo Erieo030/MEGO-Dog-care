@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
   },
   input: {
+    textAlign: 'left',
     fontSize: FORM_FIELD_FONT_SIZE,
     minHeight: FORM_FIELD_HEIGHT,
     justifyContent: 'center',

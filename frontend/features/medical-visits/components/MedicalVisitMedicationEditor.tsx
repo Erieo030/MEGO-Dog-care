@@ -1,22 +1,24 @@
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { RecordActionButton } from '../../../components/RecordActionButton';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import DatePickerField from '../../../components/DatePickerField';
 import { Colors } from '../../../constants/Colors';
 import {
-  FORM_FIELD_FONT_SIZE,
+  FORM_FIELD_GAP,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_LABEL_FONT_SIZE,
   FORM_FIELD_LABEL_FONT_WEIGHT,
   FORM_FIELD_LABEL_MARGIN_BOTTOM,
   FORM_FIELD_LABEL_MARGIN_TOP,
-  FORM_FIELD_PADDING_HORIZONTAL,
-  FORM_FIELD_RADIUS,
 } from '../../../constants/FormTokens';
 import { Medication } from '../../../types';
 import { taipeiDateKey, taipeiDateFromKey } from '../../../utils/taipeiDate';
 import MedicalVisitTextField from './MedicalVisitTextField';
+import { AppButton } from '../../../components/AppButton';
+import { SelectionChip } from '../../../components/SelectionChip';
+import { MedicationFrequencyField } from '../../medications/components/MedicationFrequencyField';
+import { Spacing } from '../../../constants/Layout';
 
 type Props = {
   errors?: Partial<Record<'name' | 'timesPerDay' | 'endDate', string>>;
@@ -33,6 +35,8 @@ export default function MedicalVisitMedicationEditor({
   onUpdate,
   onRemove,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
+  const showDetails = expanded || Boolean(errors?.timesPerDay || errors?.endDate);
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -52,64 +56,75 @@ export default function MedicalVisitMedicationEditor({
         maxLength={100}
       />
       <MedicalVisitTextField
-        label="服用方式（選填）"
+        label="藥袋／使用說明（選填）"
         value={medication.instructions}
         onChangeText={(value) => onUpdate('instructions', value)}
         maxLength={500}
       />
-      <Text style={styles.label}>每日次數（選填）</Text>
-      <TextInput
-        accessibilityLabel={`藥物 ${index + 1} 每日次數`}
-        style={[styles.input, errors?.timesPerDay && { borderColor: Colors.dangerText }]}
-        keyboardType="number-pad"
-        value={String(medication.timesPerDay)}
-        onChangeText={(value) => onUpdate('timesPerDay', Number(value))}
+      <AppButton
+        title={showDetails ? '收合服用資訊' : '補充服用資訊'}
+        variant="secondary"
+        style={styles.disclosure}
+        onPress={() => setExpanded(!showDetails)}
       />
-      {errors?.timesPerDay ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {errors.timesPerDay}
-        </Text>
-      ) : null}
-      <DatePickerField
-        label="開始日期"
-        value={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
-        onChange={(date) => onUpdate('startDate', taipeiDateKey(date))}
-      />
-      <DatePickerField
-        label="結束日期"
-        value={medication.endDate ? taipeiDateFromKey(medication.endDate) : undefined}
-        minimumDate={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
-        onChange={(date) => onUpdate('endDate', taipeiDateKey(date))}
-      />
-      {errors?.endDate ? (
-        <Text accessibilityRole="alert" style={styles.error}>
-          {errors.endDate}
-        </Text>
-      ) : null}
-      <Text style={styles.label}>飯前／飯後（選填）</Text>
-      <View style={styles.mealRow}>
-        {(
-          [
-            ['before', '飯前'],
-            ['after', '飯後'],
-            ['any', '不限'],
-          ] as const
-        ).map(([value, label]) => (
-          <TouchableOpacity
-            key={value}
-            style={[styles.meal, medication.mealTiming === value && styles.mealActive]}
-            onPress={() => onUpdate('mealTiming', value)}
-          >
-            <Text style={styles.inputText}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <SupplementalNotesField
-        value={medication.notes}
-        onChange={(value) => onUpdate('notes', value)}
-        maxLength={500}
-        placeholder="補充藥物使用時需要記下的內容"
-      />
+      {showDetails && (
+        <>
+          <Text style={styles.label}>每日次數（新增藥物時必填）</Text>
+          <MedicationFrequencyField
+            accessibilityLabel={`藥物 ${index + 1} 每日次數`}
+            maximum={10}
+            invalid={!!errors?.timesPerDay}
+            value={medication.timesPerDay}
+            onChange={(value) => onUpdate('timesPerDay', value)}
+          />
+          {errors?.timesPerDay ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {errors.timesPerDay}
+            </Text>
+          ) : null}
+          <DatePickerField
+            label="開始日期"
+            value={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
+            onChange={(date) => onUpdate('startDate', taipeiDateKey(date))}
+          />
+          <DatePickerField
+            label="結束日期"
+            value={medication.endDate ? taipeiDateFromKey(medication.endDate) : undefined}
+            minimumDate={medication.startDate ? taipeiDateFromKey(medication.startDate) : undefined}
+            onChange={(date) => onUpdate('endDate', taipeiDateKey(date))}
+          />
+          {errors?.endDate ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {errors.endDate}
+            </Text>
+          ) : null}
+          <Text style={styles.label}>飯前／飯後（選填）</Text>
+          <View style={styles.mealRow}>
+            {(
+              [
+                ['before', '飯前'],
+                ['after', '飯後'],
+                ['any', '不限'],
+              ] as const
+            ).map(([value, label]) => (
+              <SelectionChip
+                key={value}
+                size="form"
+                label={label}
+                selected={medication.mealTiming === value}
+                onPress={() => onUpdate('mealTiming', value)}
+                style={styles.mealOption}
+              />
+            ))}
+          </View>
+          <SupplementalNotesField
+            value={medication.notes}
+            onChange={(value) => onUpdate('notes', value)}
+            maxLength={500}
+            placeholder="補充藥物使用時需要記下的內容"
+          />
+        </>
+      )}
     </View>
   );
 }
@@ -122,7 +137,7 @@ const styles = StyleSheet.create({
     minHeight: FORM_FIELD_HEIGHT,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginTop: 10,
+    marginTop: FORM_FIELD_GAP,
     borderWidth: 1,
     borderColor: Colors.border,
   },
@@ -131,6 +146,7 @@ const styles = StyleSheet.create({
   removeButton: {
     alignSelf: 'flex-start',
   },
+  disclosure: { marginTop: FORM_FIELD_GAP },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -138,27 +154,6 @@ const styles = StyleSheet.create({
     marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
   },
-  input: {
-    fontSize: FORM_FIELD_FONT_SIZE,
-    minHeight: FORM_FIELD_HEIGHT,
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: FORM_FIELD_RADIUS,
-    paddingHorizontal: FORM_FIELD_PADDING_HORIZONTAL,
-    color: Colors.text,
-  },
-  inputText: { color: Colors.text },
-  mealRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  meal: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 14,
-    minHeight: 44,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: Colors.surfaceSoft,
-  },
-  mealActive: { backgroundColor: Colors.primarySoft, borderColor: Colors.primary },
+  mealRow: { flexDirection: 'row', gap: Spacing.sm },
+  mealOption: { flex: 1, minWidth: 0 },
 });

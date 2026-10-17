@@ -3,15 +3,17 @@ import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeade
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：編輯健康異常紀錄既有的通用欄位，保留詳細資料與本機圖片 URI。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppButton } from '../components/AppButton';
+import { SelectionChip, SelectionGroup } from '../components/SelectionChip';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -226,16 +228,17 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
           <FieldError message={errors.summary} />
         </View>
         <Text style={styles.label}>嚴重程度（必填）</Text>
-        <View style={styles.chips}>
+        <SelectionGroup label="嚴重程度">
           {severities.map((value) => (
-            <Chip
+            <SelectionChip
               key={value}
-              text={SEVERITY_LABELS[value]}
-              active={severity === value}
+              size="form"
+              label={SEVERITY_LABELS[value]}
+              selected={severity === value}
               onPress={() => setSeverity(value)}
             />
           ))}
-        </View>
+        </SelectionGroup>
         <View onLayout={position('occurredAt')}>
           <DatePickerField
             label="發生日期（必填）"
@@ -284,18 +287,6 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   );
 }
 
-function Chip({ text, active, onPress }: { text: string; active: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      disabled={false}
-      style={[styles.chip, active && styles.chipActive]}
-      onPress={onPress}
-    >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{text}</Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 18, paddingBottom: 42 },
@@ -332,18 +323,6 @@ const styles = StyleSheet.create({
     marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 16,
-    paddingHorizontal: 13,
-    paddingVertical: 12,
-  },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { color: Colors.text },
-  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   input: {
     fontSize: FORM_FIELD_FONT_SIZE,
     minHeight: FORM_FIELD_HEIGHT,
@@ -362,7 +341,7 @@ const styles = StyleSheet.create({
     borderRadius: FORM_BUTTON_RADIUS,
     padding: 16,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: FORM_ACTION_GAP,
     minHeight: FORM_BUTTON_HEIGHT,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },

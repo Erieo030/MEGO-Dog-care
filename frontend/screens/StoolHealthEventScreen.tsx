@@ -5,13 +5,15 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
+import { Spacing } from '../constants/Layout';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -215,16 +217,24 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
     }
   };
 
-  if (loading) return <HealthEventLoadingState text="正在載入排便異常紀錄…" />;
+  const pageTitle = eventId ? '編輯排便異常紀錄' : '記錄排便異常';
+  if (loading)
+    return (
+      <ScreenPageState title={pageTitle}>
+        <HealthEventLoadingState text="正在載入排便異常紀錄…" />
+      </ScreenPageState>
+    );
   if (error)
     return (
-      <HealthEventErrorState
-        text={error}
-        onRetry={() => {
-          setLoading(true);
-          load();
-        }}
-      />
+      <ScreenPageState title={pageTitle}>
+        <HealthEventErrorState
+          text={error}
+          onRetry={() => {
+            setLoading(true);
+            load();
+          }}
+        />
+      </ScreenPageState>
     );
 
   return (
@@ -233,19 +243,19 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
         ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="ellipse-outline" size={22} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.title}>{eventId ? '編輯排便異常紀錄' : '記錄排便異常'}</Text>
-            <Text style={styles.subtitle}>只記錄觀察到的外觀與狀況，不提供疾病診斷。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={pageTitle}
+          description="只記錄觀察到的外觀與狀況，不提供疾病診斷。"
+          icon="ellipse-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
 
         <View onLayout={position('stoolConsistency')}>
           <Text style={styles.label}>形狀（必填）</Text>
           <OptionGroup
+            label="形狀"
             options={STOOL_CONSISTENCY_OPTIONS}
             value={details.stoolConsistency}
             onChange={(stoolConsistency) => {
@@ -259,6 +269,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
         <View onLayout={position('stoolColor')}>
           <Text style={styles.label}>顏色（必填）</Text>
           <OptionGroup
+            label="顏色"
             options={STOOL_COLOR_OPTIONS}
             value={details.stoolColor}
             onChange={(stoolColor) => {
@@ -318,7 +329,12 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
         </View>
 
         <Text style={styles.label}>嚴重程度（必填）</Text>
-        <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />
+        <OptionGroup<Severity>
+          label="嚴重程度"
+          options={severities}
+          value={severity}
+          onChange={setSeverity}
+        />
 
         <AttachmentPicker
           onBusyChange={(busy) => {
@@ -365,18 +381,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 7 },
-  introIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
+  intro: { marginBottom: Spacing.md },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -427,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: FORM_BUTTON_RADIUS,
     padding: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: FORM_ACTION_GAP,
     minHeight: FORM_BUTTON_HEIGHT,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },

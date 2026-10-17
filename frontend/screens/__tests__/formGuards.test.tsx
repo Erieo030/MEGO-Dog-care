@@ -236,13 +236,7 @@ test.each(cases)(
         ? screen.root
             .findAllByType('PetField' as never)
             .find((node) => node.props.field.key === 'allergies')!
-        : Component === PetMemorialScreen
-          ? screen.root.find(
-              (node) =>
-                node.type === ('Input' as never) &&
-                node.props.accessibilityLabel === '想對牠說的話',
-            )
-          : screen.root.findAllByType('Notes' as never).at(-1)!;
+        : screen.root.findAllByType('Notes' as never).at(-1)!;
     const original = editable().props.value;
     await act(async () =>
       (editable().props.onChange || editable().props.onChangeText)('尚未儲存的修改'),

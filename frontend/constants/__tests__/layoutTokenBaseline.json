@@ -23,10 +23,6 @@
     "spacing": 1,
     "radius": 0
   },
-  "components/FilterChip.tsx": {
-    "spacing": 2,
-    "radius": 1
-  },
   "components/MonthPicker.tsx": {
     "spacing": 6,
     "radius": 2
@@ -107,10 +103,6 @@
     "spacing": 4,
     "radius": 1
   },
-  "features/health-events/components/HealthEventOptions.tsx": {
-    "spacing": 3,
-    "radius": 1
-  },
   "features/health-events/components/HealthEventScreenState.tsx": {
     "spacing": 5,
     "radius": 1
@@ -174,10 +166,6 @@
   "features/pets/components/PetIdentityCarousel.tsx": {
     "spacing": 26,
     "radius": 9
-  },
-  "features/pets/screens/PetMemorialScreen.tsx": {
-    "spacing": 3,
-    "radius": 1
   },
   "features/reminders/components/ReminderListCard.tsx": {
     "spacing": 10,

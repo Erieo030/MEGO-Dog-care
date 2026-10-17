@@ -81,7 +81,7 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
     const reminderText = item.followUpReminderId ? '，並一併刪除對應的回診提醒' : '';
     Alert.alert(
       '刪除就醫紀錄',
-      `確定刪除「${item.reason}」${reminderText}？此操作也會移除對應時間軸事件。`,
+      `確定刪除「${item.reason}」${reminderText}？此操作也會移除對應時間軸事件。已另行建立的用藥療程會保留，需至用藥紀錄管理。`,
       [
         { text: '取消', style: 'cancel' },
         {
@@ -178,8 +178,28 @@ export default function MedicalVisitDetailScreen({ route, navigation }: Props) {
           onPress={remove}
         />
         <MedicalVisitDetailRows rows={rows} />
-        <Text style={s.heading}>藥物</Text>
-        <MedicalVisitMedicationCards medications={item.medications ?? []} />
+        <Text style={s.heading}>當次開藥紀錄</Text>
+        <Text style={s.detailHint}>
+          這裡保留當次看診資訊。後續療程與提醒另行管理，兩者不會互相覆寫。若只是更正已建立的療程，請至用藥紀錄編輯，不必再建立。
+        </Text>
+        <MedicalVisitMedicationCards
+          medications={item.medications ?? []}
+          onCreateCourse={
+            !selectedPet?.memorial
+              ? (medication) =>
+                  navigation.navigate('MedicationForm', {
+                    sourceVisit: {
+                      id: item.id,
+                      petId: item.petId,
+                      visitedAt: item.visitedAt,
+                      medication,
+                      sourceMedicationKey: medication.sourceMedicationKey!,
+                    },
+                  })
+              : undefined
+          }
+          onViewCourse={(recordId) => navigation.navigate('MedicationDetail', { recordId })}
+        />
         <Text style={s.heading}>健康文件／附件</Text>
         <AttachmentGallery items={item.attachments ?? []} userId={session!.userId} />
       </ScrollView>

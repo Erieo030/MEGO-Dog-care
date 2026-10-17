@@ -3,20 +3,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 /** 毛孩新增與編輯共用表單，集中處理欄位驗證與健康資料輸入。 */
 import React, { useRef, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_FIELD_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_LABEL_FONT_SIZE,
   FORM_FIELD_LABEL_FONT_WEIGHT,
@@ -25,6 +24,7 @@ import {
 } from '../constants/FormTokens';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
+import { SelectionChip } from '../components/SelectionChip';
 import { emptyPetData, PetData } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import PetAvatarPicker from '../features/pets/components/PetAvatarPicker';
@@ -172,30 +172,31 @@ export default function PetFormScreen({
           {renderFields(PET_FORM_FIELDS.slice(0, 2))}
           <View onLayout={position('gender')}>
             <Text style={styles.label}>性別（必填）</Text>
-            <View style={styles.optionRow}>
+            <View style={styles.optionRow} accessibilityRole="radiogroup" accessibilityLabel="性別">
               {(
                 [
                   ['male', '公'],
                   ['female', '母'],
                 ] as const
               ).map(([value, label]) => (
-                <TouchableOpacity
+                <SelectionChip
                   key={value}
-                  style={[styles.option, form.gender === value && styles.optionSelected]}
+                  size="form"
+                  label={label}
+                  selected={form.gender === value}
+                  style={styles.option}
                   onPress={() => update('gender', value)}
-                >
-                  <Text
-                    style={[styles.optionText, form.gender === value && styles.optionTextSelected]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
             <FieldError message={errors.gender} />
           </View>
           <Text style={styles.label}>品種類型（必填）</Text>
-          <View style={styles.optionRow}>
+          <View
+            style={styles.optionRow}
+            accessibilityRole="radiogroup"
+            accessibilityLabel="品種類型"
+          >
             {(
               [
                 ['purebred', '純種'],
@@ -203,17 +204,14 @@ export default function PetFormScreen({
                 ['unknown', '不確定'],
               ] as const
             ).map(([value, label]) => (
-              <TouchableOpacity
+              <SelectionChip
                 key={value}
-                style={[styles.option, form.breedType === value && styles.optionSelected]}
+                size="form"
+                label={label}
+                selected={form.breedType === value}
+                style={styles.option}
                 onPress={() => update('breedType', value)}
-              >
-                <Text
-                  style={[styles.optionText, form.breedType === value && styles.optionTextSelected]}
-                >
-                  {label}
-                </Text>
-              </TouchableOpacity>
+              />
             ))}
           </View>
 
@@ -308,17 +306,9 @@ const styles = StyleSheet.create({
   optionRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
   option: {
     flex: 1,
+    minWidth: 0,
     minHeight: FORM_BUTTON_HEIGHT,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
   },
-  optionSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  optionText: { color: Colors.text, fontWeight: '700' },
-  optionTextSelected: { color: Colors.onPrimary },
   hint: { color: Colors.subtext, fontSize: Type.caption },
   switchRow: {
     flexDirection: 'row',
@@ -334,6 +324,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitText: { color: Colors.onPrimary, fontSize: Type.headline, fontWeight: '700' },
-  cancelButton: { alignItems: 'center', padding: 18 },
+  cancelButton: { alignItems: 'center', padding: 18, marginTop: FORM_FIELD_GAP },
   cancelText: { color: Colors.subtext, fontWeight: '600' },
 });

@@ -3,6 +3,8 @@ import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import { Type } from '../../constants/Typography';
 import {
+  FORM_FIELD_GAP,
+  FORM_ACTION_GAP,
   FORM_PAGE_HORIZONTAL_PADDING,
   FORM_FIELD_LABEL_FONT_SIZE,
   FORM_FIELD_LABEL_FONT_WEIGHT,
@@ -24,7 +26,6 @@ export const dailyLogStyles = StyleSheet.create({
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
     color: Colors.text,
   },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   classifierSection: {
     marginTop: 14,
     padding: 12,
@@ -65,26 +66,15 @@ export const dailyLogStyles = StyleSheet.create({
     fontWeight: '800',
   },
   suggestionText: { color: Colors.subtext, fontSize: Type.caption, lineHeight: 17, marginTop: 3 },
+  suggestionAction: { marginTop: FORM_FIELD_GAP },
   suggestionDisclaimer: {
     color: Colors.subtext,
     fontSize: Type.caption2,
     lineHeight: 16,
     marginTop: 5,
   },
-  chip: {
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { color: Colors.text, fontWeight: '700' },
-  selectedText: { color: Colors.onPrimary },
   save: {
-    marginTop: 22,
+    marginTop: FORM_ACTION_GAP,
     backgroundColor: Colors.primary,
     padding: 14,
     minHeight: FORM_BUTTON_HEIGHT,

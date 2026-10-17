@@ -5,13 +5,15 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { ScreenPageHeader, ScreenPageState } from '../components/ScreenPageHeader';
+import { Spacing } from '../constants/Layout';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
 
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -231,16 +233,24 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
     }
   };
 
-  if (loading) return <HealthEventLoadingState text="正在載入嘔吐紀錄…" />;
+  const pageTitle = eventId ? '編輯嘔吐紀錄' : '記錄嘔吐';
+  if (loading)
+    return (
+      <ScreenPageState title={pageTitle}>
+        <HealthEventLoadingState text="正在載入嘔吐紀錄…" />
+      </ScreenPageState>
+    );
   if (error)
     return (
-      <HealthEventErrorState
-        text={error}
-        onRetry={() => {
-          setLoading(true);
-          load();
-        }}
-      />
+      <ScreenPageState title={pageTitle}>
+        <HealthEventErrorState
+          text={error}
+          onRetry={() => {
+            setLoading(true);
+            load();
+          }}
+        />
+      </ScreenPageState>
     );
 
   return (
@@ -249,19 +259,19 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
         ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
-        <View style={styles.intro}>
-          <View style={styles.introIcon}>
-            <Ionicons name="alert-circle-outline" size={22} color={Colors.primaryDecoration} />
-          </View>
-          <View style={styles.introCopy}>
-            <Text style={styles.title}>{eventId ? '編輯嘔吐紀錄' : '記錄嘔吐'}</Text>
-            <Text style={styles.subtitle}>只記錄看到的狀況，不提供疾病診斷。</Text>
-          </View>
-        </View>
+        <ScreenPageHeader
+          style={styles.intro}
+          title={pageTitle}
+          description="只記錄看到的狀況，不提供疾病診斷。"
+          icon="alert-circle-outline"
+          iconColor={Colors.primaryDecoration}
+          iconBackground={Colors.primarySoft}
+        />
 
         <View onLayout={position('vomitCount')}>
           <Text style={styles.label}>發生次數（必填）</Text>
           <OptionGroup
+            label="發生次數"
             options={VOMIT_COUNT_OPTIONS}
             value={details.vomitCount}
             onChange={(vomitCount) => {
@@ -275,6 +285,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
         <View onLayout={position('energyCondition')}>
           <Text style={styles.label}>精神狀況（必填）</Text>
           <OptionGroup
+            label="精神狀態"
             options={ENERGY_OPTIONS}
             value={details.energyCondition}
             onChange={(energyCondition) => {
@@ -301,7 +312,12 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
         </View>
 
         <Text style={styles.label}>嚴重程度（必填）</Text>
-        <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />
+        <OptionGroup<Severity>
+          label="嚴重程度"
+          options={severities}
+          value={severity}
+          onChange={setSeverity}
+        />
 
         <AttachmentPicker
           onBusyChange={(busy) => {
@@ -327,6 +343,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
           <View style={styles.advanced}>
             <Text style={styles.label}>顏色</Text>
             <OptionGroup
+              label="顏色"
               options={VOMIT_COLOR_OPTIONS}
               value={details.color}
               onChange={(color) => setDetails((current) => ({ ...current, color }))}
@@ -365,6 +382,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
 
             <Text style={styles.label}>飲水狀況</Text>
             <OptionGroup
+              label="喝水狀況"
               options={DRINKING_OPTIONS}
               value={details.drinkingCondition}
               onChange={(drinkingCondition) =>
@@ -405,18 +423,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: { paddingHorizontal: FORM_PAGE_HORIZONTAL_PADDING, paddingTop: 18, paddingBottom: 34 },
-  intro: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 7 },
-  introIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: Colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  introCopy: { flex: 1, minWidth: 0 },
-  title: { color: Colors.text, fontSize: Type.title2, fontWeight: '800' },
-  subtitle: { color: Colors.subtext, lineHeight: 18, marginTop: 2, fontSize: Type.caption },
+  intro: { marginBottom: Spacing.md },
   label: {
     color: Colors.text,
     fontSize: FORM_FIELD_LABEL_FONT_SIZE,
@@ -471,7 +478,7 @@ const styles = StyleSheet.create({
     borderRadius: FORM_BUTTON_RADIUS,
     padding: 16,
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: FORM_ACTION_GAP,
     minHeight: FORM_BUTTON_HEIGHT,
   },
   submitText: { color: Colors.onPrimary, fontWeight: '800' },

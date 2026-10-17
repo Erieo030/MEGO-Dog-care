@@ -4,6 +4,8 @@ import { Colors } from '../../../constants/Colors';
 import { MEAL_TIMING_LABELS } from '../../../constants/MedicalVisits';
 import { Medication } from '../../../types';
 import { Type } from '../../../constants/Typography';
+import { AppButton } from '../../../components/AppButton';
+import { FORM_FIELD_GAP } from '../../../constants/FormTokens';
 
 export function MedicalVisitDetailRows({ rows }: { rows: [string, string][] }) {
   return (
@@ -18,7 +20,15 @@ export function MedicalVisitDetailRows({ rows }: { rows: [string, string][] }) {
   );
 }
 
-export function MedicalVisitMedicationCards({ medications }: { medications: Medication[] }) {
+export function MedicalVisitMedicationCards({
+  medications,
+  onCreateCourse,
+  onViewCourse,
+}: {
+  medications: Medication[];
+  onCreateCourse?: (medication: Medication) => void;
+  onViewCourse?: (id: string) => void;
+}) {
   if (!medications.length) return <Text style={styles.empty}>目前沒有藥物</Text>;
 
   return (
@@ -38,6 +48,29 @@ export function MedicalVisitMedicationCards({ medications }: { medications: Medi
             </Text>
           )}
           {!!medication.notes && <Text style={styles.value}>補充備註：{medication.notes}</Text>}
+          {medication.linkedMedicationId && onViewCourse ? (
+            <AppButton
+              title="查看用藥療程"
+              variant="secondary"
+              style={styles.courseAction}
+              onPress={() => onViewCourse(medication.linkedMedicationId!)}
+            />
+          ) : onCreateCourse && medication.sourceMedicationKey ? (
+            <>
+              <AppButton
+                title="建立用藥療程"
+                variant="secondary"
+                style={styles.courseAction}
+                disabled={medication.timesPerDay > 6}
+                onPress={() => onCreateCourse(medication)}
+              />
+              {medication.timesPerDay > 6 && (
+                <Text style={styles.value}>
+                  此紀錄每日超過 6 次，目前療程提醒尚不支援，請保留原藥袋資訊。
+                </Text>
+              )}
+            </>
+          ) : null}
         </View>
       ))}
     </>
@@ -93,11 +126,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 18,
     padding: 15,
-    marginBottom: 8,
+    marginBottom: FORM_FIELD_GAP,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   med: { color: Colors.text, fontWeight: '800' },
+  courseAction: { marginTop: FORM_FIELD_GAP },
   empty: { color: Colors.subtext, textAlign: 'center', padding: 14 },
   retry: {
     borderWidth: 1,

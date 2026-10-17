@@ -1,8 +1,10 @@
-import { CardSurface } from '../../constants/Layout';
+import { CardSurface, Spacing } from '../../constants/Layout';
 /** 用途：疫苗功能共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import {
+  FORM_ACTION_GAP,
+  FORM_FIELD_GAP,
   FORM_BUTTON_HEIGHT,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
@@ -90,7 +92,8 @@ export const vaccinationStyles = StyleSheet.create({
     minHeight: FORM_BUTTON_HEIGHT,
     borderRadius: FORM_BUTTON_RADIUS,
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: FORM_ACTION_GAP,
+    marginBottom: Spacing.sm,
   },
   primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   detailHero: { ...CardSurface.record, flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -143,6 +146,7 @@ export const vaccinationStyles = StyleSheet.create({
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
   error: { color: Colors.dangerText },
   deleteButton: {
+    marginTop: FORM_FIELD_GAP,
     alignSelf: 'center',
     minHeight: 44,
     minWidth: 72,
@@ -150,7 +154,6 @@ export const vaccinationStyles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    marginTop: 8,
   },
   delete: { color: Colors.dangerText, textAlign: 'center', fontWeight: '700' },
 });

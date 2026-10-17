@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Colors } from '../../../constants/Colors';
 import {
   FORM_FIELD_LABEL_FONT_SIZE,
@@ -12,6 +12,7 @@ import {
   HealthEventQuickQuestion,
 } from '../createHealthEventContent';
 import { HealthEventType } from '../../../types';
+import { SelectionChip, SelectionGroup } from '../../../components/SelectionChip';
 
 type ChoiceFieldProps = {
   label: string;
@@ -24,19 +25,17 @@ export function CreateHealthEventChoiceField({ label, values, value, onChange }:
   return (
     <>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.chips}>
+      <SelectionGroup label={label}>
         {values.map((option) => (
-          <TouchableOpacity
+          <SelectionChip
             key={option}
-            style={[styles.chip, value === option && styles.chipActive]}
+            size="form"
+            label={option}
+            selected={value === option}
             onPress={() => onChange(option)}
-          >
-            <Text style={[styles.chipText, value === option && styles.chipTextActive]}>
-              {option}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
-      </View>
+      </SelectionGroup>
     </>
   );
 }
@@ -117,20 +116,6 @@ const styles = StyleSheet.create({
     marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
     marginBottom: FORM_FIELD_LABEL_MARGIN_BOTTOM,
   },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  chipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  chipText: { color: Colors.text, fontWeight: '700' },
-  chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
   advancedButton: { paddingVertical: 12 },
   advancedText: { color: Colors.primary, fontWeight: '700' },
 });

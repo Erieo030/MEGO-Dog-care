@@ -13,6 +13,7 @@ import SupplementalNotesField from '../components/SupplementalNotesField';
 import { Colors } from '../constants/Colors';
 import {
   FORM_BUTTON_HEIGHT,
+  FORM_ACTION_GAP,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
   FORM_FIELD_FONT_SIZE,
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: FORM_BUTTON_RADIUS,
     alignItems: 'center',
-    marginTop: 25,
+    marginTop: FORM_ACTION_GAP,
     minHeight: FORM_BUTTON_HEIGHT,
   },
   disabled: { opacity: 0.55 },

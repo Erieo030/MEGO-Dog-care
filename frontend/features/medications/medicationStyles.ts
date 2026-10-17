@@ -1,8 +1,10 @@
-import { CardSurface } from '../../constants/Layout';
+import { CardSurface, Spacing } from '../../constants/Layout';
 /** 用途：用藥列表、表單、詳細頁共用樣式。 */
 import { StyleSheet } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import {
+  FORM_ACTION_GAP,
+  FORM_FIELD_GAP,
   FORM_BUTTON_HEIGHT,
   FORM_BUTTON_RADIUS,
   FORM_FIELD_HEIGHT,
@@ -84,6 +86,7 @@ export const medicationStyles = StyleSheet.create({
     marginTop: FORM_FIELD_LABEL_MARGIN_TOP,
   },
   input: {
+    textAlign: 'left',
     fontSize: FORM_FIELD_FONT_SIZE,
     backgroundColor: Colors.surface,
     color: Colors.text,
@@ -93,17 +96,8 @@ export const medicationStyles = StyleSheet.create({
     padding: 14,
     minHeight: FORM_FIELD_HEIGHT,
   },
-  options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 10 },
-  chip: {
-    paddingHorizontal: 14,
-    minHeight: 44,
-    justifyContent: 'center',
-    borderRadius: 14,
-    backgroundColor: Colors.surfaceSoft,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  selected: { backgroundColor: Colors.successSoft, borderColor: Colors.success },
+  options: { flexDirection: 'row', gap: Spacing.sm },
+  mealOption: { flex: 1, minWidth: 0 },
   primary: {
     flexDirection: 'row',
     gap: 7,
@@ -113,7 +107,8 @@ export const medicationStyles = StyleSheet.create({
     minHeight: FORM_BUTTON_HEIGHT,
     borderRadius: FORM_BUTTON_RADIUS,
     alignItems: 'center',
-    marginVertical: 10,
+    marginTop: FORM_ACTION_GAP,
+    marginBottom: Spacing.sm,
   },
   primaryText: { color: Colors.onPrimary, fontWeight: '700' },
   empty: { color: Colors.text, fontWeight: '700', textAlign: 'center' },
@@ -125,11 +120,12 @@ export const medicationStyles = StyleSheet.create({
     borderColor: Colors.success,
     borderRadius: 14,
     justifyContent: 'center',
-    marginVertical: 4,
+    marginTop: FORM_FIELD_GAP,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   deleteButton: {
+    marginTop: FORM_FIELD_GAP,
     alignSelf: 'center',
     minHeight: 44,
     minWidth: 72,
@@ -150,12 +146,12 @@ export const medicationStyles = StyleSheet.create({
   },
   secondaryText: { color: Colors.success, fontWeight: '700' },
   delete: { color: Colors.dangerText, textAlign: 'center' },
+  reminderList: { marginTop: FORM_FIELD_GAP, gap: Spacing.md },
   reminderRow: {
     ...CardSurface.hint,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8,
   },
   reminderAction: {
     minWidth: 76,

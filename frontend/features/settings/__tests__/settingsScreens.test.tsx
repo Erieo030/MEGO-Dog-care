@@ -137,12 +137,12 @@ const mount = async (element: React.ReactElement) => {
     screen = create(element);
   });
 };
-const assertHeader = async (page: SettingsPageKey) => {
+const assertHeader = async (page: SettingsPageKey, title: string = SETTINGS_PAGES[page].title) => {
   const headings = screen.root.findAll(
     (node) => node.type === ('Text' as never) && node.props.accessibilityRole === 'header',
   );
   expect(headings).toHaveLength(1);
-  expect(headings[0].props.children).toBe(SETTINGS_PAGES[page].title);
+  expect(headings[0].props.children).toBe(title);
   const back = screen.root.findByType('SoftButton' as never);
   await act(async () => back.props.onPress());
   expect(mockGoBack).toHaveBeenCalledTimes(1);
@@ -219,7 +219,7 @@ test.each(['active', 'memorial', 'missing'])(
   async (state) => {
     mockSelectedPet = state === 'missing' ? null : { ...mockPet, memorial: state === 'memorial' };
     await mount(<PetMemorialScreen navigation={mockNavigation} />);
-    await assertHeader('PetMemorial');
+    await assertHeader('PetMemorial', state === 'active' ? '移到回憶' : '回憶');
     expect(screen.root.findByType('SafeAreaView' as never).props.edges).toEqual([
       'top',
       'left',

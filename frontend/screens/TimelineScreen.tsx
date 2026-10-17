@@ -7,6 +7,7 @@ import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } fr
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Colors } from '../constants/Colors';
+import { PageLayout } from '../constants/PageLayout';
 import ScreenState from '../components/ScreenState';
 import { openTimelineSource } from '../constants/Timeline';
 import { useAuth } from '../contexts/AuthContext';
@@ -262,7 +263,11 @@ export default function TimelineScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingHorizontal: 18, paddingTop: 18, flexGrow: 1 },
+  content: {
+    paddingHorizontal: PageLayout.mainHorizontal,
+    paddingTop: PageLayout.top,
+    flexGrow: 1,
+  },
   errorBox: { ...CardSurface.hint, alignItems: 'center' },
   error: { color: Colors.danger, textAlign: 'center' },
   loadingDetails: { color: Colors.subtext, textAlign: 'center', paddingVertical: 20 },

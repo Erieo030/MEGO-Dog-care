@@ -6,6 +6,7 @@
 
 - `preVetContent.ts`：天數、資料區段、中文標籤、日期／年齡格式。
 - `preVetStyles.ts`：摘要頁與表格的共用樣式。
+- 頁首沿用日常的 `ScreenPageHeader`，返回鍵、標題、說明與圖示隨內容捲動；使用 `PageLayout.detailHorizontal` 的子頁留白，不另外保留一組固定頁首。期間與資料類別採共用 `SelectionChip`：單選文字直接置中，多選勾選標記左右同寬留位，選取皆有淡底、邊框及加粗文字，仍維持原有資料規則。
 - `usePreVetBrief.ts`：集中讀取系統摘要與手動 AI 整理；切換毛孩、天數、類別或離開頁面會取消請求，忽略晚到的舊結果。
 - `preVetOnePage.ts`：將勾選的資料整理成單頁重點與分享文字；未勾選類別不會出現。
 - `components/PreVetOnePageCard.tsx`：畫面首先呈現的看診快速摘要與飼主自填詢問事項。
