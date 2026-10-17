@@ -19,6 +19,7 @@ import { Colors } from '../../../constants/Colors';
 import ScreenState from '../../../components/ScreenState';
 import KeyboardAwareScrollView from '../../../components/KeyboardAwareScrollView';
 import { FieldError } from '../../../components/FieldError';
+import { SaveStatusNotice, type SaveStatus } from '../../../components/SaveStatusNotice';
 import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { ProfileStackParamList } from '../../../navigation/types';
@@ -56,6 +57,8 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   const [error, setError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  // 儲存後留在原頁，沒有轉場可以當回饋。
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
   const saveLock = useRef(false);
   const userId = session?.userId;
   const petId = selectedPet?.id;
@@ -136,7 +139,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         JSON.stringify(current) === JSON.stringify(data) ? result.profile : current,
       );
       markSaved(editableLostProfile(submitted));
-      Alert.alert('已儲存', '毛孩身分 QR 已更新');
+      setSaveStatus({ tone: 'success', message: '毛孩身分 QR 已更新。' });
     } catch (error) {
       Alert.alert('儲存失敗', (error as Error).message);
     } finally {
@@ -219,6 +222,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
         <SettingsPageHeader page="LostPetSettings" style={{ marginBottom: 0 }} />
+        <SaveStatusNotice status={saveStatus} onDismiss={() => setSaveStatus(null)} />
         <View style={styles.petCard}>
           <View style={styles.petAvatar}>
             {selectedPet?.avatarAttachmentId && userId ? (

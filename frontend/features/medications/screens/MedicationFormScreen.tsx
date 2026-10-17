@@ -110,11 +110,9 @@ export function MedicationFormScreen() {
           onAddAnother: () => navigation.replace('MedicationForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert(
-          '已儲存',
-          (existing && !duplicate ? '用藥紀錄已更新' : '用藥紀錄已新增') +
-            (notificationWarning ? '\n' + notificationWarning : ''),
-        );
+        // 儲存成功不另外提示：畫面會換到詳情頁，轉場本身就是回饋。
+        // 只有通知沒排成功時才需要讓使用者知道。
+        if (notificationWarning) Alert.alert('紀錄已儲存，通知尚未同步', notificationWarning);
         markSaved(draft, () =>
           navigation.replace('MedicationDetail', { recordId: response.record.id }),
         );

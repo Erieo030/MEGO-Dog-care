@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useRef, useState } from 'react';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ReminderToggleField } from '../components/ReminderToggleField';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -201,15 +201,29 @@ export default function MedicalVisitFormScreen({ route, navigation }: Props) {
           onAddAnother: () => navigation.replace('MedicalVisitForm', { quickEntry: true }),
         });
       } else {
-        Alert.alert(
-          '已儲存',
-          !data.createFollowUpReminder
-            ? '就醫紀錄已儲存。'
-            : !notificationResult || notificationResult.permission !== 'granted'
-              ? '就醫紀錄與 App 內回診提醒已儲存；手機通知未排定，請到設定確認。'
-              : '就醫紀錄與回診提醒已儲存，手機通知已同步。',
-          [{ text: '完成', onPress: () => navigation.goBack() }],
-        );
+        // 儲存成功不另外提示，返回上一頁本身就是回饋；只有回診提醒的手機通知
+        // 沒排成功時才需要讓使用者知道，而且要給得出下一步。
+        const notificationBlocked =
+          data.createFollowUpReminder &&
+          (!notificationResult || notificationResult.permission !== 'granted');
+        if (notificationBlocked) {
+          Alert.alert(
+            '回診提醒已建立，手機通知未排定',
+            'App 內仍會顯示這筆提醒。要收到手機通知，請在系統設定開啟 MEGO 的通知權限。',
+            [
+              { text: '稍後再說', style: 'cancel', onPress: () => navigation.goBack() },
+              {
+                text: '前往設定',
+                onPress: () => {
+                  void Linking.openSettings().catch(() => undefined);
+                  navigation.goBack();
+                },
+              },
+            ],
+          );
+        } else {
+          navigation.goBack();
+        }
       }
     } catch (e) {
       Alert.alert('儲存失敗', (e as Error).message || '請稍後再試');

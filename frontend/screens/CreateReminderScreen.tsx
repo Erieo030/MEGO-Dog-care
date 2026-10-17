@@ -3,7 +3,7 @@ import { addDateKeyDays, taipeiDateKey, taipeiDateFromKey } from '../utils/taipe
 import { SafeAreaView } from 'react-native-safe-area-context';
 /** 用途：建立或編輯提醒；後端成功後同步裝置 Local Notification。 */
 import React, { useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../components/AppButton';
 import { ScreenPageHeader } from '../components/ScreenPageHeader';
@@ -142,7 +142,32 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
             onAddAnother: () => navigation.replace('CreateReminder', { quickEntry: true }),
           });
         } else {
-          Alert.alert('已儲存', message, [{ text: '完成', onPress: navigation.goBack }]);
+          // 排程正常就直接返回；只有手機通知沒排成的三種情況需要告知，
+          // 其中權限未開啟可以直接帶使用者去設定。
+          const problem =
+            result.status === 'disabled'
+              ? 'MEGO 的手機提醒已關閉，App 內提醒仍會保留。'
+              : result.status === 'denied'
+                ? '通知權限尚未開啟，你仍可以在 MEGO 內查看提醒。'
+                : result.status === 'expired'
+                  ? '提醒時間已過，不會排程手機通知。'
+                  : '';
+          if (!problem) navigation.goBack();
+          else if (result.status === 'denied')
+            Alert.alert('提醒已儲存，手機通知未排定', problem, [
+              { text: '稍後再說', style: 'cancel', onPress: navigation.goBack },
+              {
+                text: '前往設定',
+                onPress: () => {
+                  void Linking.openSettings().catch(() => undefined);
+                  navigation.goBack();
+                },
+              },
+            ]);
+          else
+            Alert.alert('提醒已儲存，手機通知未排定', problem, [
+              { text: '我知道了', onPress: navigation.goBack },
+            ]);
         }
       } catch {
         const notificationError = '提醒已儲存，但手機通知排程失敗，仍可在 App 內查看。';
@@ -153,7 +178,9 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
             onAddAnother: () => navigation.replace('CreateReminder', { quickEntry: true }),
           });
         } else {
-          Alert.alert('已儲存', notificationError, [{ text: '完成', onPress: navigation.goBack }]);
+          Alert.alert('提醒已儲存，手機通知未排定', notificationError, [
+            { text: '我知道了', onPress: navigation.goBack },
+          ]);
         }
       }
     } catch (error) {

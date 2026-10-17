@@ -200,9 +200,12 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
           onAddAnother: () => navigation.replace('StoolHealthEvent', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', successMessage, [
-          { text: '完成', onPress: () => (eventId ? navigation.goBack() : navigation.popToTop()) },
-        ]);
+        // 儲存成功不另外提示，畫面會退回清單或首頁，轉場本身就是回饋；
+        // 但安全提醒必須讓使用者看到，這種情況才保留對話框。
+        const leave = () => (eventId ? navigation.goBack() : navigation.popToTop());
+        if (safety)
+          Alert.alert('安全提醒', STOOL_SAFETY_MESSAGE, [{ text: '我知道了', onPress: leave }]);
+        else leave();
       }
     } catch (requestError) {
       Alert.alert('儲存失敗', (requestError as Error).message || '請稍後再試');

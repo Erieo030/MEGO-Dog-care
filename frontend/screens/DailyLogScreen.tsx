@@ -13,6 +13,7 @@ import { Colors } from '../constants/Colors';
 import ScreenState from '../components/ScreenState';
 import { ScreenPageHeader, ScreenPageFrame, ScreenPageState } from '../components/ScreenPageHeader';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
+import { SaveStatusNotice, type SaveStatus } from '../components/SaveStatusNotice';
 import { SoftEntrance } from '../components/SoftMotion';
 import { LottieArt } from '../components/LottieArt';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
@@ -88,6 +89,8 @@ export default function DailyLogScreen({ route, navigation }: Props) {
   const mutationInFlight = useRef(false);
   const deleteConfirmationOpen = useRef(false);
   const [error, setError] = useState('');
+  // 這個畫面儲存後留在原地，沒有轉場可以當回饋，因此在頁面上顯示狀態。
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
   const [classifying, setClassifying] = useState(false);
   const [stoolSuggestion, setStoolSuggestion] = useState<StoolClassification | null>(null);
   const classificationInFlight = useRef(false);
@@ -188,7 +191,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
           { text: '完成', onPress: () => navigation.popToTop() },
         ]);
       } else {
-        Alert.alert('已儲存', `${dateLabel}紀錄已更新`);
+        setSaveStatus({ tone: 'success', message: `${dateLabel}紀錄已更新。` });
         await load();
       }
     } catch (e) {
@@ -266,6 +269,7 @@ export default function DailyLogScreen({ route, navigation }: Props) {
           iconColor={Colors.primaryDecoration}
           iconBackground={Colors.primarySoft}
         />
+        <SaveStatusNotice status={saveStatus} onDismiss={() => setSaveStatus(null)} />
         <View style={s.pageDecoration}>
           <SoftEntrance>
             <Image

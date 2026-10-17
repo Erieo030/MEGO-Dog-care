@@ -148,3 +148,34 @@ test('a successful submit does not give error feedback', async () => {
   await act(async () => submit());
   expect(Haptics.notificationAsync).not.toHaveBeenCalled();
 });
+
+test('a successful save navigates without a confirmation dialog', async () => {
+  await mount();
+  const input = screen.root.find(
+    (node) =>
+      node.type === ('Input' as never) && node.props.accessibilityLabel === '疫苗名稱（必填）',
+  );
+  await act(async () => input.props.onChangeText('狂犬病'));
+  await act(async () => submit());
+  // 畫面會換到詳情頁，轉場本身就是回饋，不需要「已儲存」對話框。
+  expect(Alert.alert).not.toHaveBeenCalled();
+  expect(mockNavigation.replace).toHaveBeenCalledWith('VaccinationDetail', { recordId: 'v1' });
+});
+
+test('a notification sync failure is still reported, since it needs attention', async () => {
+  const sync = jest.requireMock('../../../services/careNotificationSync');
+  sync.syncCareNotifications.mockResolvedValueOnce(
+    '手機通知同步失敗，回到首頁或重新開啟 App 時會重試。',
+  );
+  await mount();
+  const input = screen.root.find(
+    (node) =>
+      node.type === ('Input' as never) && node.props.accessibilityLabel === '疫苗名稱（必填）',
+  );
+  await act(async () => input.props.onChangeText('狂犬病'));
+  await act(async () => submit());
+  expect(Alert.alert).toHaveBeenCalledWith(
+    '紀錄已儲存，通知尚未同步',
+    expect.stringContaining('手機通知同步失敗'),
+  );
+});

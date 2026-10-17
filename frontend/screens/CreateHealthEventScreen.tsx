@@ -95,12 +95,13 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
         attachmentIds: images.map((item) => item.id),
       });
       markSaved(formValues);
-      const showSafetyNotice = () => {
-        if (severity === 'severe')
-          Alert.alert(
-            '安全提醒',
-            '如果毛孩持續惡化、反覆嘔吐、呼吸困難、昏倒、大量出血或無法飲水，請立即聯絡動物醫院。',
-          );
+      const showSafetyNotice = (onAcknowledge?: () => void) => {
+        if (severity !== 'severe') return;
+        Alert.alert(
+          '安全提醒',
+          '如果毛孩持續惡化、反覆嘔吐、呼吸困難、昏倒、大量出血或無法飲水，請立即聯絡動物醫院。',
+          onAcknowledge ? [{ text: '我知道了', onPress: onAcknowledge }] : undefined,
+        );
       };
       if (quickEntry) {
         showQuickRecordFeedback({
@@ -112,15 +113,10 @@ export default function CreateHealthEventScreen({ route, navigation }: Props) {
           onAddAnother: () => navigation.replace('AbnormalType', { quickEntry: true }),
         });
       } else {
-        Alert.alert('已儲存', '異常紀錄已加入近期動態', [
-          {
-            text: '完成',
-            onPress: () => {
-              showSafetyNotice();
-              navigation.popToTop();
-            },
-          },
-        ]);
+        // 儲存成功不另外提示；嚴重程度達到安全提醒時才保留對話框，
+        // 並等使用者確認後再離開，避免提醒被新畫面蓋過。
+        if (severity === 'severe') showSafetyNotice(navigation.popToTop);
+        else navigation.popToTop();
       }
     } catch (e) {
       Alert.alert('儲存失敗', (e as Error).message);

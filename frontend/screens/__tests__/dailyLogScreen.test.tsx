@@ -103,12 +103,16 @@ test('saving a backdated entry uses the requested date and matching title', asyn
       (node) => node.type === ('Text' as never) && node.props.children === '日常紀錄',
     ),
   ).toHaveLength(1);
+  // 這個畫面儲存後留在原地，因此另外顯示一則成功提示，同樣帶日期；
+  // 標題本身仍然只有一個。
+  const dated = screen.root.findAll(
+    (node) =>
+      node.type === ('Text' as never) &&
+      JSON.stringify(node.props.children).includes('2026 年 10 月 3 日'),
+  );
+  expect(dated).toHaveLength(2);
   expect(
-    screen.root.findAll(
-      (node) =>
-        node.type === ('Text' as never) &&
-        JSON.stringify(node.props.children).includes('2026 年 10 月 3 日'),
-    ),
+    dated.filter((node) => JSON.stringify(node.props.children).includes('紀錄已更新')),
   ).toHaveLength(1);
   expect(mockNavigation.setOptions).not.toHaveBeenCalled();
 });
