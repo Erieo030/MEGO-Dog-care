@@ -25,6 +25,8 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import { RECURRENCE_RULES, REMINDER_TYPES } from '../constants/Reminders';
@@ -42,6 +44,9 @@ import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard'
 import { Type } from '../constants/Typography';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CreateReminder'>;
+
+type ReminderField = 'title' | 'scheduledAt';
+const FIELD_ORDER: readonly ReminderField[] = ['title', 'scheduledAt'];
 
 export default function CreateReminderScreen({ navigation, route }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -91,16 +96,17 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
     setRule(item[2]);
   };
 
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<ReminderField>();
+
   const submit = async () => {
-    if (!selectedPet || !session?.userId || !title.trim() || mutationLock.current) {
-      if (!title.trim()) Alert.alert('提示', '請填寫提醒名稱');
-      return;
-    }
-    if (!Number.isFinite(scheduledAt.getTime())) return Alert.alert('提示', '提醒日期無效');
-    if (scheduledAt.getTime() <= Date.now()) {
-      Alert.alert('提醒時間已過', '請選擇晚於目前時間的日期與時間；同一天的未來時間可以使用。');
-      return;
-    }
+    const problems: Partial<Record<ReminderField, string>> = {};
+    if (!title.trim()) problems.title = '請填寫提醒名稱。';
+    if (!Number.isFinite(scheduledAt.getTime())) problems.scheduledAt = '提醒日期無效。';
+    else if (scheduledAt.getTime() <= Date.now())
+      problems.scheduledAt = '請選擇晚於目前時間的日期與時間；同一天的未來時間可以使用。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
+    if (!selectedPet || !session?.userId || mutationLock.current) return;
     if (mutationLock.current) return;
     mutationLock.current = true;
     setSubmitting(true);
@@ -161,6 +167,7 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -182,16 +189,33 @@ export default function CreateReminderScreen({ navigation, route }: Props) {
             />
           ))}
         </View>
-        <Label text="提醒名稱（必填）" />
-        <TextInput style={styles.input} value={title} onChangeText={setTitle} maxLength={100} />
-        <DatePickerField
-          label="提醒日期與時間（必填）"
-          value={scheduledAt}
-          mode="datetime"
-          minimumDate={new Date()}
-          disabled={submitting}
-          onChange={setScheduledAt}
-        />
+        <View onLayout={position('title')}>
+          <Label text="提醒名稱（必填）" />
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={(next) => {
+              clearError('title');
+              setTitle(next);
+            }}
+            maxLength={100}
+          />
+          <FieldError message={errors.title} />
+        </View>
+        <View onLayout={position('scheduledAt')}>
+          <DatePickerField
+            label="提醒日期與時間（必填）"
+            value={scheduledAt}
+            mode="datetime"
+            minimumDate={new Date()}
+            disabled={submitting}
+            onChange={(next) => {
+              clearError('scheduledAt');
+              setScheduledAt(next);
+            }}
+          />
+          <FieldError message={errors.scheduledAt} />
+        </View>
         <Label text="是否重複（建議值，可自行調整）" />
         <View style={styles.chips}>
           {RECURRENCE_RULES.map(([value, label]) => (

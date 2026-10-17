@@ -24,6 +24,8 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import AttachmentPicker from '../components/AttachmentPicker';
@@ -67,6 +69,9 @@ const emptyDetails = (): VomitingDetails => ({
 });
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'VomitingHealthEvent'>;
+
+type VomitingField = 'vomitCount' | 'energyCondition' | 'occurredAt';
+const FIELD_ORDER: readonly VomitingField[] = ['vomitCount', 'energyCondition', 'occurredAt'];
 
 export default function VomitingHealthEventScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -166,6 +171,9 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
     }, [eventId, load, dirtyRef]),
   );
 
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<VomitingField>();
+
   const submit = async () => {
     if (
       !selectedPet ||
@@ -176,11 +184,12 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
       submissionLock.current
     )
       return;
-    if (!details.vomitCount) return Alert.alert('尚未完成', '請選擇發生次數');
-    if (!details.energyCondition) return Alert.alert('尚未完成', '請選擇精神狀況');
-    if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now()) {
-      return Alert.alert('時間錯誤', '請選擇有效且不晚於現在的發生時間');
-    }
+    const problems: Partial<Record<VomitingField, string>> = {};
+    if (!details.vomitCount) problems.vomitCount = '請選擇發生次數。';
+    if (!details.energyCondition) problems.energyCondition = '請選擇精神狀況。';
+    if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now())
+      problems.occurredAt = '請選擇有效且不晚於現在的發生時間。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     submissionLock.current = true;
     setSubmitting(true);
     try {
@@ -234,6 +243,7 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <View style={styles.intro}>
@@ -246,28 +256,46 @@ export default function VomitingHealthEventScreen({ route, navigation }: Props) 
           </View>
         </View>
 
-        <Text style={styles.label}>發生次數（必填）</Text>
-        <OptionGroup
-          options={VOMIT_COUNT_OPTIONS}
-          value={details.vomitCount}
-          onChange={(vomitCount) => setDetails((current) => ({ ...current, vomitCount }))}
-        />
+        <View onLayout={position('vomitCount')}>
+          <Text style={styles.label}>發生次數（必填）</Text>
+          <OptionGroup
+            options={VOMIT_COUNT_OPTIONS}
+            value={details.vomitCount}
+            onChange={(vomitCount) => {
+              clearError('vomitCount');
+              setDetails((current) => ({ ...current, vomitCount }));
+            }}
+          />
+          <FieldError message={errors.vomitCount} />
+        </View>
 
-        <Text style={styles.label}>精神狀況（必填）</Text>
-        <OptionGroup
-          options={ENERGY_OPTIONS}
-          value={details.energyCondition}
-          onChange={(energyCondition) => setDetails((current) => ({ ...current, energyCondition }))}
-        />
+        <View onLayout={position('energyCondition')}>
+          <Text style={styles.label}>精神狀況（必填）</Text>
+          <OptionGroup
+            options={ENERGY_OPTIONS}
+            value={details.energyCondition}
+            onChange={(energyCondition) => {
+              clearError('energyCondition');
+              setDetails((current) => ({ ...current, energyCondition }));
+            }}
+          />
+          <FieldError message={errors.energyCondition} />
+        </View>
 
-        <DatePickerField
-          label="發生日期（必填）"
-          value={occurredAt}
-          mode="date"
-          maximumDate={new Date()}
-          disabled={submitting || attachmentsBusy}
-          onChange={setOccurredAt}
-        />
+        <View onLayout={position('occurredAt')}>
+          <DatePickerField
+            label="發生日期（必填）"
+            value={occurredAt}
+            mode="date"
+            maximumDate={new Date()}
+            disabled={submitting || attachmentsBusy}
+            onChange={(next) => {
+              clearError('occurredAt');
+              setOccurredAt(next);
+            }}
+          />
+          <FieldError message={errors.occurredAt} />
+        </View>
 
         <Text style={styles.label}>嚴重程度（必填）</Text>
         <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />

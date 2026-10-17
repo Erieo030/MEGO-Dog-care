@@ -36,6 +36,8 @@ import {
   PetFormTextField as PetFormTextFieldData,
 } from '../features/pets/petFormContent';
 import { useFormUnsavedChangesGuard } from '../hooks/useFormUnsavedChangesGuard';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import { Type } from '../constants/Typography';
 
 interface PetFormScreenProps {
@@ -50,6 +52,9 @@ interface PetFormScreenProps {
   footer?: React.ReactNode;
   pageHeader?: boolean;
 }
+
+type PetField = 'name' | 'breed' | 'gender' | 'birthday' | 'arrivalDate';
+const FIELD_ORDER: readonly PetField[] = ['name', 'breed', 'gender', 'birthday', 'arrivalDate'];
 
 export default function PetFormScreen({
   title,
@@ -67,28 +72,30 @@ export default function PetFormScreen({
   const mutationLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(form, setForm, true, saving);
-  const update = <K extends keyof PetData>(key: K, value: PetData[K]) =>
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<
+    PetField,
+    ScrollView
+  >();
+  const update = <K extends keyof PetData>(key: K, value: PetData[K]) => {
+    clearError(key as PetField);
     setForm((current) => ({ ...current, [key]: value }));
+  };
 
   const submit = async () => {
     if (mutationLock.current) return;
-    if (!form.name.trim() || !form.gender || !form.breed.trim() || !form.arrivalDate.trim()) {
-      Alert.alert('提示', '請填寫姓名、性別、品種與到家日期');
-      return;
-    }
-    if (petNameLength(form.name.trim()) > PET_NAME_MAX_LENGTH) {
-      Alert.alert('姓名太長', `毛孩姓名最多 ${PET_NAME_MAX_LENGTH} 個字元，請縮短後再儲存。`);
-      return;
-    }
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-    if (form.birthday && !datePattern.test(form.birthday)) {
-      Alert.alert('提示', '出生日期請使用 YYYY-MM-DD 格式');
-      return;
-    }
-    if (form.arrivalDate && !datePattern.test(form.arrivalDate)) {
-      Alert.alert('提示', '到家日期請使用 YYYY-MM-DD 格式');
-      return;
-    }
+    const problems: Partial<Record<PetField, string>> = {};
+    if (!form.name.trim()) problems.name = '請填寫毛孩姓名。';
+    else if (petNameLength(form.name.trim()) > PET_NAME_MAX_LENGTH)
+      problems.name = `毛孩姓名最多 ${PET_NAME_MAX_LENGTH} 個字元，請縮短後再儲存。`;
+    if (!form.breed.trim()) problems.breed = '請填寫品種。';
+    if (!form.gender) problems.gender = '請選擇性別。';
+    if (form.birthday && !datePattern.test(form.birthday))
+      problems.birthday = '出生日期請使用 YYYY-MM-DD 格式。';
+    if (!form.arrivalDate.trim()) problems.arrivalDate = '請選擇到家日期。';
+    else if (!datePattern.test(form.arrivalDate))
+      problems.arrivalDate = '到家日期請使用 YYYY-MM-DD 格式。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     if (mutationLock.current) return;
     mutationLock.current = true;
     setSaving(true);
@@ -112,6 +119,8 @@ export default function PetFormScreen({
         key={field.key}
         field={field}
         value={form[field.key]}
+        error={errors[field.key as PetField]}
+        onLayout={position(field.key as PetField)}
         onChange={(value) => update(field.key, value)}
       />
     ));
@@ -123,6 +132,7 @@ export default function PetFormScreen({
         style={styles.flex}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.content,
             bottomContentPadding !== undefined && { paddingBottom: bottomContentPadding },
@@ -160,26 +170,29 @@ export default function PetFormScreen({
 
           <Text style={styles.sectionHeading}>基本資料</Text>
           {renderFields(PET_FORM_FIELDS.slice(0, 2))}
-          <Text style={styles.label}>性別（必填）</Text>
-          <View style={styles.optionRow}>
-            {(
-              [
-                ['male', '公'],
-                ['female', '母'],
-              ] as const
-            ).map(([value, label]) => (
-              <TouchableOpacity
-                key={value}
-                style={[styles.option, form.gender === value && styles.optionSelected]}
-                onPress={() => update('gender', value)}
-              >
-                <Text
-                  style={[styles.optionText, form.gender === value && styles.optionTextSelected]}
+          <View onLayout={position('gender')}>
+            <Text style={styles.label}>性別（必填）</Text>
+            <View style={styles.optionRow}>
+              {(
+                [
+                  ['male', '公'],
+                  ['female', '母'],
+                ] as const
+              ).map(([value, label]) => (
+                <TouchableOpacity
+                  key={value}
+                  style={[styles.option, form.gender === value && styles.optionSelected]}
+                  onPress={() => update('gender', value)}
                 >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[styles.optionText, form.gender === value && styles.optionTextSelected]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <FieldError message={errors.gender} />
           </View>
           <Text style={styles.label}>品種類型（必填）</Text>
           <View style={styles.optionRow}>

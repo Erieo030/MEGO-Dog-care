@@ -23,6 +23,8 @@ import {
   FORM_FIELD_RADIUS,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
@@ -42,6 +44,9 @@ import { Type } from '../constants/Typography';
 const severities = Object.keys(SEVERITY_LABELS) as Severity[];
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HealthEventEdit'>;
+
+type EditField = 'summary' | 'occurredAt';
+const FIELD_ORDER: readonly EditField[] = ['summary', 'occurredAt'];
 
 export default function HealthEventEditScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -129,6 +134,8 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
     }, [load, dirtyRef]),
   );
 
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<EditField>();
+
   const submit = async () => {
     if (
       !item ||
@@ -139,9 +146,11 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
       submissionLock.current
     )
       return;
-    if (!summary.trim()) return Alert.alert('請填寫摘要', '摘要不可留白');
-    if (Number.isNaN(occurredAt.getTime())) return Alert.alert('日期錯誤', '請選擇有效日期');
-    if (occurredAt.getTime() > Date.now()) return Alert.alert('日期錯誤', '發生時間不可晚於現在');
+    const problems: Partial<Record<EditField, string>> = {};
+    if (!summary.trim()) problems.summary = '摘要不可留白。';
+    if (Number.isNaN(occurredAt.getTime())) problems.occurredAt = '請選擇有效日期。';
+    else if (occurredAt.getTime() > Date.now()) problems.occurredAt = '發生時間不可晚於現在。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     submissionLock.current = true;
     setSubmitting(true);
     try {
@@ -185,6 +194,7 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -200,15 +210,21 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
         <Text style={styles.label}>{HEALTH_EVENT_LABELS[item.type]}</Text>
         <Text style={styles.label}>編輯保留原類型；不同狀況請另建紀錄，以填寫對應欄位。</Text>
         <AppButton title="新增其他健康異常" onPress={() => navigation.navigate('AbnormalType')} />
-        <Text style={styles.label}>摘要（必填）</Text>
-        <TextInput
-          value={summary}
-          onChangeText={setSummary}
-          maxLength={200}
-          style={styles.input}
-          placeholder="簡短描述這次狀況"
-          placeholderTextColor={Colors.subtext}
-        />
+        <View onLayout={position('summary')}>
+          <Text style={styles.label}>摘要（必填）</Text>
+          <TextInput
+            value={summary}
+            onChangeText={(next) => {
+              clearError('summary');
+              setSummary(next);
+            }}
+            maxLength={200}
+            style={styles.input}
+            placeholder="簡短描述這次狀況"
+            placeholderTextColor={Colors.subtext}
+          />
+          <FieldError message={errors.summary} />
+        </View>
         <Text style={styles.label}>嚴重程度（必填）</Text>
         <View style={styles.chips}>
           {severities.map((value) => (
@@ -220,14 +236,20 @@ export default function HealthEventEditScreen({ route, navigation }: Props) {
             />
           ))}
         </View>
-        <DatePickerField
-          label="發生日期（必填）"
-          value={occurredAt}
-          mode="date"
-          maximumDate={new Date()}
-          disabled={submitting || attachmentsBusy}
-          onChange={setOccurredAt}
-        />
+        <View onLayout={position('occurredAt')}>
+          <DatePickerField
+            label="發生日期（必填）"
+            value={occurredAt}
+            mode="date"
+            maximumDate={new Date()}
+            disabled={submitting || attachmentsBusy}
+            onChange={(next) => {
+              clearError('occurredAt');
+              setOccurredAt(next);
+            }}
+          />
+          <FieldError message={errors.occurredAt} />
+        </View>
         <Text style={styles.sectionHeading}>補充資訊</Text>
         <SupplementalNotesField
           value={notes}

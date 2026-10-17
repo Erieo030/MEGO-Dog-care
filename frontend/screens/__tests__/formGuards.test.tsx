@@ -344,7 +344,12 @@ test('existing overlong pet name cannot be submitted until shortened', async () 
   });
   await act(async () => screen.root.findByType('AppButton' as never).props.onPress());
   expect(onSubmit).not.toHaveBeenCalled();
-  expect(Alert.alert).toHaveBeenCalledWith('姓名太長', expect.stringContaining('20'));
+  // 驗證訊息改為傳給姓名欄位顯示在其下方，不再用 Alert 打斷。
+  const nameField = screen.root.find(
+    (node) => node.type === ('PetField' as never) && node.props.field?.key === 'name',
+  );
+  expect(nameField.props.error).toEqual(expect.stringContaining('20'));
+  expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 test('editing then removing a medication reminder does not restore its hidden time on save', async () => {

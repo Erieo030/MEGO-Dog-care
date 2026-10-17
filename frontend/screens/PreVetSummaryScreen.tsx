@@ -12,6 +12,8 @@ import { Colors } from '../constants/Colors';
 import type { RootStackParamList } from '../navigation/types';
 import { VetBriefSection } from '../services/aiService';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import { usePreVetBrief } from '../features/ai/pre-vet/usePreVetBrief';
 import { DashboardWeightPoint } from '../types';
 import {
@@ -100,7 +102,9 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
     setNarrativeExpanded(false);
   }, [selectedPet?.id, session?.userId]);
 
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<'sections'>();
   const toggleSection = (section: VetBriefSection) => {
+    clearError('sections');
     setDraftSections((current) =>
       current.includes(section)
         ? current.filter((value) => value !== section)
@@ -109,10 +113,13 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
   };
 
   const applySections = () => {
-    if (!draftSections.length) {
-      Alert.alert('請保留一種資料', '至少選擇一種照護資料，才能建立就醫前摘要。');
+    if (
+      !showErrors(
+        draftSections.length ? {} : { sections: '至少選擇一種照護資料，才能建立就醫前摘要。' },
+        ['sections'],
+      )
+    )
       return;
-    }
     setAppliedSections(draftSections);
   };
 
@@ -154,6 +161,7 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
         </View>
       </View>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.content}
         bottomOffset={24}
         showsVerticalScrollIndicator={false}
@@ -235,7 +243,7 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
                 <Text style={styles.selectorHint}>
                   未選取資料不會出現在摘要、分享或 AI 整理中。
                 </Text>
-                <View style={styles.optionWrap}>
+                <View style={styles.optionWrap} onLayout={position('sections')}>
                   {PRE_VET_SECTION_OPTIONS.map((option) => (
                     <TouchableOpacity
                       key={option.key}
@@ -259,6 +267,7 @@ export default function PreVetSummaryScreen({ navigation }: Props) {
                     </TouchableOpacity>
                   ))}
                 </View>
+                <FieldError message={errors.sections} />
                 {draftChanged && (
                   <TouchableOpacity
                     accessibilityRole="button"

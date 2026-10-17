@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useRef, useState } from 'react';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { ATTACHMENT_LIMITS } from '../constants/Attachments';
-import { Alert, StyleSheet, Text, TextInput } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppButton } from '../components/AppButton';
 import SupplementalNotesField from '../components/SupplementalNotesField';
@@ -25,6 +25,8 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import { useTabContentBottomPadding } from '../components/navigation/useTabContentBottomPadding';
@@ -51,6 +53,9 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   const [attachmentsBusy, setAttachmentsBusy] = useState(false);
   const attachmentActivity = useRef(false);
   const submissionLock = useRef(false);
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<
+    'weight' | 'date'
+  >();
   const [attachments, setAttachments] = useState(record?.attachments ?? []);
 
   const formValues = { weight, date, notes, attachments };
@@ -71,19 +76,17 @@ export default function WeightFormScreen({ route, navigation }: Props) {
       return;
     const normalizedWeight = weight.trim();
     const value = Number(normalizedWeight);
+    const problems: Partial<Record<'weight' | 'date', string>> = {};
     if (
       !/^\d+(\.\d{1,2})?$/.test(normalizedWeight) ||
       !Number.isFinite(value) ||
       value <= 0 ||
       value > 300
-    ) {
-      Alert.alert('請確認體重', '體重需大於 0、不超過 300 kg，且最多兩位小數。');
-      return;
-    }
-    if (Number.isNaN(date.getTime()) || date.getTime() > Date.now()) {
-      Alert.alert('請確認日期', '測量日期必須有效，且不可晚於今天。');
-      return;
-    }
+    )
+      problems.weight = '體重需大於 0、不超過 300 kg，且最多兩位小數。';
+    if (Number.isNaN(date.getTime()) || date.getTime() > Date.now())
+      problems.date = '測量日期必須有效，且不可晚於今天。';
+    if (!showErrors(problems, ['weight', 'date'])) return;
     if (!session?.userId || (!record && !selectedPet)) {
       Alert.alert('儲存失敗', '找不到目前登入使用者或毛孩資料');
       return;
@@ -125,6 +128,7 @@ export default function WeightFormScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -133,23 +137,35 @@ export default function WeightFormScreen({ route, navigation }: Props) {
           description="相近條件量測更容易比較"
           icon="scale-outline"
         />
-        <Text style={styles.label}>體重（kg）（必填）</Text>
-        <TextInput
-          style={styles.input}
-          value={weight}
-          onChangeText={setWeight}
-          keyboardType="decimal-pad"
-          placeholder="例如 8.2"
-          editable={!submitting}
-        />
+        <View onLayout={position('weight')}>
+          <Text style={styles.label}>體重（kg）（必填）</Text>
+          <TextInput
+            style={styles.input}
+            value={weight}
+            onChangeText={(next) => {
+              clearError('weight');
+              setWeight(next);
+            }}
+            keyboardType="decimal-pad"
+            placeholder="例如 8.2"
+            editable={!submitting}
+          />
+          <FieldError message={errors.weight} />
+        </View>
 
-        <DatePickerField
-          label="測量日期（必填）"
-          value={date}
-          maximumDate={new Date()}
-          disabled={submitting || attachmentsBusy}
-          onChange={setDate}
-        />
+        <View onLayout={position('date')}>
+          <DatePickerField
+            label="測量日期（必填）"
+            value={date}
+            maximumDate={new Date()}
+            disabled={submitting || attachmentsBusy}
+            onChange={(next) => {
+              clearError('date');
+              setDate(next);
+            }}
+          />
+          <FieldError message={errors.date} />
+        </View>
 
         <SupplementalNotesField value={notes} onChange={setNotes} />
 

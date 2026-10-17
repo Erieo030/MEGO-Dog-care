@@ -9,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../components/AppButton';
 import AuthenticatedPetAvatar from '../../../components/AuthenticatedPetAvatar';
 import DatePickerField from '../../../components/DatePickerField';
+import { FieldError } from '../../../components/FieldError';
+import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 import { useTabContentBottomPadding } from '../../../components/navigation/useTabContentBottomPadding';
 import { Colors } from '../../../constants/Colors';
 import { CardShadow, Radius, Spacing } from '../../../constants/Layout';
@@ -34,6 +36,10 @@ import {
 type Props = { navigation: { goBack: () => void } };
 
 export default function PetMemorialScreen({ navigation }: Props) {
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<
+    'date',
+    ScrollView
+  >();
   const { session } = useAuth();
   const { pets, memorializeSelectedPet, restoreSelectedPet } = usePet();
   const selectedPet = useFormPet();
@@ -69,10 +75,7 @@ export default function PetMemorialScreen({ navigation }: Props) {
   const confirmMemorial = () => {
     const dateKey = toTaipeiDateValue(date).slice(0, 10);
     const problem = validateMemorialDate(dateKey, pet, taipeiDateKey());
-    if (problem) {
-      Alert.alert('請確認日期', problem);
-      return;
-    }
+    if (!showErrors(problem ? { date: problem } : {}, ['date'])) return;
     Alert.alert(`把${pet.name}移到回憶？`, MEMORIAL_EFFECTS.join('\n\n'), [
       { text: '再想想', style: 'cancel' },
       {
@@ -189,6 +192,7 @@ export default function PetMemorialScreen({ navigation }: Props) {
   return (
     <ScreenPageFrame>
       <ScrollView
+        ref={scrollRef}
         style={styles.page}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
@@ -211,12 +215,18 @@ export default function PetMemorialScreen({ navigation }: Props) {
           ))}
         </View>
 
-        <DatePickerField
-          label="離開的日期"
-          value={date}
-          maximumDate={new Date()}
-          onChange={setDate}
-        />
+        <View onLayout={position('date')}>
+          <DatePickerField
+            label="離開的日期"
+            value={date}
+            maximumDate={new Date()}
+            onChange={(next) => {
+              clearError('date');
+              setDate(next);
+            }}
+          />
+          <FieldError message={errors.date} />
+        </View>
         <Text style={styles.label}>想對牠說的話（選填）</Text>
         <TextInput
           value={note}

@@ -2,6 +2,8 @@ import { useFormPet } from '../../../hooks/useFormPet';
 import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
+import { FieldError } from '../../../components/FieldError';
+import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 /**
  * 用途：新增、編輯與複製用藥療程。
  * 表單型別：../types.ts
@@ -38,6 +40,9 @@ const fields = [
   ['notes', '補充備註'],
 ] as const;
 
+type MedicationField = 'name' | 'endDate' | 'timesPerDay' | 'reminderTimes';
+const FIELD_ORDER: readonly MedicationField[] = ['name', 'endDate', 'timesPerDay', 'reminderTimes'];
+
 export function MedicationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
@@ -51,31 +56,31 @@ export function MedicationFormScreen() {
   const [draft, setDraft] = useState<MedicationDraft>(() =>
     createMedicationDraft(existing, duplicate),
   );
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<MedicationField>();
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
   const [editingReminderTime, setEditingReminderTime] = useState<string | null>(null);
-  const setField = <Key extends keyof MedicationDraft>(key: Key, value: MedicationDraft[Key]) =>
+  const setField = <Key extends keyof MedicationDraft>(key: Key, value: MedicationDraft[Key]) => {
+    clearError(key as MedicationField);
     setDraft((current) => ({ ...current, [key]: value }));
+  };
 
   const save = async () => {
     if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
-    if (!draft.name.trim()) {
-      Alert.alert('請填寫藥名');
-      return;
-    }
-    if (draft.startDate && draft.endDate && draft.endDate < draft.startDate) {
-      Alert.alert('日期順序錯誤', '結束日期不能早於開始日期。');
-      return;
-    }
-
-    if (!Number.isInteger(draft.timesPerDay) || draft.timesPerDay < 1 || draft.timesPerDay > 6) {
-      Alert.alert('每日次數須為 1–6 次');
-      return;
-    }
+    const problems: Partial<Record<MedicationField, string>> = {};
+    if (!draft.name.trim()) problems.name = '請填寫藥品名稱。';
+    if (draft.startDate && draft.endDate && draft.endDate < draft.startDate)
+      problems.endDate = '結束日期不能早於開始日期。';
+    if (!Number.isInteger(draft.timesPerDay) || draft.timesPerDay < 1 || draft.timesPerDay > 6)
+      problems.timesPerDay = '每日次數須為 1–6 次。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     const reminderTimes = [...new Set(draft.reminderTimes)];
-    if (reminderTimes.length > 6)
-      return Alert.alert('提醒時間最多 6 筆', '請刪除多出的時間後再儲存。');
+    if (reminderTimes.length > 6) {
+      showErrors({ reminderTimes: '提醒時間最多 6 筆，請刪除多出的時間後再儲存。' }, FIELD_ORDER);
+      return;
+    }
     saveLock.current = true;
     setSaving(true);
     try {
@@ -125,6 +130,7 @@ export function MedicationFormScreen() {
   return (
     <ScreenPageFrame>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -144,24 +150,26 @@ export function MedicationFormScreen() {
             if (isDate) {
               const value = draft[key];
               return (
-                <DatePickerField
-                  key={key}
-                  label={label}
-                  value={value ? taipeiDateFromKey(value) : undefined}
-                  onClear={key === 'endDate' ? () => setField('endDate', '') : undefined}
-                  onChange={(date) => setField(key, taipeiDateKey(date))}
-                  minimumDate={
-                    key === 'endDate' && draft.startDate
-                      ? taipeiDateFromKey(draft.startDate)
-                      : undefined
-                  }
-                  maximumDate={key === 'startDate' ? new Date() : undefined}
-                />
+                <View key={key} onLayout={key === 'endDate' ? position(key) : undefined}>
+                  <DatePickerField
+                    label={label}
+                    value={value ? taipeiDateFromKey(value) : undefined}
+                    onClear={key === 'endDate' ? () => setField('endDate', '') : undefined}
+                    onChange={(date) => setField(key, taipeiDateKey(date))}
+                    minimumDate={
+                      key === 'endDate' && draft.startDate
+                        ? taipeiDateFromKey(draft.startDate)
+                        : undefined
+                    }
+                    maximumDate={key === 'startDate' ? new Date() : undefined}
+                  />
+                  {key === 'endDate' ? <FieldError message={errors.endDate} /> : null}
+                </View>
               );
             }
             if (key === 'timesPerDay')
               return (
-                <View key={key}>
+                <View key={key} onLayout={position('timesPerDay')}>
                   <Text style={styles.label}>{label}：1–6 次</Text>
                   <View style={styles.options}>
                     {[1, 2, 3, 4, 5, 6].map((count) => (
@@ -177,10 +185,11 @@ export function MedicationFormScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
+                  <FieldError message={errors.timesPerDay} />
                 </View>
               );
             return (
-              <View key={key}>
+              <View key={key} onLayout={key === 'name' ? position(key) : undefined}>
                 <Text style={styles.label}>{label}</Text>
                 <TextInput
                   style={styles.input}
@@ -190,6 +199,7 @@ export function MedicationFormScreen() {
                   accessibilityLabel={label}
                   onChangeText={(value) => setField(key, value)}
                 />
+                {key === 'name' ? <FieldError message={errors.name} /> : null}
               </View>
             );
           })}
@@ -214,33 +224,36 @@ export function MedicationFormScreen() {
           ))}
         </View>
 
-        <DatePickerField
-          label="每天提醒時間（選填，最多 6 筆）"
-          disabled={!editingReminderTime && draft.reminderTimes.length >= 6}
-          mode="time"
-          value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
-          onChange={(date) => {
-            if (!editingReminderTime && draft.reminderTimes.length >= 6) return;
-            const next = formatTaipeiTime(date);
-            setDraft((current) => ({
-              ...current,
-              reminderTimes: [
-                ...new Set(
-                  editingReminderTime
-                    ? current.reminderTimes.map((item) =>
-                        item === editingReminderTime ? next : item,
-                      )
-                    : [...current.reminderTimes, next],
-                ),
-              ],
-              reminderTimeDraft: '',
-            }));
-            setEditingReminderTime(null);
-          }}
-        />
-        {draft.reminderTimes.length >= 6 && (
-          <Text style={styles.reminderHint}>已達 6 筆上限；仍可編輯或刪除既有時間。</Text>
-        )}
+        <View onLayout={position('reminderTimes')}>
+          <DatePickerField
+            label="每天提醒時間（選填，最多 6 筆）"
+            disabled={!editingReminderTime && draft.reminderTimes.length >= 6}
+            mode="time"
+            value={timeValue(draft.reminderTimeDraft || draft.reminderTimes[0])}
+            onChange={(date) => {
+              if (!editingReminderTime && draft.reminderTimes.length >= 6) return;
+              const next = formatTaipeiTime(date);
+              setDraft((current) => ({
+                ...current,
+                reminderTimes: [
+                  ...new Set(
+                    editingReminderTime
+                      ? current.reminderTimes.map((item) =>
+                          item === editingReminderTime ? next : item,
+                        )
+                      : [...current.reminderTimes, next],
+                  ),
+                ],
+                reminderTimeDraft: '',
+              }));
+              setEditingReminderTime(null);
+            }}
+          />
+          {draft.reminderTimes.length >= 6 && (
+            <Text style={styles.reminderHint}>已達 6 筆上限；仍可編輯或刪除既有時間。</Text>
+          )}
+          <FieldError message={errors.reminderTimes} />
+        </View>
         {draft.reminderTimes.map((time) => (
           <View key={time} style={styles.reminderRow}>
             <Text style={styles.reminderHint}>每天 {time}</Text>

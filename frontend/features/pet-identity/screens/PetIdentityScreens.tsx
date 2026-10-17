@@ -18,6 +18,8 @@ import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { Colors } from '../../../constants/Colors';
 import ScreenState from '../../../components/ScreenState';
 import KeyboardAwareScrollView from '../../../components/KeyboardAwareScrollView';
+import { FieldError } from '../../../components/FieldError';
+import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { ProfileStackParamList } from '../../../navigation/types';
 import {
@@ -100,8 +102,12 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   );
 
   const data = profile || DEFAULT_PROFILE;
-  const update = <K extends keyof LostProfile>(key: K, value: LostProfile[K]) =>
+  // 「至少公開一種聯絡方式」是跨欄位規則，錯誤顯示在聯絡公開範圍那一區。
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<'contact'>();
+  const update = <K extends keyof LostProfile>(key: K, value: LostProfile[K]) => {
+    clearError('contact');
     setProfile({ ...data, [key]: value });
+  };
 
   const save = async () => {
     if (!session?.userId || !selectedPet || saveLock.current) return;
@@ -109,10 +115,15 @@ export function LostPetSettingsScreen({ navigation }: Props) {
       (data.showContactPhone && Boolean(data.contactPhone?.trim())) ||
       (data.showAlternatePhone && Boolean(data.alternatePhone?.trim())) ||
       (data.showContactEmail && Boolean(data.contactEmail?.trim()));
-    if (!hasPublicContact) {
-      Alert.alert('請設定公開聯絡方式', '請填寫並公開電話、備用電話或 Email，掃描者才能聯絡到你。');
+    if (
+      !showErrors(
+        hasPublicContact
+          ? {}
+          : { contact: '請填寫並公開電話、備用電話或 Email，掃描者才能聯絡到你。' },
+        ['contact'],
+      )
+    )
       return;
-    }
     const submitted = { ...data, enabled: true };
     saveLock.current = true;
     setSaving(true);
@@ -204,6 +215,7 @@ export function LostPetSettingsScreen({ navigation }: Props) {
   return (
     <ScreenPageFrame>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
         <SettingsPageHeader page="LostPetSettings" style={{ marginBottom: 0 }} />
@@ -282,7 +294,10 @@ export function LostPetSettingsScreen({ navigation }: Props) {
         <Text style={styles.note}>
           掃描者只會看到已開啟且已填寫的聯絡方式；至少公開一種，對方才能聯絡你。
         </Text>
-        <View style={styles.optionSurface}>{toggleOptions(contactVisibilityFields)}</View>
+        <View onLayout={position('contact')}>
+          <View style={styles.optionSurface}>{toggleOptions(contactVisibilityFields)}</View>
+          <FieldError message={errors.contact} />
+        </View>
         <View style={styles.previewSurface}>
           <Text style={styles.previewHeading}>掃描頁預覽</Text>
           <Text style={styles.previewSubheading}>以下內容會依目前的公開設定即時更新</Text>

@@ -1,8 +1,9 @@
 import { useReducedMotion } from '../hooks/usePressFeedback';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 /** 用途：以輕量原生版面登入，鍵盤開啟時保持欄位與送出按鈕可操作。 */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -39,6 +40,8 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const passwordInputRef = useRef<TextInput>(null);
+  // 登入表單很短，不需要捲動定位，只取欄位錯誤的狀態。
+  const { errors, showErrors, clearError } = useFormFieldErrors<'email' | 'password'>();
 
   useEffect(() => {
     const keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
@@ -54,10 +57,10 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
 
   const handleLoginPress = async () => {
     if (loginLock.current) return;
-    if (!email || !password) {
-      Alert.alert('提示', '請輸入帳號和密碼 🐾');
-      return;
-    }
+    const problems: Partial<Record<'email' | 'password', string>> = {};
+    if (!email) problems.email = '請輸入電子郵件。';
+    if (!password) problems.password = '請輸入密碼。';
+    if (!showErrors(problems, ['email', 'password'])) return;
     loginLock.current = true;
     setIsSubmitting(true);
     try {
@@ -114,7 +117,10 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                   placeholder="你的電子郵件"
                   placeholderTextColor={Colors.subtext}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(next) => {
+                    clearError('email');
+                    setEmail(next);
+                  }}
                   onFocus={revealFormForKeyboard}
                   editable={!isSubmitting}
                   keyboardType="email-address"
@@ -124,6 +130,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
                 />
               </View>
+              <FieldError message={errors.email} />
 
               <View style={styles.inputShell}>
                 <Ionicons name="lock-closed-outline" size={21} color={Colors.subtext} />
@@ -134,7 +141,10 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                   placeholder="你的密碼"
                   placeholderTextColor={Colors.subtext}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(next) => {
+                    clearError('password');
+                    setPassword(next);
+                  }}
                   onFocus={revealFormForKeyboard}
                   editable={!isSubmitting}
                   secureTextEntry={!showPassword}
@@ -156,6 +166,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                   />
                 </TouchableOpacity>
               </View>
+              <FieldError message={errors.password} />
 
               <TouchableOpacity
                 accessibilityRole="button"

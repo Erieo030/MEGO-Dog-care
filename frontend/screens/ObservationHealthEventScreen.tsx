@@ -29,6 +29,8 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import AttachmentPicker from '../components/AttachmentPicker';
@@ -56,6 +58,9 @@ import { Type } from '../constants/Typography';
 
 const severities = Object.entries(SEVERITY_LABELS) as Array<[Severity, string]>;
 type Props = NativeStackScreenProps<HomeStackParamList, 'ObservationHealthEvent'>;
+
+type ObservationField = 'primary' | 'occurredAt';
+const FIELD_ORDER: readonly ObservationField[] = ['primary', 'occurredAt'];
 
 export default function ObservationHealthEventScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -143,6 +148,9 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
     }, [eventId, load, dirtyRef]),
   );
 
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<ObservationField>();
+
   const submit = async () => {
     if (
       !selectedPet ||
@@ -153,9 +161,11 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
       submissionLock.current
     )
       return;
-    if (!values[config.primaryKey]) return Alert.alert('尚未完成', `請選擇${config.primaryLabel}`);
+    const problems: Partial<Record<ObservationField, string>> = {};
+    if (!values[config.primaryKey]) problems.primary = `請選擇${config.primaryLabel}。`;
     if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now())
-      return Alert.alert('時間錯誤', '請選擇有效且不晚於現在的發生時間');
+      problems.occurredAt = '請選擇有效且不晚於現在的發生時間。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     submissionLock.current = true;
     setSubmitting(true);
     try {
@@ -210,6 +220,7 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <View style={styles.intro}>
@@ -223,12 +234,18 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
             <Text style={styles.subtitle}>只保存觀察到的狀況，不提供疾病診斷或治療建議。</Text>
           </View>
         </View>
-        <Text style={styles.label}>{config.primaryLabel}（必填）</Text>
-        <QuickOptionGroup
-          options={config.primaryOptions}
-          value={values[config.primaryKey] as string | undefined}
-          onChange={(value) => setValues((current) => ({ ...current, [config.primaryKey]: value }))}
-        />
+        <View onLayout={position('primary')}>
+          <Text style={styles.label}>{config.primaryLabel}（必填）</Text>
+          <QuickOptionGroup
+            options={config.primaryOptions}
+            value={values[config.primaryKey] as string | undefined}
+            onChange={(value) => {
+              clearError('primary');
+              setValues((current) => ({ ...current, [config.primaryKey]: value }));
+            }}
+          />
+          <FieldError message={errors.primary} />
+        </View>
         {config.optionalGroups.map((group) => (
           <View key={group.key}>
             <Text style={styles.label}>{group.label}</Text>
@@ -256,14 +273,20 @@ export default function ObservationHealthEventScreen({ route, navigation }: Prop
             />
           </>
         )}
-        <DatePickerField
-          label="發生時間（必填）"
-          value={occurredAt}
-          mode="datetime"
-          maximumDate={new Date()}
-          disabled={submitting || attachmentsBusy}
-          onChange={setOccurredAt}
-        />
+        <View onLayout={position('occurredAt')}>
+          <DatePickerField
+            label="發生時間（必填）"
+            value={occurredAt}
+            mode="datetime"
+            maximumDate={new Date()}
+            disabled={submitting || attachmentsBusy}
+            onChange={(next) => {
+              clearError('occurredAt');
+              setOccurredAt(next);
+            }}
+          />
+          <FieldError message={errors.occurredAt} />
+        </View>
         <Text style={styles.label}>嚴重程度（必填）</Text>
         <QuickOptionGroup
           options={severities}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import { FieldError } from '../../../components/FieldError';
 import DatePickerField from '../../../components/DatePickerField';
 import SupplementalNotesField from '../../../components/SupplementalNotesField';
 import { Colors } from '../../../constants/Colors';
@@ -22,13 +23,16 @@ type Props = {
   field: PetFormTextFieldData;
   value: string;
   onChange: (value: string) => void;
+  /** 驗證失敗時顯示在欄位下方，取代打斷流程的 Alert。 */
+  error?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
 };
 
-export default function PetFormTextField({ field, value, onChange }: Props) {
+export default function PetFormTextField({ field, value, onChange, error, onLayout }: Props) {
   const isDate = field.key === 'birthday' || field.key === 'arrivalDate';
 
   return (
-    <View style={styles.fieldGroup}>
+    <View style={styles.fieldGroup} onLayout={onLayout}>
       {isDate ? (
         <>
           <Text style={styles.label}>{field.label}</Text>
@@ -70,6 +74,7 @@ export default function PetFormTextField({ field, value, onChange }: Props) {
           )}
         </>
       )}
+      <FieldError message={error} />
     </View>
   );
 }

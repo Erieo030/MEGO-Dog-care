@@ -2,6 +2,8 @@ import { useFormPet } from '../../../hooks/useFormPet';
 import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
+import { FieldError } from '../../../components/FieldError';
+import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 /** 用途：新增、編輯與複製驅蟲紀錄。 */
 import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -38,6 +40,9 @@ const fields = [
   ['notes', '補充備註'],
 ] as const;
 
+type DewormingField = 'productName' | 'administeredAt' | 'nextDueAt';
+const FIELD_ORDER: readonly DewormingField[] = ['productName', 'administeredAt', 'nextDueAt'];
+
 export function DewormingFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
@@ -51,21 +56,27 @@ export function DewormingFormScreen() {
   const [draft, setDraft] = useState<DewormingDraft>(() =>
     createDewormingDraft(existing, duplicate),
   );
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<DewormingField>();
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
-  const setField = <Key extends keyof DewormingDraft>(key: Key, value: DewormingDraft[Key]) =>
+  const setField = <Key extends keyof DewormingDraft>(key: Key, value: DewormingDraft[Key]) => {
+    clearError(key as DewormingField);
     setDraft((current) => ({ ...current, [key]: value }));
+  };
 
   const save = async () => {
     if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
-    if (!draft.productName.trim()) return Alert.alert('請填寫產品名稱');
     const administered = validDewormingDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validDewormingDate(draft.nextDueAt) : undefined;
-    if (!administered || (draft.nextDueAt && !nextDue))
-      return Alert.alert('日期錯誤', '請選擇有效的使用日期。');
-    if (nextDue && nextDue < administered)
-      return Alert.alert('日期順序錯誤', '下次日期不能早於使用日期。');
+    const problems: Partial<Record<DewormingField, string>> = {};
+    if (!draft.productName.trim()) problems.productName = '請填寫產品／藥品名稱。';
+    if (!administered) problems.administeredAt = '請選擇有效的使用日期。';
+    if (draft.nextDueAt && !nextDue) problems.nextDueAt = '請選擇有效的下次驅蟲日期。';
+    else if (administered && nextDue && nextDue < administered)
+      problems.nextDueAt = '下次日期不能早於使用日期。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     saveLock.current = true;
     setSaving(true);
     try {
@@ -112,6 +123,7 @@ export function DewormingFormScreen() {
   return (
     <ScreenPageFrame>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -144,31 +156,33 @@ export function DewormingFormScreen() {
             const isDate = key === 'administeredAt' || key === 'nextDueAt';
             if (isDate)
               return (
-                <DatePickerField
-                  key={key}
-                  label={label}
-                  placeholder={key === 'nextDueAt' ? '選擇下次驅蟲日期' : '選擇使用日期'}
-                  hint={key === 'nextDueAt' ? '不可早於使用日期，可選同一天。' : undefined}
-                  value={validDewormingDate(draft[key])}
-                  onClear={
-                    key === 'nextDueAt'
-                      ? () => {
-                          setField('nextDueAt', '');
-                          setField('createReminder', false);
-                        }
-                      : undefined
-                  }
-                  onChange={(date) => setField(key, toTaipeiDateValue(date))}
-                  minimumDate={
-                    key === 'nextDueAt'
-                      ? validDewormingDate(draft.administeredAt) || new Date()
-                      : undefined
-                  }
-                  maximumDate={key === 'administeredAt' ? new Date() : undefined}
-                />
+                <View key={key} onLayout={position(key)}>
+                  <DatePickerField
+                    label={label}
+                    placeholder={key === 'nextDueAt' ? '選擇下次驅蟲日期' : '選擇使用日期'}
+                    hint={key === 'nextDueAt' ? '不可早於使用日期，可選同一天。' : undefined}
+                    value={validDewormingDate(draft[key])}
+                    onClear={
+                      key === 'nextDueAt'
+                        ? () => {
+                            setField('nextDueAt', '');
+                            setField('createReminder', false);
+                          }
+                        : undefined
+                    }
+                    onChange={(date) => setField(key, toTaipeiDateValue(date))}
+                    minimumDate={
+                      key === 'nextDueAt'
+                        ? validDewormingDate(draft.administeredAt) || new Date()
+                        : undefined
+                    }
+                    maximumDate={key === 'administeredAt' ? new Date() : undefined}
+                  />
+                  <FieldError message={errors[key]} />
+                </View>
               );
             return (
-              <View key={key}>
+              <View key={key} onLayout={key === 'productName' ? position(key) : undefined}>
                 <Text style={styles.label}>{label}</Text>
                 <TextInput
                   style={styles.input}
@@ -178,6 +192,7 @@ export function DewormingFormScreen() {
                   value={typeof draft[key] === 'string' ? draft[key] : ''}
                   onChangeText={(value) => setField(key, value)}
                 />
+                {key === 'productName' ? <FieldError message={errors.productName} /> : null}
               </View>
             );
           })}

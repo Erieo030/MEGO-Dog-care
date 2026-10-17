@@ -24,6 +24,8 @@ import {
   FORM_PAGE_HORIZONTAL_PADDING,
 } from '../constants/FormTokens';
 import DatePickerField from '../components/DatePickerField';
+import { FieldError } from '../components/FieldError';
+import { useFormFieldErrors } from '../hooks/useFormFieldErrors';
 import KeyboardAwareScrollView from '../components/KeyboardAwareScrollView';
 import { showQuickRecordFeedback } from '../utils/quickRecordFeedback';
 import AttachmentPicker from '../components/AttachmentPicker';
@@ -65,6 +67,9 @@ const emptyDetails = (): StoolDetails => ({
 });
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'StoolHealthEvent'>;
+
+type StoolField = 'stoolConsistency' | 'stoolColor' | 'occurredAt';
+const FIELD_ORDER: readonly StoolField[] = ['stoolConsistency', 'stoolColor', 'occurredAt'];
 
 export default function StoolHealthEventScreen({ route, navigation }: Props) {
   const bottomContentPadding = useTabContentBottomPadding();
@@ -151,6 +156,8 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
     }, [eventId, load, dirtyRef]),
   );
 
+  const { errors, scrollRef, position, showErrors, clearError } = useFormFieldErrors<StoolField>();
+
   const submit = async () => {
     if (
       !selectedPet ||
@@ -161,11 +168,12 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
       submissionLock.current
     )
       return;
-    if (!details.stoolConsistency) return Alert.alert('尚未完成', '請選擇排便形狀');
-    if (!details.stoolColor) return Alert.alert('尚未完成', '請選擇排便顏色');
-    if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now()) {
-      return Alert.alert('時間錯誤', '請選擇有效且不晚於現在的發生時間');
-    }
+    const problems: Partial<Record<StoolField, string>> = {};
+    if (!details.stoolConsistency) problems.stoolConsistency = '請選擇排便形狀。';
+    if (!details.stoolColor) problems.stoolColor = '請選擇排便顏色。';
+    if (Number.isNaN(occurredAt.getTime()) || occurredAt.getTime() > Date.now())
+      problems.occurredAt = '請選擇有效且不晚於現在的發生時間。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     submissionLock.current = true;
     setSubmitting(true);
     try {
@@ -219,6 +227,7 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.container}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingBottom: bottomContentPadding }]}
       >
         <View style={styles.intro}>
@@ -231,21 +240,31 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        <Text style={styles.label}>形狀（必填）</Text>
-        <OptionGroup
-          options={STOOL_CONSISTENCY_OPTIONS}
-          value={details.stoolConsistency}
-          onChange={(stoolConsistency) =>
-            setDetails((current) => ({ ...current, stoolConsistency }))
-          }
-        />
+        <View onLayout={position('stoolConsistency')}>
+          <Text style={styles.label}>形狀（必填）</Text>
+          <OptionGroup
+            options={STOOL_CONSISTENCY_OPTIONS}
+            value={details.stoolConsistency}
+            onChange={(stoolConsistency) => {
+              clearError('stoolConsistency');
+              setDetails((current) => ({ ...current, stoolConsistency }));
+            }}
+          />
+          <FieldError message={errors.stoolConsistency} />
+        </View>
 
-        <Text style={styles.label}>顏色（必填）</Text>
-        <OptionGroup
-          options={STOOL_COLOR_OPTIONS}
-          value={details.stoolColor}
-          onChange={(stoolColor) => setDetails((current) => ({ ...current, stoolColor }))}
-        />
+        <View onLayout={position('stoolColor')}>
+          <Text style={styles.label}>顏色（必填）</Text>
+          <OptionGroup
+            options={STOOL_COLOR_OPTIONS}
+            value={details.stoolColor}
+            onChange={(stoolColor) => {
+              clearError('stoolColor');
+              setDetails((current) => ({ ...current, stoolColor }));
+            }}
+          />
+          <FieldError message={errors.stoolColor} />
+        </View>
 
         <Text style={styles.label}>其他狀況（可複選）</Text>
         <OptionsWrap>
@@ -280,14 +299,20 @@ export default function StoolHealthEventScreen({ route, navigation }: Props) {
           />
         </OptionsWrap>
 
-        <DatePickerField
-          label="發生日期（必填）"
-          value={occurredAt}
-          mode="date"
-          maximumDate={new Date()}
-          disabled={submitting || attachmentsBusy}
-          onChange={setOccurredAt}
-        />
+        <View onLayout={position('occurredAt')}>
+          <DatePickerField
+            label="發生日期（必填）"
+            value={occurredAt}
+            mode="date"
+            maximumDate={new Date()}
+            disabled={submitting || attachmentsBusy}
+            onChange={(next) => {
+              clearError('occurredAt');
+              setOccurredAt(next);
+            }}
+          />
+          <FieldError message={errors.occurredAt} />
+        </View>
 
         <Text style={styles.label}>嚴重程度（必填）</Text>
         <OptionGroup<Severity> options={severities} value={severity} onChange={setSeverity} />

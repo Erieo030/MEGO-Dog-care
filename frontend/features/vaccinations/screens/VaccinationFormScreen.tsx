@@ -2,6 +2,8 @@ import { useFormPet } from '../../../hooks/useFormPet';
 import { syncCareNotifications } from '../../../services/careNotificationSync';
 import { ScreenPageHeader, ScreenPageFrame } from '../../../components/ScreenPageHeader';
 import { useFormUnsavedChangesGuard } from '../../../hooks/useFormUnsavedChangesGuard';
+import { FieldError } from '../../../components/FieldError';
+import { useFormFieldErrors } from '../../../hooks/useFormFieldErrors';
 /** 用途：新增、編輯與複製疫苗紀錄。 */
 import React, { useRef, useState } from 'react';
 import { Alert, Text, TextInput, View } from 'react-native';
@@ -31,6 +33,8 @@ const fields = [
   ['nextDueAt', '下次接種日期（選填）'],
   ['notes', '補充備註'],
 ] as const;
+type VaccinationField = 'vaccineName' | 'administeredAt' | 'nextDueAt';
+const FIELD_ORDER: readonly VaccinationField[] = ['vaccineName', 'administeredAt', 'nextDueAt'];
 export function VaccinationFormScreen() {
   const bottomContentPadding = useTabContentBottomPadding(24, true);
   const { session } = useAuth();
@@ -44,20 +48,26 @@ export function VaccinationFormScreen() {
   const [draft, setDraft] = useState<VaccinationDraft>(() =>
     createVaccinationDraft(existing, duplicate),
   );
+  const { errors, scrollRef, position, showErrors, clearError } =
+    useFormFieldErrors<VaccinationField>();
   const saveLock = useRef(false);
   const [saving, setSaving] = useState(false);
   const { markSaved } = useFormUnsavedChangesGuard(draft, setDraft, true, saving);
-  const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) =>
+  const setField = <Key extends keyof VaccinationDraft>(key: Key, value: VaccinationDraft[Key]) => {
+    clearError(key as VaccinationField);
     setDraft((current) => ({ ...current, [key]: value }));
+  };
   const save = async () => {
     if (!session?.userId || !ownerPet || ownerPet.memorial || saveLock.current) return;
-    if (!draft.vaccineName.trim()) return Alert.alert('請填寫疫苗名稱');
     const administered = validVaccinationDate(draft.administeredAt);
     const nextDue = draft.nextDueAt ? validVaccinationDate(draft.nextDueAt) : undefined;
-    if (!administered || (draft.nextDueAt && !nextDue))
-      return Alert.alert('日期錯誤', '請選擇有效的接種日期。');
-    if (nextDue && nextDue < administered)
-      return Alert.alert('日期順序錯誤', '下次接種日期不能早於接種日期。');
+    const problems: Partial<Record<VaccinationField, string>> = {};
+    if (!draft.vaccineName.trim()) problems.vaccineName = '請填寫疫苗名稱。';
+    if (!administered) problems.administeredAt = '請選擇有效的接種日期。';
+    if (draft.nextDueAt && !nextDue) problems.nextDueAt = '請選擇有效的下次接種日期。';
+    else if (administered && nextDue && nextDue < administered)
+      problems.nextDueAt = '下次接種日期不能早於接種日期。';
+    if (!showErrors(problems, FIELD_ORDER)) return;
     saveLock.current = true;
     setSaving(true);
     try {
@@ -102,6 +112,7 @@ export function VaccinationFormScreen() {
   return (
     <ScreenPageFrame>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
       >
         <ScreenPageHeader
@@ -119,31 +130,34 @@ export function VaccinationFormScreen() {
             const isDate = key === 'administeredAt' || key === 'nextDueAt';
             if (isDate)
               return (
-                <DatePickerField
-                  key={`${key}-${String(draft[key])}`}
-                  label={label}
-                  placeholder={key === 'nextDueAt' ? '選擇下次接種日期' : '選擇接種日期'}
-                  hint={key === 'nextDueAt' ? '不可早於接種日期，可選同一天。' : undefined}
-                  value={validVaccinationDate(draft[key])}
-                  onClear={
-                    key === 'nextDueAt'
-                      ? () => {
-                          setField('nextDueAt', '');
-                          setField('createReminder', false);
-                        }
-                      : undefined
-                  }
-                  onChange={(date) => setField(key, toTaipeiDateValue(date))}
-                  minimumDate={
-                    key === 'nextDueAt'
-                      ? validVaccinationDate(draft.administeredAt) || new Date()
-                      : undefined
-                  }
-                  maximumDate={key === 'administeredAt' ? new Date() : undefined}
-                />
+                <View key={key} onLayout={position(key)}>
+                  <DatePickerField
+                    key={`${key}-${String(draft[key])}`}
+                    label={label}
+                    placeholder={key === 'nextDueAt' ? '選擇下次接種日期' : '選擇接種日期'}
+                    hint={key === 'nextDueAt' ? '不可早於接種日期，可選同一天。' : undefined}
+                    value={validVaccinationDate(draft[key])}
+                    onClear={
+                      key === 'nextDueAt'
+                        ? () => {
+                            setField('nextDueAt', '');
+                            setField('createReminder', false);
+                          }
+                        : undefined
+                    }
+                    onChange={(date) => setField(key, toTaipeiDateValue(date))}
+                    minimumDate={
+                      key === 'nextDueAt'
+                        ? validVaccinationDate(draft.administeredAt) || new Date()
+                        : undefined
+                    }
+                    maximumDate={key === 'administeredAt' ? new Date() : undefined}
+                  />
+                  <FieldError message={errors[key]} />
+                </View>
               );
             return (
-              <View key={key}>
+              <View key={key} onLayout={key === 'vaccineName' ? position(key) : undefined}>
                 <Text style={styles.label}>{label}</Text>
                 <TextInput
                   style={styles.input}
@@ -153,6 +167,7 @@ export function VaccinationFormScreen() {
                   value={typeof draft[key] === 'string' ? draft[key] : ''}
                   onChangeText={(value) => setField(key, value)}
                 />
+                {key === 'vaccineName' ? <FieldError message={errors.vaccineName} /> : null}
               </View>
             );
           })}
