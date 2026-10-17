@@ -12,6 +12,7 @@ BACKEND_DIR="$ROOT_DIR/backend"
 FRONTEND_DIR="$ROOT_DIR/frontend"
 ENV_FILE="$ROOT_DIR/.env"
 VENV_DIR="$ROOT_DIR/dog-care"
+RUNTIME_CHECK="$BACKEND_DIR/scripts/check_runtime_dependencies.py"
 LOG_DIR="$ROOT_DIR/.logs"
 BACKEND_PORT="${PORT:-}"
 EXPO_CONNECTION="${EXPO_CONNECTION:-}"
@@ -133,6 +134,12 @@ wait_for_backend() {
   return 1
 }
 
+backend_dependencies_ready() {
+  # pip 的 metadata／hash 還存在，不代表中斷安裝後的程式檔完整。
+  "$VENV_DIR/bin/python" "$RUNTIME_CHECK" >/dev/null 2>&1 &&
+    "$VENV_DIR/bin/python" -m pip check >/dev/null 2>&1
+}
+
 detect_lan_ip() {
   local address=""
   address="$(ip -4 route get 1.1.1.1 2>/dev/null | awk '{for (i = 1; i <= NF; i++) if ($i == "src") {print $(i + 1); exit}}')"
@@ -169,6 +176,7 @@ if [[ ${#AUTH_SECRET_KEY_VALUE} -lt 32 ]]; then
   info "Generated a persistent auth secret in root .env"
 fi
 [[ -f "$BACKEND_DIR/requirements.txt" ]] || fail "Missing backend/requirements.txt"
+[[ -f "$RUNTIME_CHECK" ]] || fail "Missing backend runtime dependency check"
 [[ -f "$FRONTEND_DIR/package-lock.json" ]] || fail "Missing frontend/package-lock.json"
 
 if [[ -z "$EXPO_CONNECTION" ]]; then
@@ -201,10 +209,20 @@ fi
 REQUIREMENTS_HASH="$(sha256sum "$BACKEND_DIR/requirements.txt" | awk '{print $1}')"
 INSTALLED_HASH="$(cat "$VENV_DIR/.requirements-hash" 2>/dev/null || true)"
 if [[ "$REQUIREMENTS_HASH" != "$INSTALLED_HASH" ]] ||
-  ! "$VENV_DIR/bin/python" -c "import fastapi, jwt, pydantic, pymongo, uvicorn" 2>/dev/null; then
+  ! backend_dependencies_ready; then
   info "Installing backend dependencies..."
   "$VENV_DIR/bin/python" -m pip install --upgrade pip
   "$VENV_DIR/bin/python" -m pip install -r "$BACKEND_DIR/requirements.txt"
+  if ! backend_dependencies_ready; then
+    info "Repairing incomplete backend packages at their installed versions..."
+    "$VENV_DIR/bin/python" "$RUNTIME_CHECK" --repair
+  fi
+  if ! backend_dependencies_ready; then
+    "$VENV_DIR/bin/python" "$RUNTIME_CHECK" || true
+    "$VENV_DIR/bin/python" -m pip check || true
+    fail "Backend dependencies could not be loaded; repair the Python environment before starting FastAPI"
+  fi
+  # 只有實際載入與依賴檢查都成功，才更新安裝完成標記。
   printf '%s\n' "$REQUIREMENTS_HASH" >"$VENV_DIR/.requirements-hash"
 else
   success "Backend dependencies are ready"
