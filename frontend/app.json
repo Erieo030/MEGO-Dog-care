@@ -3,6 +3,8 @@
     "name": "MEGO",
     "slug": "mego",
     "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "org.name.myapp"
     },
