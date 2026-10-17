@@ -152,16 +152,19 @@ npm run ios
 npm run android
 npm run web
 
-# 後端測試（在專案根目錄執行）
+# 後端測試（在專案根目錄執行，需要可連線的 MongoDB）
 cd ..
 PYTHONPATH=backend pytest -q backend/tests
+
+# RAG 測試（不需要資料庫）
+PYTHONPATH=backend pytest -q backend/rag_experiment
 
 # 其他檢查
 bash -n start.sh
 git diff --check
 ```
 
-每次推送到 GitHub，GitHub Actions 都會自動執行後端測試、前端型別檢查與前端測試。API 的參數與授權需求以 Swagger（`/docs`）為準。
+每次推送到 GitHub，GitHub Actions 會以三個獨立工作執行：後端測試（搭配 `mongo:7`）、RAG 測試（不需資料庫，因此與後端分開，後端失敗時仍會執行）、前端型別檢查與測試。API 的參數與授權需求以 Swagger（`/docs`）為準。
 
 ---
 
@@ -172,7 +175,7 @@ MEGO-Dog-care/
 ├── frontend/
 │   ├── screens/        # 首頁、提醒、時間軸、就醫、健康異常、AI 與毛孩表單等畫面
 │   ├── features/       # 依照護領域整理的畫面、元件、樣式與模組 README
-│   ├── components/     # 共用元件（日期／時間 Modal、按鈕、底部導覽）
+│   ├── components/     # 共用元件（日期／時間 Modal、按鈕、底部導覽、欄位錯誤、儲存狀態訊息）
 │   ├── services/       # API client 與各功能 service
 │   ├── utils/          # 可測試的前端業務規則（例如健康趨勢引擎）
 │   ├── contexts/       # Auth、Pet、Settings 狀態

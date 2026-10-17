@@ -10,3 +10,5 @@
 既有 `WeightListScreen` 保留 navigator route、資料載入、刪除、重新整理與表單導航。
 
 首頁捷徑開啟 `WeightFormScreen`，不是 `WeightListScreen`。表單的「新增體重／編輯體重」使用共用 `ScreenPageHeader` 排版 F；標題列沒有舊卡片外框，與其他快速紀錄頁一致。體重輸入、日期驗證、附件與儲存流程保持原樣。
+
+體重與測量日期的錯誤顯示在欄位下方（`components/FieldError.tsx`），不使用對話框；送出時捲到第一個出錯的欄位並震動一次，修改該欄即清除訊息。

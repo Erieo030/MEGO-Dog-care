@@ -10,3 +10,5 @@
 - `screens/PetFormScreen.tsx`：欄位狀態、驗證、送出 callback 與性別／品種類型選擇。
 
 圖片權限、`PetData` 結構與建立／更新流程未更動。
+
+`PetFormTextField` 接受 `error` 與 `onLayout`，錯誤顯示在欄位下方（`components/FieldError.tsx`）。姓名、品種、性別、出生日期與到家日期分別標示，原本四個必填欄位合併成一則提示、使用者要自行找出是哪一個的問題已修正；送出時捲到第一個出錯的欄位並震動一次。移到回憶的日期檢查同樣改為欄位錯誤，不使用對話框。

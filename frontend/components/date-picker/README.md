@@ -16,3 +16,5 @@ Modal 內使用 `taipeiPickerValue` 將台灣年月日時分放進 UTC 欄位容
 測試涵蓋確認／取消、日期邊界、1999 年生日及台灣時分；跨裝置時區測試另外在 UTC、America/New_York 與 Pacific/Auckland 執行。這不取代實機 Modal 驗收。
 
 選填的 `hint` 會在日期框下方顯示小字說明，並帶入選擇按鈕的無障礙提示。疫苗／驅蟲將日期限制移出標題，以「不可早於……，可選同一天」描述現有的同日可選規則，不更動驗證邏輯。提醒說明依語意分行，窄螢幕仍可再自然換行，卡片不固定高度。
+
+選到允許範圍外的日期時，訊息顯示在對話框內或欄位下方（`datePickerStyles.rangeError`），不再在已開啟的對話框上疊一層系統 Alert——那會蓋住使用者剛選的日期。日曆對話框自己知道範圍，在面板內顯示；時間對話框拿不到 `minimumDate`／`maximumDate`，由欄位層顯示。兩者都帶 `accessibilityRole="alert"`。
