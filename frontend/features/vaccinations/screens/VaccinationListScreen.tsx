@@ -12,7 +12,7 @@ import {
 } from '../../../components/ScreenPageHeader';
 /** 用途：顯示毛孩疫苗紀錄列表。 */
 import React, { useCallback, useRef, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, Text, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +36,7 @@ export function VaccinationListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [storedRecords, setRecords] = useState<Vaccination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const requestId = useRef(0);
   const ownerKey = `${session?.userId ?? ''}:${selectedPet?.id ?? ''}`;
@@ -48,6 +49,7 @@ export function VaccinationListScreen() {
       const current = ++requestId.current;
       if (!session?.userId || !selectedPet) {
         setLoading(false);
+        setRefreshing(false);
         setError('請先登入並選擇毛孩');
         return;
       }
@@ -67,7 +69,10 @@ export function VaccinationListScreen() {
       } catch (caught) {
         if (current === requestId.current && !signal?.aborted) setError((caught as Error).message);
       } finally {
-        if (current === requestId.current) setLoading(false);
+        if (current === requestId.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [selectedPet, session?.userId, ownerKey],
@@ -100,6 +105,15 @@ export function VaccinationListScreen() {
           maxToRenderPerBatch={8}
           windowSize={5}
           contentContainerStyle={[styles.page, { paddingBottom: bottomContentPadding }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => {
+                setRefreshing(true);
+                void load();
+              }}
+            />
+          }
           ListHeaderComponent={
             <>
               <ScreenPageHeader
